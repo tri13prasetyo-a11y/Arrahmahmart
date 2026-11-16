@@ -28,9 +28,9 @@
             </header>
 
             <main id="main-content">
-                <div class="text-center py-12">
+                <div class="text-center py-12" id="loading-spinner">
                     <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600 mx-auto mb-3"></div>
-                    <p class="text-sm text-slate-500">Memuat Toko & Cloud Supabase...</p>
+                    <p class="text-sm text-slate-500">Memuat Toko Arrahmah Mart...</p>
                 </div>
             </main>
         </div>
@@ -41,12 +41,17 @@
     </div>
 
     <script>
-        // ==========================================
-        // KONFIGURASI SUPABASE (Terhubung Sempurna)
-        // ==========================================
         const SUPABASE_URL = 'https://oeoskmyvumfwihbrmfkx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_VriQAQ-FC3JGp7-ojoEGHw_YoU5RCDu'; 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let supabaseClient = null;
+        try {
+            if (window.supabase && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch (err) {
+            console.error("Supabase init warning:", err);
+        }
 
         let products = [];
         let vouchers = [];
@@ -57,54 +62,22 @@
         let currentView = 'customer';
 
         async function initApp() {
-            await fetchAllData();
-            setupRealtime();
-            renderCustomerView();
-        }
-
-        async function fetchAllData() {
             try {
-                let pRes = await supabase.from('products').select('*');
-                if (pRes.data) products = pRes.data;
-            } catch (e) { products = []; }
+                if (supabaseClient) {
+                    let pRes = await supabaseClient.from('products').select('*');
+                    if (pRes.data) products = pRes.data;
 
-            try {
-                let vRes = await supabase.from('vouchers').select('*');
-                if (vRes.data) vouchers = vRes.data;
-            } catch (e) { vouchers = []; }
+                    let vRes = await supabaseClient.from('vouchers').select('*');
+                    if (vRes.data) vouchers = vRes.data;
 
-            try {
-                let bRes = await supabase.from('bundles').select('*');
-                if (bRes.data) bundles = bRes.data;
-            } catch (e) { bundles = []; }
-
-            try {
-                let tRes = await supabase.from('tebus_murah').select('*');
-                if (tRes.data) tebusMurahList = tRes.data;
-            } catch (e) { tebusMurahList = []; }
-
-            try {
-                let cRes = await supabase.from('customers').select('*');
-                if (cRes.data) customers = cRes.data;
-            } catch (e) { customers = []; }
-
-            try {
-                let oRes = await supabase.from('orders').select('*');
-                if (oRes.data) orders = oRes.data;
-            } catch (e) { orders = []; }
-        }
-
-        function setupRealtime() {
-            try {
-                supabase.channel('public:all')
-                    .on('postgres_changes', { event: '*', schema: 'public' }, payload => {
-                        fetchAllData().then(() => {
-                            if (currentView === 'customer') renderCustomerView();
-                            if (currentView === 'admin') renderAdminView();
-                        });
-                    })
-                    .subscribe();
-            } catch (e) { console.log("Realtime active"); }
+                    let cRes = await supabaseClient.from('customers').select('*');
+                    if (cRes.data) customers = cRes.data;
+                }
+            } catch (e) {
+                console.error("Fetch data warning:", e);
+            } finally {
+                renderCustomerView();
+            }
         }
 
         function switchView(view) {
@@ -113,9 +86,6 @@
             else if (view === 'admin') renderAdminView();
         }
 
-        // ==========================================
-        // TAMPILAN CUSTOMER (Dengan Harga Coret Promo)
-        // ==========================================
         function renderCustomerView() {
             const main = document.getElementById('main-content');
             let html = `
@@ -130,7 +100,12 @@
             `;
 
             if (products.length === 0) {
-                html += `<p class="text-xs text-slate-400 col-span-full text-center py-6">Belum ada produk. Silakan input produk lewat menu Admin.</p>`;
+                html += `
+                    <div class="col-span-full bg-white p-6 rounded-xl text-center shadow-sm">
+                        <p class="text-xs text-slate-500 mb-2">Belum ada produk atau data sedang dimuat.</p>
+                        <button onclick="initApp()" class="bg-amber-600 text-white px-4 py-2 rounded-lg text-xs font-semibold">Muat Ulang Katalog</button>
+                    </div>
+                `;
             } else {
                 products.forEach(p => {
                     let hasDiscount = p.discount && p.discount > 0;
@@ -149,7 +124,7 @@
                                     <div class="text-xs font-bold text-amber-700 mt-1">Rp ${p.price.toLocaleString()}</div>
                                 `}
                             </div>
-                            <button onclick="alert('Fitur keranjang aktif untuk produk ID: ${p.id}')" class="mt-3 w-full bg-amber-600 text-white py-1.5 rounded-lg text-xs font-medium hover:bg-amber-700">+ Keranjang</button>
+                            <button onclick="alert('Fitur keranjang aktif untuk produk: ${p.name}')" class="mt-3 w-full bg-amber-600 text-white py-1.5 rounded-lg text-xs font-medium hover:bg-amber-700">+ Keranjang</button>
                         </div>
                     `;
                 });
@@ -159,9 +134,6 @@
             main.innerHTML = html;
         }
 
-        // ==========================================
-        // TAMPILAN ADMIN & MANAJEMEN VARIAN / WA
-        // ==========================================
         function checkAdminAccess() {
             let pin = prompt("Masukkan PIN Admin (Default: 1234):");
             if (pin === "1234") {
@@ -181,7 +153,6 @@
                         <button onclick="switchView('customer')" class="text-xs bg-slate-200 px-3 py-1.5 rounded-lg font-medium">Keluar Admin</button>
                     </div>
 
-                    <!-- Form Tambah Produk & 6 Varian -->
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                         <h3 class="font-bold text-xs text-amber-700 uppercase tracking-wide">Tambah Produk & Varian (Hingga 6 Jenis)</h3>
                         <input type="text" id="p-name" placeholder="Nama Produk" class="w-full text-xs p-2 border rounded-lg">
@@ -191,11 +162,10 @@
                             <input type="number" id="p-stock" placeholder="Stok Utama" class="text-xs p-2 border rounded-lg">
                         </div>
                         <input type="text" id="p-img" placeholder="Link Gambar URL Produk" class="w-full text-xs p-2 border rounded-lg">
-                        <input type="text" id="p-variants" placeholder="Varian (Contoh: Merah, Biru, Hijau / Rasa Manis, Asin)" class="w-full text-xs p-2 border rounded-lg">
+                        <input type="text" id="p-variants" placeholder="Varian (Contoh: Merah, Biru / Manis, Asin)" class="w-full text-xs p-2 border rounded-lg">
                         <button onclick="addNewProduct()" class="w-full bg-amber-600 text-white py-2 rounded-lg text-xs font-semibold">Simpan Produk ke Cloud</button>
                     </div>
 
-                    <!-- Database Pelanggan dengan Tombol WhatsApp Instan -->
                     <div>
                         <h3 class="font-bold text-xs text-slate-700 uppercase tracking-wide mb-2">Database Pelanggan & Follow-up WhatsApp</h3>
                         <div class="space-y-2">
@@ -239,12 +209,12 @@
                 variants
             };
 
-            const { error } = await supabase.from('products').insert([newProd]);
+            const { error } = await supabaseClient.from('products').insert([newProd]);
             if (error) {
                 alert("Gagal menyimpan produk: " + error.message);
             } else {
                 alert("Produk & Varian berhasil disimpan ke Supabase!");
-                fetchAllData().then(() => renderAdminView());
+                initApp().then(() => renderAdminView());
             }
         }
 
