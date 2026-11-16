@@ -3,222 +3,681 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arrahmah Mart - Cloud Realtime Edition</title>
+    <title>Arrahmah Mart - Belanja & Dashboard Toko</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .headline-slider { scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        .headline-slide { scroll-snap-align: start; flex-shrink: 0; }
     </style>
 </head>
-<body class="text-slate-800">
-    <div id="app" class="max-w-4xl mx-auto p-4 min-h-screen flex flex-col justify-between">
-        <div>
-            <header class="bg-amber-600 text-white p-4 rounded-xl shadow-md mb-4 flex justify-between items-center">
-                <div>
-                    <h1 class="text-xl font-bold">🛒 Arrahmah Mart Surabaya</h1>
-                    <p class="text-xs opacity-90">Belanja Mudah, Hemat & Realtime</p>
-                </div>
-                <div id="nav-buttons">
-                    <button onclick="switchView('customer')" class="bg-white text-amber-700 px-3 py-1.5 rounded-lg text-xs font-semibold shadow">Katalog</button>
-                    <button onclick="checkAdminAccess()" class="bg-amber-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow ml-2">Admin</button>
-                </div>
-            </header>
+<body class="min-h-screen text-slate-800">
 
-            <main id="main-content">
-                <div class="text-center py-12" id="loading-spinner">
-                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600 mx-auto mb-3"></div>
-                    <p class="text-sm text-slate-500">Memuat Toko Arrahmah Mart...</p>
+    <!-- =====================================================================
+         1. HALAMAN CUSTOMER (#customer)
+         ===================================================================== -->
+    <div id="view-customer" class="hidden min-h-screen flex flex-col">
+        <!-- Header Customer -->
+        <header class="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md sticky top-0 z-40">
+            <div class="max-w-5xl mx-auto px-4 py-3.5 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow-sm">
+                        <span class="text-orange-600 font-extrabold text-sm tracking-tighter">AR</span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight" id="cust-header-store-name">Arrahmah Mart</h1>
+                        <p class="text-xs text-orange-100" id="cust-header-store-city">Surabaya • Cloud Realtime</p>
+                    </div>
                 </div>
-            </main>
-        </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleCartModal(true)" class="relative bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center space-x-1.5 transition">
+                        <span>🛒 Keranjang</span>
+                        <span id="header-cart-badge" class="bg-white text-orange-600 font-bold px-1.5 py-0.2 rounded-full text-[11px]">0</span>
+                    </button>
+                </div>
+            </div>
+        </header>
 
-        <footer class="text-center text-xs text-slate-400 py-6">
-            &copy; 2026 Arrahmah Mart Surabaya. All rights reserved.
+        <!-- Konten Utama Customer -->
+        <main class="max-w-5xl w-full mx-auto p-4 pb-28 flex-1 space-y-6">
+            
+            <!-- HEADLINE / BANNER PROMO BERGULIR (Max 5 Banner 1980x1080) -->
+            <div id="cust-headline-container" class="hidden relative rounded-2xl overflow-hidden shadow-lg bg-slate-900">
+                <div id="cust-headline-slider" class="headline-slider flex overflow-x-auto snap-x snap-mandatory w-full h-48 sm:h-64 no-scrollbar"></div>
+                <button onclick="scrollHeadline(-1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition">❮</button>
+                <button onclick="scrollHeadline(1)" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition">❯</button>
+                <div id="cust-headline-dots" class="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1.5"></div>
+            </div>
+
+            <!-- Banner Poin & Identitas Customer -->
+            <div class="bg-gradient-to-br from-orange-50 to-orange-100/70 border border-orange-200 p-4 rounded-2xl shadow-sm">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div>
+                        <span class="inline-block bg-orange-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider mb-1">Member Reward</span>
+                        <h2 class="font-bold text-orange-950 text-base">🪙 Program Poin Belanja</h2>
+                        <p class="text-xs text-orange-800">Kumpulkan poin tiap transaksi & tukarkan jadi potongan harga langsung!</p>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-orange-200 flex items-center justify-between md:space-x-6 shadow-xs">
+                        <div>
+                            <p class="text-[11px] text-slate-500">Nomor WA Terdaftar:</p>
+                            <p class="font-bold text-sm text-orange-600" id="cust-phone-display">-</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[11px] text-slate-500">Saldo Poin:</p>
+                            <p class="font-bold text-sm text-emerald-600"><span id="cust-points-display">0</span> Poin</p>
+                        </div>
+                        <button onclick="changeCustomerPhone()" class="text-xs bg-orange-100 text-orange-700 hover:bg-orange-200 px-2.5 py-1.5 rounded-lg font-semibold transition">Ubah</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voucher Belanja Aktif -->
+            <div id="cust-vouchers-section" class="hidden bg-white p-4 rounded-2xl border border-orange-200 shadow-xs">
+                <div class="flex items-center space-x-2 mb-2.5">
+                    <span class="text-base">🎟️</span>
+                    <h3 class="font-bold text-sm text-slate-800">Voucher Belanja Tersedia (Gunakan saat Checkout)</h3>
+                </div>
+                <div id="cust-vouchers-list" class="flex gap-2.5 overflow-x-auto pb-1"></div>
+            </div>
+
+            <!-- Section Paket Promo / Bundling Aktif -->
+            <div id="cust-bundles-section" class="hidden">
+                <div class="flex items-center space-x-2 mb-3">
+                    <span class="text-lg">🎁</span>
+                    <h3 class="font-bold text-lg text-slate-800">Paket Promo & Bundling Spesial</h3>
+                </div>
+                <div id="cust-bundles-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- Section Tebus Murah -->
+            <div id="cust-tebus-section" class="hidden">
+                <div class="flex items-center space-x-2 mb-3">
+                    <span class="text-lg">⚡</span>
+                    <h3 class="font-bold text-lg text-slate-800">Promo Tebus Murah Spesial</h3>
+                </div>
+                <div id="cust-tebus-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
+            </div>
+
+            <!-- Section Katalog Produk -->
+            <div>
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
+                    <h3 class="font-bold text-lg text-slate-800">🛍️ Katalog Produk & Diskon Periode</h3>
+                    <input type="text" id="cust-search-input" oninput="renderCatalog()" placeholder="🔍 Cari nama produk..." class="border border-slate-200 bg-white rounded-xl px-3.5 py-2 text-xs w-full sm:w-64 focus:ring-2 focus:ring-orange-500 outline-none">
+                </div>
+                <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5"></div>
+            </div>
+        </main>
+
+        <!-- Footer Customer -->
+        <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">
+            &copy; 2026 <span id="footer-store-name">Arrahmah Mart</span> Surabaya. Belanja Mudah & Hemat.
         </footer>
     </div>
 
-    <script>
-        const SUPABASE_URL = 'https://oeoskmyvumfwihbrmfkx.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_VriQAQ-FC3JGp7-ojoEGHw_YoU5RCDu'; 
+    <!-- =====================================================================
+         2. HALAMAN ADMIN (#admin)
+         ===================================================================== -->
+    <div id="view-admin" class="hidden min-h-screen bg-slate-100">
         
-        let supabaseClient = null;
-        try {
-            if (window.supabase && window.supabase.createClient) {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            }
-        } catch (err) {
-            console.error("Supabase init warning:", err);
-        }
+        <!-- Layar Login PIN Admin -->
+        <div id="admin-login-box" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-500 to-orange-600">
+            <div class="max-w-md w-full bg-white p-8 rounded-3xl shadow-2xl">
+                <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-4">🔐</div>
+                <h2 class="font-bold text-2xl text-center text-slate-900 mb-1">Admin Panel</h2>
+                <p class="text-xs text-center text-slate-500 mb-6">Arrahmah Mart Management System (PIN Default: <strong>1234</strong>)</p>
+                <input type="password" id="admin-pin-input" onkeyup="if(event.key==='Enter') verifyAdminPin()" placeholder="••••" class="w-full border-2 border-slate-200 rounded-xl p-3.5 text-center text-lg tracking-widest font-bold mb-4 focus:border-orange-500 outline-none">
+                <button onclick="verifyAdminPin()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl text-sm shadow-lg shadow-orange-500/30 transition">Masuk ke Dashboard</button>
+            </div>
+        </div>
 
-        let products = [];
-        let vouchers = [];
-        let bundles = [];
-        let tebusMurahList = [];
-        let customers = [];
-        let orders = [];
-        let currentView = 'customer';
-
-        async function initApp() {
-            try {
-                if (supabaseClient) {
-                    let pRes = await supabaseClient.from('products').select('*');
-                    if (pRes.data) products = pRes.data;
-
-                    let vRes = await supabaseClient.from('vouchers').select('*');
-                    if (vRes.data) vouchers = vRes.data;
-
-                    let cRes = await supabaseClient.from('customers').select('*');
-                    if (cRes.data) customers = cRes.data;
-                }
-            } catch (e) {
-                console.error("Fetch data warning:", e);
-            } finally {
-                renderCustomerView();
-            }
-        }
-
-        function switchView(view) {
-            currentView = view;
-            if (view === 'customer') renderCustomerView();
-            else if (view === 'admin') renderAdminView();
-        }
-
-        function renderCustomerView() {
-            const main = document.getElementById('main-content');
-            let html = `
-                <div class="space-y-4">
-                    <div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-4 rounded-xl shadow">
-                        <h2 class="font-bold text-base mb-1">🎁 Promo, Voucher & Tebus Murah</h2>
-                        <p class="text-xs opacity-90">Belanja hemat dan nikmati berbagai penawaran spesial hari ini!</p>
-                    </div>
-
-                    <h3 class="font-bold text-slate-700 text-sm mt-4">Katalog Produk & Diskon Harga Coret</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-            `;
-
-            if (products.length === 0) {
-                html += `
-                    <div class="col-span-full bg-white p-6 rounded-xl text-center shadow-sm">
-                        <p class="text-xs text-slate-500 mb-2">Belum ada produk atau data sedang dimuat.</p>
-                        <button onclick="initApp()" class="bg-amber-600 text-white px-4 py-2 rounded-lg text-xs font-semibold">Muat Ulang Katalog</button>
-                    </div>
-                `;
-            } else {
-                products.forEach(p => {
-                    let hasDiscount = p.discount && p.discount > 0;
-                    let displayPrice = hasDiscount ? p.price - p.discount : p.price;
-                    html += `
-                        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                            <div>
-                                <img src="${p.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80'}" class="w-full h-28 object-cover rounded-lg mb-2">
-                                <h4 class="font-semibold text-xs text-slate-800 line-clamp-1">${p.name}</h4>
-                                ${hasDiscount ? `
-                                    <div class="flex items-center gap-2 mt-1">
-                                        <span class="text-xs text-slate-400 line-through">Rp ${p.price.toLocaleString()}</span>
-                                        <span class="text-xs font-bold text-red-600">Rp ${displayPrice.toLocaleString()}</span>
-                                    </div>
-                                ` : `
-                                    <div class="text-xs font-bold text-amber-700 mt-1">Rp ${p.price.toLocaleString()}</div>
-                                `}
-                            </div>
-                            <button onclick="alert('Fitur keranjang aktif untuk produk: ${p.name}')" class="mt-3 w-full bg-amber-600 text-white py-1.5 rounded-lg text-xs font-medium hover:bg-amber-700">+ Keranjang</button>
+        <!-- Layout Utama Dashboard Admin -->
+        <div id="admin-dashboard" class="hidden flex min-h-screen">
+            
+            <!-- SIDEBAR KIRI -->
+            <aside id="admin-sidebar" class="w-64 bg-slate-900 text-slate-300 flex-shrink-0 flex flex-col transition-all duration-300 fixed md:static inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0">
+                <div class="p-5 flex items-center justify-between border-b border-slate-800">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 bg-orange-500 rounded-xl flex items-center justify-center text-white font-extrabold text-sm shadow">AR</div>
+                        <div>
+                            <span class="font-bold text-white text-sm block leading-tight">Arrahmah Mart</span>
+                            <span class="text-[10px] text-orange-400 font-medium">Admin Cloud Workspace</span>
                         </div>
-                    `;
-                });
-            }
-
-            html += `</div></div>`;
-            main.innerHTML = html;
-        }
-
-        function checkAdminAccess() {
-            let pin = prompt("Masukkan PIN Admin (Default: 1234):");
-            if (pin === "1234") {
-                currentView = 'admin';
-                renderAdminView();
-            } else if (pin !== null) {
-                alert("PIN Salah!");
-            }
-        }
-
-        function renderAdminView() {
-            const main = document.getElementById('main-content');
-            main.innerHTML = `
-                <div class="bg-white p-4 rounded-xl shadow space-y-6">
-                    <div class="flex justify-between items-center border-b pb-3">
-                        <h2 class="font-bold text-base text-slate-800">Panel Pengelola Toko (Admin)</h2>
-                        <button onclick="switchView('customer')" class="text-xs bg-slate-200 px-3 py-1.5 rounded-lg font-medium">Keluar Admin</button>
                     </div>
+                    <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white">✕</button>
+                </div>
 
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                        <h3 class="font-bold text-xs text-amber-700 uppercase tracking-wide">Tambah Produk & Varian (Hingga 6 Jenis)</h3>
-                        <input type="text" id="p-name" placeholder="Nama Produk" class="w-full text-xs p-2 border rounded-lg">
-                        <div class="grid grid-cols-3 gap-2">
-                            <input type="number" id="p-price" placeholder="Harga Normal" class="text-xs p-2 border rounded-lg">
-                            <input type="number" id="p-discount" placeholder="Potongan Diskon (Harga Coret)" class="text-xs p-2 border rounded-lg">
-                            <input type="number" id="p-stock" placeholder="Stok Utama" class="text-xs p-2 border rounded-lg">
-                        </div>
-                        <input type="text" id="p-img" placeholder="Link Gambar URL Produk" class="w-full text-xs p-2 border rounded-lg">
-                        <input type="text" id="p-variants" placeholder="Varian (Contoh: Merah, Biru / Manis, Asin)" class="w-full text-xs p-2 border rounded-lg">
-                        <button onclick="addNewProduct()" class="w-full bg-amber-600 text-white py-2 rounded-lg text-xs font-semibold">Simpan Produk ke Cloud</button>
-                    </div>
-
+                <nav class="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto text-xs font-medium">
+                    <!-- 1. Laporan -->
                     <div>
-                        <h3 class="font-bold text-xs text-slate-700 uppercase tracking-wide mb-2">Database Pelanggan & Follow-up WhatsApp</h3>
-                        <div class="space-y-2">
-                            ${customers.length === 0 ? '<p class="text-xs text-slate-400">Belum ada data pelanggan tersimpan.</p>' : 
-                                customers.map(c => `
-                                    <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border text-xs">
-                                        <div>
-                                            <p class="font-semibold">${c.name || 'Pelanggan'} (${c.phone})</p>
-                                            <p class="text-slate-500">Poin: ${c.points || 0}</p>
-                                        </div>
-                                        <a href="https://wa.me/${c.phone}?text=Halo%20${c.name},%20terima%20kasih%20telah%20berbelanja%20di%20Arrahmah%20Mart." target="_blank" class="bg-green-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-green-700">Chat WA</a>
-                                    </div>
-                                `).join('')}
+                        <button onclick="toggleDropdown('dd-laporan'); switchAdminMenu('laporan')" id="menu-laporan" class="admin-nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-orange-500 text-white font-semibold transition">
+                            <span class="flex items-center space-x-2.5"><span>📊</span><span>Laporan & Dashboard</span></span>
+                            <span class="text-[10px]">▼</span>
+                        </button>
+                        <div id="dd-laporan" class="pl-9 pr-2 py-1 space-y-1">
+                            <button onclick="switchAdminMenu('laporan')" class="block w-full text-left py-1.5 text-slate-300 hover:text-orange-400">Ringkasan Penjualan</button>
+                            <button onclick="exportReportExcel()" class="block w-full text-left py-1.5 text-emerald-400 hover:text-emerald-300">📥 Unduh Laporan Excel</button>
                         </div>
+                    </div>
+
+                    <!-- 2. Pesanan -->
+                    <div>
+                        <button onclick="toggleDropdown('dd-pesanan'); switchAdminMenu('pesanan')" id="menu-pesanan" class="admin-nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800 text-slate-300 transition">
+                            <span class="flex items-center space-x-2.5">
+                                <span>📦</span>
+                                <span>Pesanan</span>
+                                <span id="badge-pending-orders" class="bg-orange-500 text-white text-[10px] px-1.5 py-0.2 rounded-full hidden">0</span>
+                            </span>
+                            <span class="text-[10px]">▼</span>
+                        </button>
+                        <div id="dd-pesanan" class="hidden pl-9 pr-2 py-1 space-y-1">
+                            <button onclick="switchAdminMenu('pesanan', 'all')" class="block w-full text-left py-1.5 text-slate-400 hover:text-orange-400">Semua Transaksi</button>
+                            <button onclick="switchAdminMenu('pesanan', 'popular')" class="block w-full text-left py-1.5 text-slate-400 hover:text-orange-400">🔥 Produk Populer</button>
+                        </div>
+                    </div>
+
+                    <!-- 3. Produk -->
+                    <div>
+                        <button onclick="toggleDropdown('dd-produk'); switchAdminMenu('produk')" id="menu-produk" class="admin-nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800 text-slate-300 transition">
+                            <span class="flex items-center space-x-2.5"><span>🏷️</span><span>Produk & Varian</span></span>
+                            <span class="text-[10px]">▼</span>
+                        </button>
+                        <div id="dd-produk" class="hidden pl-9 pr-2 py-1 space-y-1">
+                            <button onclick="switchAdminMenu('produk')" class="block w-full text-left py-1.5 text-slate-400 hover:text-orange-400">Daftar Produk & HPP</button>
+                            <button onclick="openProductModal()" class="block w-full text-left py-1.5 text-orange-400 hover:text-orange-300">+ Tambah Produk Baru</button>
+                        </div>
+                    </div>
+
+                    <!-- 4. Promo & Headline -->
+                    <div>
+                        <button onclick="toggleDropdown('dd-promo'); switchAdminMenu('promo')" id="menu-promo" class="admin-nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800 text-slate-300 transition">
+                            <span class="flex items-center space-x-2.5"><span>🎁</span><span>Headline & Promo</span></span>
+                            <span class="text-[10px]">▼</span>
+                        </button>
+                        <div id="dd-promo" class="hidden pl-9 pr-2 py-1 space-y-1">
+                            <button onclick="switchAdminMenu('promo', 'headline')" class="block w-full text-left py-1.5 text-slate-400 hover:text-orange-400">🖼️ Headline Flyer (1980x1080)</button>
+                            <button onclick="switchAdminMenu('promo', 'discounts')" class="block w-full text-left py-1.5 text-slate-400 hover:text-orange-400">⏳ Diskon Produk Periode</button>
+                            <button onclick="switchAdminMenu('promo', 'bundling')" class="block w-full text-left py-1.5 text-slate-400 hover:text-orange-400">🎁 Paket Bundling</button>
+                            <button onclick="switchAdminMenu('promo', 'vouchers')" class="block w-full text-left py-1.5 text-slate-400 hover:text-orange-400">🎟️ Voucher & Tebus Murah</button>
+                        </div>
+                    </div>
+
+                    <!-- 5. Database Customer -->
+                    <div>
+                        <button onclick="toggleDropdown('dd-customer'); switchAdminMenu('customer')" id="menu-customer" class="admin-nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800 text-slate-300 transition">
+                            <span class="flex items-center space-x-2.5"><span>👥</span><span>Database Customer</span></span>
+                            <span class="text-[10px]">▼</span>
+                        </button>
+                        <div id="dd-customer" class="hidden pl-9 pr-2 py-1 space-y-1">
+                            <button onclick="switchAdminMenu('customer')" class="block w-full text-left py-1.5 text-slate-400 hover:text-orange-400">Data, Riwayat & Chat WA</button>
+                        </div>
+                    </div>
+
+                    <!-- 6. Profil & Pengaturan -->
+                    <div>
+                        <button onclick="toggleDropdown('dd-profil'); switchAdminMenu('profil')" id="menu-profil" class="admin-nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-800 text-slate-300 transition">
+                            <span class="flex items-center space-x-2.5"><span>⚙️</span><span>Profil Toko</span></span>
+                            <span class="text-[10px]">▼</span>
+                        </button>
+                        <div id="dd-profil" class="hidden pl-9 pr-2 py-1 space-y-1">
+                            <button onclick="switchAdminMenu('profil')" class="block w-full text-left py-1.5 text-slate-400 hover:text-orange-400">WA Admin & Rekening</button>
+                            <button onclick="switchAdminMenu('profil')" class="block w-full text-left py-1.5 text-slate-400 hover:text-orange-400">Tautan Link Terpisah</button>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="p-4 border-t border-slate-800 text-[11px] text-slate-400">
+                    <button onclick="logoutAdmin()" class="w-full py-2 bg-slate-800 hover:bg-red-600 hover:text-white rounded-lg text-center font-semibold transition">🚪 Keluar Admin</button>
+                </div>
+            </aside>
+
+            <!-- KONTEN KANAN ADMIN -->
+            <div class="flex-1 flex flex-col min-w-0">
+                <header class="bg-white border-b border-slate-200 px-6 py-3.5 flex justify-between items-center sticky top-0 z-30">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="toggleMobileSidebar()" class="md:hidden bg-orange-100 text-orange-600 p-2 rounded-lg font-bold">☰</button>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="text-orange-500 font-bold">❖</span>
+                            <span id="admin-breadcrumb" class="font-bold text-slate-700 text-sm">Laporan & Dashboard Penjualan</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs text-slate-500 hidden sm:inline">Administrator Cloud</span>
+                        <div class="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-xs">AR</div>
+                    </div>
+                </header>
+
+                <main class="p-6 flex-1 space-y-6 overflow-y-auto">
+
+                    <!-- TAB 1: LAPORAN -->
+                    <section id="sec-admin-laporan" class="space-y-6">
+                        <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+                            <div class="flex flex-wrap items-center gap-3 text-xs">
+                                <span class="font-bold text-slate-700">📅 Filter Periode:</span>
+                                <input type="date" id="rep-start-date" onchange="renderReports()" class="border rounded-lg px-3 py-1.5 outline-none focus:border-orange-500">
+                                <span>s/d</span>
+                                <input type="date" id="rep-end-date" onchange="renderReports()" class="border rounded-lg px-3 py-1.5 outline-none focus:border-orange-500">
+                                <button onclick="resetReportFilter()" class="text-orange-600 hover:underline font-medium">Reset Semua</button>
+                            </div>
+                            <button onclick="exportReportExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 shadow-sm transition">
+                                <span>📥 Unduh Laporan Excel (.xlsx)</span>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex justify-between items-center">
+                                <div><p class="text-xs text-slate-500 font-medium">Total Penjualan (Omzet)</p><h4 class="text-xl font-bold text-slate-900 mt-1" id="kpi-sales">Rp 0</h4></div>
+                                <div class="w-11 h-11 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-lg">🏪</div>
+                            </div>
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex justify-between items-center">
+                                <div><p class="text-xs text-slate-500 font-medium">Keuntungan Bersih (Laba)</p><h4 class="text-xl font-bold text-emerald-600 mt-1" id="kpi-profit">Rp 0</h4><p class="text-[11px] text-slate-400 mt-0.5">Margin: <strong id="kpi-margin" class="text-emerald-600">0%</strong></p></div>
+                                <div class="w-11 h-11 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">💰</div>
+                            </div>
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex justify-between items-center">
+                                <div><p class="text-xs text-slate-500 font-medium">Jumlah Transaksi</p><h4 class="text-xl font-bold text-slate-900 mt-1" id="kpi-tx-count">0</h4></div>
+                                <div class="w-11 h-11 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg">🧾</div>
+                            </div>
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex justify-between items-center">
+                                <div><p class="text-xs text-slate-500 font-medium">Nilai Potongan / Diskon</p><h4 class="text-xl font-bold text-rose-600 mt-1" id="kpi-discount">Rp 0</h4></div>
+                                <div class="w-11 h-11 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-lg">🏷️</div>
+                            </div>
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex justify-between items-center">
+                                <div><p class="text-xs text-slate-500 font-medium">Akumulasi Poin Pelanggan</p><h4 class="text-xl font-bold text-amber-600 mt-1" id="kpi-points">0 Poin</h4></div>
+                                <div class="w-11 h-11 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-lg">🪙</div>
+                            </div>
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex justify-between items-center">
+                                <div><p class="text-xs text-slate-500 font-medium">Total Pelanggan Terdaftar</p><h4 class="text-xl font-bold text-purple-600 mt-1" id="kpi-cust-count">0</h4></div>
+                                <div class="w-11 h-11 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-lg">👥</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                            <h3 class="font-bold text-sm text-slate-800 mb-4">📈 Grafik Penjualan & Laba Kotor</h3>
+                            <div class="h-64"><canvas id="salesChart"></canvas></div>
+                        </div>
+                    </section>
+
+                    <!-- TAB 2: PESANAN -->
+                    <section id="sec-admin-pesanan" class="hidden space-y-6">
+                        <div class="flex flex-wrap justify-between items-center gap-3">
+                            <div class="flex space-x-2">
+                                <button onclick="setOrderViewMode('all')" id="btn-ord-mode-all" class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-500 text-white">📦 Daftar Pesanan Masuk</button>
+                                <button onclick="setOrderViewMode('popular')" id="btn-ord-mode-popular" class="px-4 py-2 rounded-xl text-xs font-bold bg-white border text-slate-700 hover:bg-orange-50">🔥 Filter Produk Populer</button>
+                            </div>
+                        </div>
+                        <div id="subview-orders-list" class="space-y-3"></div>
+                        <div id="subview-orders-popular" class="hidden bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                            <h3 class="font-bold text-sm text-slate-800 mb-3">🔥 Peringkat Produk Terlaris Berdasarkan Transaksi</h3>
+                            <div id="popular-products-table" class="overflow-x-auto"></div>
+                        </div>
+                    </section>
+
+                    <!-- TAB 3: PRODUK & 6 VARIAN -->
+                    <section id="sec-admin-produk" class="hidden space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-base text-slate-800">🏷️ Manajemen Produk, Varian (Hingga 6 Jenis) & Harga Bertingkat</h3>
+                            <button onclick="openProductModal()" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm transition">+ Tambah Produk</button>
+                        </div>
+                        <div id="admin-products-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+                    </section>
+
+                    <!-- TAB 4: HEADLINE, DISKON PERIODE, BUNDLING, VOUCHER & TEBUS MURAH -->
+                    <section id="sec-admin-promo" class="hidden space-y-6">
+                        <div class="flex flex-wrap gap-2 border-b pb-3">
+                            <button onclick="switchPromoSubTab('headline')" id="btn-sub-headline" class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-500 text-white">🖼️ Headline Flyer (Max 5)</button>
+                            <button onclick="switchPromoSubTab('discounts')" id="btn-sub-discounts" class="px-4 py-2 rounded-xl text-xs font-bold bg-white border text-slate-700">⏳ Diskon Produk Periode</button>
+                            <button onclick="switchPromoSubTab('bundling')" id="btn-sub-bundling" class="px-4 py-2 rounded-xl text-xs font-bold bg-white border text-slate-700">🎁 Paket Bundling</button>
+                            <button onclick="switchPromoSubTab('vouchers')" id="btn-sub-vouchers" class="px-4 py-2 rounded-xl text-xs font-bold bg-white border text-slate-700">🎟️ Voucher & Tebus Murah</button>
+                            <button onclick="switchPromoSubTab('points')" id="btn-sub-points" class="px-4 py-2 rounded-xl text-xs font-bold bg-white border text-slate-700">🪙 Pengaturan Poin</button>
+                        </div>
+
+                        <!-- Sub-tab 1: Headline Flyer (1980x1080) -->
+                        <div id="sub-sec-headline" class="space-y-4">
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                                <div class="flex justify-between items-center border-b pb-3">
+                                    <div>
+                                        <h3 class="font-bold text-sm text-slate-800">🖼️ Manajemen Headline Flyer (Ukuran Ideal 1980 x 1080)</h3>
+                                        <p class="text-[11px] text-slate-500">Unggah file flyer promo untuk ditampilkan bergulir di bagian atas halaman customer (Maksimal 5 banner).</p>
+                                    </div>
+                                    <button onclick="openHeadlineModal()" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl">+ Tambah Flyer Headline</button>
+                                </div>
+                                <div id="admin-headlines-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                            </div>
+                        </div>
+
+                        <!-- Sub-tab 2: Diskon Produk Periode -->
+                        <div id="sub-sec-discounts" class="hidden space-y-4">
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                                <div class="flex justify-between items-center border-b pb-3">
+                                    <div>
+                                        <h3 class="font-bold text-sm text-slate-800">⏳ Diskon Produk Berdasarkan Periode Tertentu</h3>
+                                        <p class="text-[11px] text-slate-500">Tentukan produk yang mendapat diskon khusus dan tanggal berlaku promonya.</p>
+                                    </div>
+                                    <button onclick="openPeriodDiscountModal()" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl">+ Tambah Diskon Periode</button>
+                                </div>
+                                <div id="admin-period-discounts-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                            </div>
+                        </div>
+
+                        <!-- Sub-tab 3: Bundling -->
+                        <div id="sub-sec-bundling" class="hidden space-y-4">
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                                <div class="flex justify-between items-center border-b pb-3">
+                                    <div>
+                                        <h3 class="font-bold text-sm text-slate-800">🎁 Paket Promo Bundling (Maksimal 5 Produk)</h3>
+                                    </div>
+                                    <button onclick="openBundleModal()" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl">+ Buat Paket Bundling</button>
+                                </div>
+                                <div id="admin-bundles-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                            </div>
+                        </div>
+
+                        <!-- Sub-tab 4: Voucher (Max 5) & Tebus Murah -->
+                        <div id="sub-sec-vouchers" class="hidden space-y-6">
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                                <h3 class="font-bold text-sm text-slate-800 border-b pb-2">🎟️ Kelola Voucher Belanja (Maksimal 5 Voucher Aktif)</h3>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                                    <input type="text" id="v-code" placeholder="Kode (Contoh: HEMAT10)" class="border rounded-xl p-2.5 uppercase">
+                                    <input type="text" id="v-name" placeholder="Nama Voucher" class="border rounded-xl p-2.5">
+                                    <input type="number" id="v-disc" placeholder="Potongan (Rp)" class="border rounded-xl p-2.5">
+                                    <input type="number" id="v-min" placeholder="Min. Belanja (Rp)" class="border rounded-xl p-2.5">
+                                </div>
+                                <button onclick="addVoucherSupabase()" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl">+ Simpan Voucher</button>
+                                <div id="admin-vouchers-list" class="space-y-2 pt-2"></div>
+                            </div>
+
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                                <h3 class="font-bold text-sm text-slate-800 border-b pb-2">⚡ Kelola Produk Tebus Murah</h3>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                                    <input type="text" id="tm-name" placeholder="Nama Produk Tebus Murah" class="border rounded-xl p-2.5">
+                                    <input type="number" id="tm-normal" placeholder="Harga Normal (Rp)" class="border rounded-xl p-2.5">
+                                    <input type="number" id="tm-price" placeholder="Harga Tebus (Rp)" class="border rounded-xl p-2.5">
+                                    <input type="number" id="tm-min" placeholder="Syarat Min. Belanja (Rp)" class="border rounded-xl p-2.5">
+                                </div>
+                                <button onclick="addTebusMurahSupabase()" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl">+ Simpan Tebus Murah</button>
+                                <div id="admin-tm-list" class="space-y-2 pt-2"></div>
+                            </div>
+                        </div>
+
+                        <!-- Sub-tab 5: Poin -->
+                        <div id="sub-sec-points" class="hidden space-y-4">
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4 text-xs">
+                                <h3 class="font-bold text-sm text-slate-800 border-b pb-2">🪙 Pengaturan Nilai Tukar Poin</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="font-semibold block mb-1">Nilai Tukar 1 Poin (Rp):</label>
+                                        <input type="number" id="set-point-value" class="w-full border rounded-xl p-2.5" value="1000">
+                                    </div>
+                                    <div class="flex items-center pt-5">
+                                        <label class="flex items-center space-x-2 font-medium text-slate-700 cursor-pointer">
+                                            <input type="checkbox" id="set-auto-point" checked class="accent-orange-500 w-4 h-4">
+                                            <span>Otomatis tambahkan poin pelanggan saat pesanan dikonfirmasi LUNAS</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button onclick="savePromoSettings()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2.5 rounded-xl">Simpan Pengaturan Poin</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- TAB 5: DATABASE CUSTOMER -->
+                    <section id="sec-admin-customer" class="hidden space-y-4">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+                            <h3 class="font-bold text-sm text-slate-800">👥 Database Pelanggan & Chat WhatsApp</h3>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <input type="text" id="cust-filter-search" oninput="renderAdminCustomers()" placeholder="Cari nama / WA..." class="border rounded-xl px-3 py-1.5">
+                                <select id="cust-filter-product" onchange="renderAdminCustomers()" class="border rounded-xl px-3 py-1.5 bg-white">
+                                    <option value="">-- Filter Pernah Beli Produk --</option>
+                                </select>
+                                <input type="month" id="cust-filter-month" onchange="renderAdminCustomers()" class="border rounded-xl px-3 py-1.5">
+                            </div>
+                        </div>
+                        <div id="admin-customers-list" class="space-y-3"></div>
+                    </section>
+
+                    <!-- TAB 6: PROFIL TOKO -->
+                    <section id="sec-admin-profil" class="hidden space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4 text-xs">
+                                <h3 class="font-bold text-sm text-slate-800 border-b pb-2">🏪 Pengaturan Profil, WA & Rekening</h3>
+                                <div><label class="font-semibold block mb-1">Nama Toko:</label><input type="text" id="prof-store-name" class="w-full border rounded-xl p-2.5"></div>
+                                <div><label class="font-semibold block mb-1">Nomor WhatsApp Admin (Format: 628xxx):</label><input type="text" id="prof-wa-admin" class="w-full border rounded-xl p-2.5"></div>
+                                <div><label class="font-semibold block mb-1">Informasi Rekening & Pembayaran:</label><textarea id="prof-bank-accounts" rows="3" class="w-full border rounded-xl p-2.5"></textarea></div>
+                                <div><label class="font-semibold block mb-1">PIN Login Admin:</label><input type="text" id="prof-admin-pin" class="w-full border rounded-xl p-2.5"></div>
+                                <button onclick="saveStoreProfile()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl transition">💾 Simpan Profil Toko</button>
+                            </div>
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4 text-xs">
+                                <h3 class="font-bold text-sm text-slate-800 border-b pb-2">🔗 Tautan Akses Terpisah</h3>
+                                <div class="bg-orange-50 border border-orange-200 p-3.5 rounded-xl space-y-2">
+                                    <span class="font-bold text-orange-800 block">🛍️ Link Khusus Customer:</span>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="text" id="link-cust-url" readonly class="w-full bg-white border border-orange-200 rounded-lg px-2.5 py-1.5 text-slate-700 font-mono text-[11px]">
+                                        <button onclick="copyLink('cust')" class="bg-orange-500 text-white px-3 py-1.5 rounded-lg font-bold shrink-0">Salin</button>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-2">
+                                    <span class="font-bold text-slate-800 block">🔐 Link Khusus Admin:</span>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="text" id="link-admin-url" readonly class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-700 font-mono text-[11px]">
+                                        <button onclick="copyLink('admin')" class="bg-slate-800 text-white px-3 py-1.5 rounded-lg font-bold shrink-0">Salin</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL-MODAL
+         ===================================================================== -->
+
+    <!-- 1. Modal Keranjang -->
+    <div id="cart-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-end md:items-center justify-center p-0 md:p-4">
+        <div class="bg-white w-full max-w-lg rounded-t-3xl md:rounded-3xl p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="font-bold text-base text-slate-800">🛒 Keranjang Belanja</h3>
+                <button onclick="toggleCartModal(false)" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold">✕</button>
+            </div>
+            <div id="cart-items-container" class="space-y-3 mb-4"></div>
+
+            <!-- Input Kode Voucher -->
+            <div class="flex gap-2 mb-3 text-xs">
+                <input type="text" id="checkout-voucher-code" placeholder="Masukkan Kode Voucher..." class="flex-1 border rounded-xl p-2.5 uppercase">
+                <button onclick="applyVoucher()" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl font-bold">Pakai</button>
+            </div>
+
+            <div class="bg-orange-50 border border-orange-100 p-3.5 rounded-2xl space-y-2 text-xs mb-4">
+                <div class="flex justify-between"><span>Subtotal:</span><span id="cart-subtotal" class="font-semibold">Rp 0</span></div>
+                <div class="flex justify-between text-emerald-700"><span>Potongan Voucher:</span><span id="cart-voucher-disc" class="font-semibold">-Rp 0</span></div>
+                <div class="flex justify-between text-orange-700">
+                    <span>Poin Anda: <strong id="modal-user-points">0</strong></span>
+                    <label class="flex items-center space-x-1 cursor-pointer font-semibold">
+                        <input type="checkbox" id="use-points-checkbox" onchange="calculateCartTotal()" class="accent-orange-500">
+                        <span>Tukar Poin</span>
+                    </label>
+                </div>
+                <div class="flex justify-between font-bold text-sm pt-2 border-t border-orange-200 text-slate-900">
+                    <span>Total Pembayaran:</span>
+                    <span id="cart-total" class="text-orange-600">Rp 0</span>
+                </div>
+            </div>
+            <div class="space-y-3 text-xs mb-5">
+                <div><label class="font-semibold block mb-1">Nama Lengkap:</label><input type="text" id="order-name" class="w-full border rounded-xl p-2.5 outline-none focus:border-orange-500" placeholder="Nama Anda"></div>
+                <div><label class="font-semibold block mb-1">Nomor WhatsApp:</label><input type="tel" id="order-phone" class="w-full border rounded-xl p-2.5 outline-none focus:border-orange-500" placeholder="08xxxxxxxxxx"></div>
+                <div><label class="font-semibold block mb-1">Alamat Lengkap Pengiriman:</label><textarea id="order-address" rows="2" class="w-full border rounded-xl p-2.5 outline-none focus:border-orange-500" placeholder="Jalan, No Rumah, RT/RW..."></textarea></div>
+                <div>
+                    <label class="font-semibold block mb-1">Metode Pengiriman:</label>
+                    <select id="order-shipping" class="w-full border rounded-xl p-2.5 outline-none bg-white">
+                        <option value="Ambil di Toko (Jln Teluk Buli 1 No 15 Perak Surabaya)">Ambil di Toko (Jln Teluk Buli 1 No 15 Perak Surabaya)</option>
+                        <option value="Kurir Toko Lokal Surabaya">Kurir Toko Lokal Surabaya</option>
+                        <option value="Ojek Online (GoSend/Grab)">Ojek Online (GoSend/Grab)</option>
+                    </select>
+                </div>
+                <div><label class="font-semibold block mb-1">Metode Pembayaran:</label><select id="order-payment" class="w-full border rounded-xl p-2.5 outline-none bg-white"></select></div>
+            </div>
+            <button onclick="submitOrder()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-2xl text-sm shadow-lg shadow-orange-500/30 transition">Kirim Pesanan ke WhatsApp Admin</button>
+        </div>
+    </div>
+
+    <!-- 2. Modal Tambah / Edit Produk (File Upload Gambar & Hingga 6 Varian) -->
+    <div id="product-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-6 max-h-[90vh] overflow-y-auto shadow-2xl text-xs">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="font-bold text-base text-slate-800" id="prod-modal-title">🏷️ Tambah Produk Baru</h3>
+                <button onclick="closeProductModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold">✕</button>
+            </div>
+            <input type="hidden" id="prod-edit-id">
+            <div class="space-y-3">
+                <div><label class="font-semibold block mb-1">Nama Produk *</label><input type="text" id="prod-name" class="w-full border rounded-xl p-2.5" placeholder="Beras Premium 5kg"></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="font-semibold block mb-1">Harga HPP / Modal (Rp) *</label><input type="number" id="prod-hpp" class="w-full border rounded-xl p-2.5" placeholder="55000"></div>
+                    <div><label class="font-semibold block mb-1">Harga Coret / Normal (Rp) *</label><input type="number" id="prod-price" class="w-full border rounded-xl p-2.5" placeholder="65000"></div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div><label class="font-semibold block mb-1">Diskon Langsung (Rp)</label><input type="number" id="prod-discount" class="w-full border rounded-xl p-2.5" value="0"></div>
+                    <div><label class="font-semibold block mb-1">Stok Tersedia *</label><input type="number" id="prod-stock" class="w-full border rounded-xl p-2.5" value="20"></div>
+                    <div><label class="font-semibold block mb-1">Poin Didapat</label><input type="number" id="prod-points" class="w-full border rounded-xl p-2.5" value="5"></div>
+                </div>
+
+                <!-- Varian Produk (Hingga 6 Jenis + Stok) -->
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-2xl space-y-1.5">
+                    <label class="font-bold text-slate-800 block">🎨 Varian Produk & Stok (Maks. 6 Jenis - Opsional)</label>
+                    <input type="text" id="prod-variants" class="w-full bg-white border rounded-xl p-2.5" placeholder="Contoh: Merah:10, Biru:5, Hijau:8, Putih:12">
+                    <p class="text-[10px] text-slate-500">Pisahkan dengan tanda koma (Maksimal 6 jenis varian).</p>
+                </div>
+
+                <!-- Harga Bertingkat Grosir (3 Level) -->
+                <div class="bg-orange-50 border border-orange-200 p-3 rounded-2xl space-y-2">
+                    <p class="font-bold text-orange-900">📊 Harga Bertingkat / Grosir (Opsional, Maks. 3 Tingkat)</p>
+                    <div class="grid grid-cols-2 gap-2"><input type="number" id="tier1-qty" placeholder="Tingkat 1: Min Qty (mis. 3)" class="bg-white border rounded-lg p-2"><input type="number" id="tier1-price" placeholder="Harga Satuan (Rp)" class="bg-white border rounded-lg p-2"></div>
+                    <div class="grid grid-cols-2 gap-2"><input type="number" id="tier2-qty" placeholder="Tingkat 2: Min Qty (mis. 6)" class="bg-white border rounded-lg p-2"><input type="number" id="tier2-price" placeholder="Harga Satuan (Rp)" class="bg-white border rounded-lg p-2"></div>
+                    <div class="grid grid-cols-2 gap-2"><input type="number" id="tier3-qty" placeholder="Tingkat 3: Min Qty (mis. 12)" class="bg-white border rounded-lg p-2"><input type="number" id="tier3-price" placeholder="Harga Satuan (Rp)" class="bg-white border rounded-lg p-2"></div>
+                </div>
+
+                <!-- Input Gambar -->
+                <div>
+                    <label class="font-semibold block mb-1">Gambar Produk (Unggah File Komputer/HP):</label>
+                    <input type="file" id="prod-file-input" accept="image/*" onchange="handleProductFileUpload(this)" class="w-full border rounded-xl p-2 bg-slate-50 text-xs file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100">
+                    <input type="hidden" id="prod-img-base64">
+                    <div id="prod-img-preview-container" class="mt-2 hidden">
+                        <img id="prod-img-preview" class="w-20 h-20 object-cover rounded-xl border">
                     </div>
                 </div>
-            `;
-        }
+            </div>
+            <button onclick="saveProductForm()" class="w-full mt-5 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-sm">Simpan Produk ke Cloud</button>
+        </div>
+    </div>
 
-        async function addNewProduct() {
-            let name = document.getElementById('p-name').value;
-            let price = parseInt(document.getElementById('p-price').value) || 0;
-            let discount = parseInt(document.getElementById('p-discount').value) || 0;
-            let stock = parseInt(document.getElementById('p-stock').value) || 0;
-            let img = document.getElementById('p-img').value;
-            let variantsText = document.getElementById('p-variants').value;
-            let variants = variantsText ? variantsText.split(',').map(v => v.trim()).slice(0, 6) : [];
+    <!-- 3. Modal Buat Headline Flyer (Max 5, 1980x1080) -->
+    <div id="headline-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl text-xs space-y-3">
+            <h3 class="font-bold text-base text-slate-800 border-b pb-2">🖼️ Tambah Flyer Headline Promo</h3>
+            <p class="text-slate-500">Unggah file flyer dengan ukuran ideal <strong>1980 x 1080 piksel</strong>. Maksimal 5 flyer aktif.</p>
+            <input type="hidden" id="hl-img-base64">
+            <div>
+                <label class="font-semibold block mb-1">Judul / Keterangan Banner:</label>
+                <input type="text" id="hl-title" class="w-full border rounded-xl p-2.5" placeholder="Contoh: Promo Spesial Weekend Meriah!">
+            </div>
+            <div>
+                <label class="font-semibold block mb-1">Pilih File Flyer (1980x1080):</label>
+                <input type="file" id="hl-file-input" accept="image/*" onchange="handleHeadlineFileUpload(this)" class="w-full border rounded-xl p-2 bg-slate-50">
+            </div>
+            <div id="hl-preview-box" class="hidden">
+                <img id="hl-preview-img" class="w-full h-32 object-cover rounded-xl border">
+            </div>
+            <div class="flex space-x-2 pt-2">
+                <button onclick="document.getElementById('headline-modal').classList.add('hidden')" class="flex-1 bg-slate-200 py-2.5 rounded-xl font-bold">Batal</button>
+                <button onclick="saveHeadlineForm()" class="flex-1 bg-orange-500 text-white py-2.5 rounded-xl font-bold">Simpan Flyer</button>
+            </div>
+        </div>
+    </div>
 
-            if (!name || !price) {
-                alert("Nama dan Harga produk wajib diisi!");
-                return;
-            }
+    <!-- 4. Modal Diskon Produk Periode Tertentu -->
+    <div id="period-discount-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-6 max-h-[90vh] overflow-y-auto shadow-2xl text-xs space-y-3">
+            <h3 class="font-bold text-base text-slate-800 border-b pb-2">⏳ Tambah Diskon Produk Berdasarkan Periode</h3>
+            <div>
+                <label class="font-semibold block mb-1">Judul / Nama Event Diskon:</label>
+                <input type="text" id="pd-name" class="w-full border rounded-xl p-2.5" placeholder="Contoh: Flash Sale Akhir Pekan">
+            </div>
+            <div>
+                <label class="font-semibold block mb-1">Pilih Produk Promo:</label>
+                <select id="pd-product-id" class="w-full border rounded-xl p-2.5 bg-white"></select>
+            </div>
+            <div>
+                <label class="font-semibold block mb-1">Harga Diskon Spesial (Rp):</label>
+                <input type="number" id="pd-promo-price" class="w-full border rounded-xl p-2.5 border-orange-400 font-bold text-orange-600" placeholder="59000">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="font-semibold block mb-1">Mulai Tanggal:</label><input type="date" id="pd-start" class="w-full border rounded-xl p-2.5"></div>
+                <div><label class="font-semibold block mb-1">Sampai Tanggal:</label><input type="date" id="pd-end" class="w-full border rounded-xl p-2.5"></div>
+            </div>
+            <div class="flex space-x-2 pt-2">
+                <button onclick="document.getElementById('period-discount-modal').classList.add('hidden')" class="flex-1 bg-slate-200 py-2.5 rounded-xl font-bold">Batal</button>
+                <button onclick="savePeriodDiscountForm()" class="flex-1 bg-orange-500 text-white py-2.5 rounded-xl font-bold">Simpan Diskon Periode</button>
+            </div>
+        </div>
+    </div>
 
-            let newProd = {
-                id: Date.now(),
-                name,
-                price,
-                discount,
-                stock,
-                img,
-                variants
-            };
+    <!-- 5. Modal Bundling -->
+    <div id="bundle-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-6 max-h-[90vh] overflow-y-auto shadow-2xl text-xs space-y-3">
+            <h3 class="font-bold text-base text-slate-800 border-b pb-2">🎁 Buat Paket Promo Bundling</h3>
+            <div><label class="font-semibold block mb-1">Nama Paket Bundling *</label><input type="text" id="bnd-name" class="w-full border rounded-xl p-2.5" placeholder="Paket Sembako Hemat"></div>
+            <div>
+                <label class="font-semibold block mb-1">Pilih Produk (Maksimal 5 Produk):</label>
+                <div id="bnd-product-selector" class="max-h-40 overflow-y-auto border rounded-xl p-2.5 space-y-1.5 bg-slate-50"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="font-semibold block mb-1">Harga Awal Total:</label><input type="number" id="bnd-original-price" readonly class="w-full border rounded-xl p-2.5 bg-slate-100 font-bold" value="0"></div>
+                <div><label class="font-semibold block mb-1">Harga Spesial Paket (Rp) *</label><input type="number" id="bnd-promo-price" class="w-full border rounded-xl p-2.5 border-orange-400 font-bold text-orange-600" placeholder="95000"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="font-semibold block mb-1">Mulai Tanggal:</label><input type="date" id="bnd-start" class="w-full border rounded-xl p-2.5"></div>
+                <div><label class="font-semibold block mb-1">Sampai Tanggal:</label><input type="date" id="bnd-end" class="w-full border rounded-xl p-2.5"></div>
+            </div>
+            <button onclick="saveBundleForm()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-sm">Simpan Paket Promo</button>
+        </div>
+    </div>
 
-            const { error } = await supabaseClient.from('products').insert([newProd]);
-            if (error) {
-                alert("Gagal menyimpan produk: " + error.message);
-            } else {
-                alert("Produk & Varian berhasil disimpan ke Supabase!");
-                initApp().then(() => renderAdminView());
-            }
-        }
+    <!-- 6. Modal Edit Customer -->
+    <div id="edit-cust-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl text-xs space-y-3">
+            <h3 class="font-bold text-base text-slate-800 border-b pb-2">✏️ Edit Data Pelanggan</h3>
+            <input type="hidden" id="edit-cust-phone-key">
+            <div><label class="font-semibold block mb-1">Nama Pelanggan:</label><input type="text" id="edit-cust-name" class="w-full border rounded-xl p-2.5"></div>
+            <div><label class="font-semibold block mb-1">Nomor WhatsApp:</label><input type="text" id="edit-cust-phone" class="w-full border rounded-xl p-2.5"></div>
+            <div><label class="font-semibold block mb-1">Alamat Lengkap:</label><textarea id="edit-cust-address" rows="2" class="w-full border rounded-xl p-2.5"></textarea></div>
+            <div><label class="font-semibold block mb-1">Saldo Poin:</label><input type="number" id="edit-cust-points" class="w-full border rounded-xl p-2.5"></div>
+            <div class="flex space-x-2 pt-2">
+                <button onclick="document.getElementById('edit-cust-modal').classList.add('hidden')" class="flex-1 bg-slate-200 py-2.5 rounded-xl font-bold">Batal</button>
+                <button onclick="saveEditedCustomer()" class="flex-1 bg-orange-500 text-white py-2.5 rounded-xl font-bold">Simpan</button>
+            </div>
+        </div>
+    </div>
 
-        window.onload = initApp;
-    </script>
-</body>
-</html>
+    <!-- =====================================================================
+         JAVASCRIPT ENGINE V4 + CLOUD SUPABASE REALTIME
+         ===================================================================== -->
+    <script>
+        const SUPABASE_URL = 'https://oeoskmyvumfwihbrmfkx.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_VriQAQ-FC3JGp7-ojoEGHw_YoU5RCDu';
+        let sb = null;
+        try {
+            sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) { console.error(e); }
+
+        let storeProfile = {
+            storeName: "Arrahmah Mart",
+            waAdmin: "6281331999525",
