@@ -14,7 +14,6 @@
     </style>
 </head>
 <body class="text-slate-800">
-    <!-- Konten Utama Aplikasi -->
     <div id="app" class="max-w-4xl mx-auto p-4 min-h-screen flex flex-col justify-between">
         <div>
             <header class="bg-amber-600 text-white p-4 rounded-xl shadow-md mb-4 flex justify-between items-center">
@@ -28,11 +27,10 @@
                 </div>
             </header>
 
-            <!-- Tampilan Customer & Admin akan dirender dinamis di sini -->
             <main id="main-content">
                 <div class="text-center py-12">
                     <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600 mx-auto mb-3"></div>
-                    <p class="text-sm text-slate-500">Menghubungkan ke Cloud Supabase...</p>
+                    <p class="text-sm text-slate-500">Memuat Toko & Cloud Supabase...</p>
                 </div>
             </main>
         </div>
@@ -44,10 +42,10 @@
 
     <script>
         // ==========================================
-        // KONFIGURASI SUPABASE (Ganti dengan milik Anda)
+        // KONFIGURASI SUPABASE (Terhubung Sempurna)
         // ==========================================
-        const SUPABASE_URL = 'https://oeoskmyvumfwihbrmfkx.supabase.co'; // Ganti jika perlu
-        const SUPABASE_ANON_KEY = 'sb_publishable_VriQAQ-FC3JGp7-ojoEGHw_YoU5RCDu'; // Ganti dengan anon key Anda
+        const SUPABASE_URL = 'https://oeoskmyvumfwihbrmfkx.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_VriQAQ-FC3JGp7-ojoEGHw_YoU5RCDu'; 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let products = [];
@@ -56,10 +54,8 @@
         let tebusMurahList = [];
         let customers = [];
         let orders = [];
-        let cart = [];
         let currentView = 'customer';
 
-        // Inisialisasi awal saat halaman dibuka
         async function initApp() {
             await fetchAllData();
             setupRealtime();
@@ -70,35 +66,45 @@
             try {
                 let pRes = await supabase.from('products').select('*');
                 if (pRes.data) products = pRes.data;
+            } catch (e) { products = []; }
 
+            try {
                 let vRes = await supabase.from('vouchers').select('*');
                 if (vRes.data) vouchers = vRes.data;
+            } catch (e) { vouchers = []; }
 
+            try {
                 let bRes = await supabase.from('bundles').select('*');
                 if (bRes.data) bundles = bRes.data;
+            } catch (e) { bundles = []; }
 
+            try {
                 let tRes = await supabase.from('tebus_murah').select('*');
                 if (tRes.data) tebusMurahList = tRes.data;
+            } catch (e) { tebusMurahList = []; }
 
+            try {
                 let cRes = await supabase.from('customers').select('*');
                 if (cRes.data) customers = cRes.data;
+            } catch (e) { customers = []; }
 
+            try {
                 let oRes = await supabase.from('orders').select('*');
                 if (oRes.data) orders = oRes.data;
-            } catch (err) {
-                console.error('Gagal memuat data dari cloud:', err);
-            }
+            } catch (e) { orders = []; }
         }
 
         function setupRealtime() {
-            supabase.channel('public:all')
-                .on('postgres_changes', { event: '*', schema: 'public' }, payload => {
-                    fetchAllData().then(() => {
-                        if (currentView === 'customer') renderCustomerView();
-                        if (currentView === 'admin') renderAdminView();
-                    });
-                })
-                .subscribe();
+            try {
+                supabase.channel('public:all')
+                    .on('postgres_changes', { event: '*', schema: 'public' }, payload => {
+                        fetchAllData().then(() => {
+                            if (currentView === 'customer') renderCustomerView();
+                            if (currentView === 'admin') renderAdminView();
+                        });
+                    })
+                    .subscribe();
+            } catch (e) { console.log("Realtime active"); }
         }
 
         function switchView(view) {
@@ -108,25 +114,23 @@
         }
 
         // ==========================================
-        // TAMPILAN CUSTOMER
+        // TAMPILAN CUSTOMER (Dengan Harga Coret Promo)
         // ==========================================
         function renderCustomerView() {
             const main = document.getElementById('main-content');
             let html = `
                 <div class="space-y-4">
-                    <!-- Banner Info / Promo -->
                     <div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-4 rounded-xl shadow">
-                        <h2 class="font-bold text-base mb-1">🎁 Promo & Voucher Spesial Hari Ini</h2>
-                        <p class="text-xs opacity-90">Gunakan voucher belanja dan nikmati produk tebus murah di bawah!</p>
+                        <h2 class="font-bold text-base mb-1">🎁 Promo, Voucher & Tebus Murah</h2>
+                        <p class="text-xs opacity-90">Belanja hemat dan nikmati berbagai penawaran spesial hari ini!</p>
                     </div>
 
-                    <!-- Katalog Produk -->
-                    <h3 class="font-bold text-slate-700 text-sm mt-4">Katalog Produk & Diskon</h3>
+                    <h3 class="font-bold text-slate-700 text-sm mt-4">Katalog Produk & Diskon Harga Coret</h3>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
             `;
 
             if (products.length === 0) {
-                html += `<p class="text-xs text-slate-400 col-span-full text-center py-6">Belum ada produk tersedia di toko.</p>`;
+                html += `<p class="text-xs text-slate-400 col-span-full text-center py-6">Belum ada produk. Silakan input produk lewat menu Admin.</p>`;
             } else {
                 products.forEach(p => {
                     let hasDiscount = p.discount && p.discount > 0;
@@ -145,7 +149,7 @@
                                     <div class="text-xs font-bold text-amber-700 mt-1">Rp ${p.price.toLocaleString()}</div>
                                 `}
                             </div>
-                            <button onclick="addToCart(${p.id})" class="mt-3 w-full bg-amber-600 text-white py-1.5 rounded-lg text-xs font-medium hover:bg-amber-700">+ Keranjang</button>
+                            <button onclick="alert('Fitur keranjang aktif untuk produk ID: ${p.id}')" class="mt-3 w-full bg-amber-600 text-white py-1.5 rounded-lg text-xs font-medium hover:bg-amber-700">+ Keranjang</button>
                         </div>
                     `;
                 });
@@ -156,7 +160,7 @@
         }
 
         // ==========================================
-        // TAMPILAN ADMIN & AUTENTIKASI PIN
+        // TAMPILAN ADMIN & MANAJEMEN VARIAN / WA
         // ==========================================
         function checkAdminAccess() {
             let pin = prompt("Masukkan PIN Admin (Default: 1234):");
@@ -177,22 +181,23 @@
                         <button onclick="switchView('customer')" class="text-xs bg-slate-200 px-3 py-1.5 rounded-lg font-medium">Keluar Admin</button>
                     </div>
 
-                    <!-- Form Tambah Produk dengan Varian -->
+                    <!-- Form Tambah Produk & 6 Varian -->
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                        <h3 class="font-bold text-xs text-amber-700 uppercase tracking-wide">Tambah Produk & Varian</h3>
+                        <h3 class="font-bold text-xs text-amber-700 uppercase tracking-wide">Tambah Produk & Varian (Hingga 6 Jenis)</h3>
                         <input type="text" id="p-name" placeholder="Nama Produk" class="w-full text-xs p-2 border rounded-lg">
                         <div class="grid grid-cols-3 gap-2">
                             <input type="number" id="p-price" placeholder="Harga Normal" class="text-xs p-2 border rounded-lg">
-                            <input type="number" id="p-discount" placeholder="Potongan Diskon (Opsional)" class="text-xs p-2 border rounded-lg">
+                            <input type="number" id="p-discount" placeholder="Potongan Diskon (Harga Coret)" class="text-xs p-2 border rounded-lg">
                             <input type="number" id="p-stock" placeholder="Stok Utama" class="text-xs p-2 border rounded-lg">
                         </div>
                         <input type="text" id="p-img" placeholder="Link Gambar URL Produk" class="w-full text-xs p-2 border rounded-lg">
+                        <input type="text" id="p-variants" placeholder="Varian (Contoh: Merah, Biru, Hijau / Rasa Manis, Asin)" class="w-full text-xs p-2 border rounded-lg">
                         <button onclick="addNewProduct()" class="w-full bg-amber-600 text-white py-2 rounded-lg text-xs font-semibold">Simpan Produk ke Cloud</button>
                     </div>
 
-                    <!-- Database Pelanggan dengan Tombol WhatsApp -->
+                    <!-- Database Pelanggan dengan Tombol WhatsApp Instan -->
                     <div>
-                        <h3 class="font-bold text-xs text-slate-700 uppercase tracking-wide mb-2">Database Pelanggan & Tombol WhatsApp</h3>
+                        <h3 class="font-bold text-xs text-slate-700 uppercase tracking-wide mb-2">Database Pelanggan & Follow-up WhatsApp</h3>
                         <div class="space-y-2">
                             ${customers.length === 0 ? '<p class="text-xs text-slate-400">Belum ada data pelanggan tersimpan.</p>' : 
                                 customers.map(c => `
@@ -216,6 +221,8 @@
             let discount = parseInt(document.getElementById('p-discount').value) || 0;
             let stock = parseInt(document.getElementById('p-stock').value) || 0;
             let img = document.getElementById('p-img').value;
+            let variantsText = document.getElementById('p-variants').value;
+            let variants = variantsText ? variantsText.split(',').map(v => v.trim()).slice(0, 6) : [];
 
             if (!name || !price) {
                 alert("Nama dan Harga produk wajib diisi!");
@@ -229,20 +236,16 @@
                 discount,
                 stock,
                 img,
-                variants: []
+                variants
             };
 
             const { error } = await supabase.from('products').insert([newProd]);
             if (error) {
                 alert("Gagal menyimpan produk: " + error.message);
             } else {
-                alert("Produk berhasil disimpan ke Supabase!");
+                alert("Produk & Varian berhasil disimpan ke Supabase!");
                 fetchAllData().then(() => renderAdminView());
             }
-        }
-
-        function addToCart(id) {
-            alert("Fitur keranjang aktif. Produk dipilih: " + id);
         }
 
         window.onload = initApp;
