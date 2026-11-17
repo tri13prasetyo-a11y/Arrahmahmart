@@ -136,7 +136,7 @@
                         <div id="admin-products-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                     </div>
 
-                    <!-- 3. TAB PROMO (BILDING OTOMATIS HITUNG HARGA SEBELUM & SETELAH) -->
+                    <!-- 3. TAB PROMO (BILDING DENGAN KALKULASI PRESISI) -->
                     <div id="admin-tab-promos" class="hidden space-y-6">
                         <!-- Voucher -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
@@ -151,7 +151,7 @@
                             <div id="admin-vouchers-list" class="space-y-2 pt-2"></div>
                         </div>
 
-                        <!-- BUNDLING (DENGAN HITUNG TOTAL SEBELUM & SETELAH) -->
+                        <!-- BUNDLING (PRESISI KALKULASI TOTAL) -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 id="form-bundle-title" class="font-bold text-sm text-orange-600">📦 Kelola Paket Bundling (Hingga 5 Produk)</h3>
                             <input type="hidden" id="edit-bundle-id" value="">
@@ -443,32 +443,32 @@
         }
 
         function populateProductDropdowns() {
-            let opts = `<option value="">-- Pilih Produk --</option>` + products.map(p => `<option value="${p.name} (Rp ${p.promoPrice.toLocaleString()})">${p.name} - Rp ${p.promoPrice.toLocaleString()}</option>`).join('');
+            let opts = `<option value="">-- Pilih Produk --</option>` + products.map(p => `<option value="${p.name}">${p.name} - Rp ${p.promoPrice.toLocaleString()}</option>`).join('');
             ['b-p1-select', 'b-p2-select', 'b-p3-select', 'b-p4-select', 'b-p5-select', 'tm-prod-select'].forEach(id => {
                 let el = document.getElementById(id);
                 if (el) el.innerHTML = opts;
             });
         }
 
-        function extractNum(str) {
-            let m = str ? str.match(/\d+/g) : null;
-            return m ? parseInt(m.join('')) : 0;
-        }
-
+        // --- KALKULASI PRESISI BUNDLING ---
         function calculateBundleTotal() {
-            let p1 = document.getElementById('b-p1-select').value;
-            let p2 = document.getElementById('b-p2-select').value;
-            let p3 = document.getElementById('b-p3-select').value;
-            let p4 = document.getElementById('b-p4-select').value;
-            let p5 = document.getElementById('b-p5-select').value;
-            let total = extractNum(p1) + extractNum(p2) + extractNum(p3) + extractNum(p4) + extractNum(p5);
-            document.getElementById('b-calc-orig-display').innerText = `Rp ${total.toLocaleString()}`;
+            let selectors = ['b-p1-select', 'b-p2-select', 'b-p3-select', 'b-p4-select', 'b-p5-select'];
+            let total = 0;
+            selectors.forEach(id => {
+                let name = document.getElementById(id).value;
+                if (name) {
+                    let p = products.find(prod => prod.name === name);
+                    if (p) total += p.promoPrice;
+                }
+            });
+            let displayEl = document.getElementById('b-calc-orig-display');
+            if (displayEl) displayEl.innerText = `Rp ${total.toLocaleString()}`;
             return total;
         }
 
         function onSelectTebusProduct() {
             let val = document.getElementById('tm-prod-select').value;
-            let found = products.find(p => `${p.name} (Rp ${p.promoPrice.toLocaleString()})` === val);
+            let found = products.find(p => p.name === val);
             if (found) {
                 document.getElementById('tm-normal').value = found.promoPrice;
             }
@@ -499,7 +499,7 @@
                 promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">🎟️ Voucher Belanja Aktif:</p><div class="flex gap-2 overflow-x-auto pb-1">${vouchers.map(v => `<div class="bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg text-xs shrink-0"><span class="font-bold text-orange-700 block">${v.code}</span><span class="text-[10px] text-slate-600">Potongan Rp ${(v.discount_amount||0).toLocaleString()} (Min Rp ${(v.min_spend||0).toLocaleString()})</span></div>`).join('')}</div></div>`;
             }
 
-            // Bundling Customer View dengan Harga Coret Sebelum & Sesudah Bundling
+            // Bundling Customer View
             if (bundles.length > 0) {
                 promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">📦 Paket Bundling Hemat:</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${bundles.map(b => {
                     let itemsDesc = [b.p1, b.p2, b.p3, b.p4, b.p5].filter(Boolean).join(' + ');
@@ -600,6 +600,17 @@
             } else { floatBtn.innerHTML = ''; }
         }
 
+        function getItemPrice(prod, qty) {
+            let price = prod.promoPrice;
+            if (Array.isArray(prod.tiers) && prod.tiers.length > 0) {
+                let sortedTiers = [...prod.tiers].sort((a,b)=>b.min - a.min);
+                for(let t of sortedTiers) {
+                    if (qty >= t.min) { price = t.price; break; }
+                }
+            }
+            return price;
+        }
+
         function addToCart(id) {
             const prod = products.find(p => p.id === id);
             if (!prod) return;
@@ -607,19 +618,23 @@
             let cartKey = chosenVariant ? `${id}-${chosenVariant}` : `${id}`;
             let exist = cart.find(i => i.cartKey === cartKey);
             let currentQty = exist ? exist.qty : 0;
-            
-            let finalPrice = prod.promoPrice;
-            if (Array.isArray(prod.tiers) && prod.tiers.length > 0) {
-                let targetQty = currentQty + 1;
-                let sortedTiers = [...prod.tiers].sort((a,b)=>b.min - a.min);
-                for(let t of sortedTiers) {
-                    if (targetQty >= t.min) { finalPrice = t.price; break; }
-                }
-            }
+            let newQty = currentQty + 1;
 
-            if (currentQty + 1 > prod.stock) { alert("Stok tidak mencukupi!"); return; }
-            if (exist) { exist.qty++; exist.promoPrice = finalPrice; }
-            else { cart.push({ ...prod, cartKey, promoPrice: finalPrice, name: chosenVariant ? `${prod.name} (${chosenVariant})` : prod.name, qty: 1 }); }
+            if (newQty > prod.stock) { alert("Stok tidak mencukupi!"); return; }
+
+            let finalPrice = getItemPrice(prod, newQty);
+            if (exist) {
+                exist.qty = newQty;
+                exist.promoPrice = finalPrice;
+            } else {
+                cart.push({ ...prod, cartKey, promoPrice: finalPrice, name: chosenVariant ? `${prod.name} (${chosenVariant})` : prod.name, qty: 1 });
+            }
+            // Sinkronisasi harga tier untuk item sejenis di keranjang
+            cart.forEach(item => {
+                if (!item.isSpecial && item.id === prod.id) {
+                    item.promoPrice = getItemPrice(prod, item.qty);
+                }
+            });
             updateCartFloatingUI();
         }
 
@@ -666,8 +681,24 @@
         function updateQty(cartKey, delta) {
             let item = cart.find(i => i.cartKey === cartKey);
             if (item) {
-                item.qty += delta;
-                if (item.qty <= 0) cart = cart.filter(i => i.cartKey !== cartKey);
+                if (!item.isSpecial) {
+                    let prod = products.find(p => p.id === item.id);
+                    if (prod) {
+                        let newQty = item.qty + delta;
+                        if (newQty <= 0) {
+                            cart = cart.filter(i => i.cartKey !== cartKey);
+                        } else if (newQty > prod.stock) {
+                            alert("Stok tidak mencukupi!");
+                            return;
+                        } else {
+                            item.qty = newQty;
+                            item.promoPrice = getItemPrice(prod, newQty);
+                        }
+                    }
+                } else {
+                    item.qty += delta;
+                    if (item.qty <= 0) cart = cart.filter(i => i.cartKey !== cartKey);
+                }
             }
             renderCartModalContent();
             updateCartFloatingUI();
@@ -688,13 +719,28 @@
         function calculateCartTotal() {
             let subtotal = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
             let vDisc = appliedVoucher ? appliedVoucher.discount_amount : 0;
+            
+            if (appliedVoucher && subtotal < appliedVoucher.min_spend) {
+                alert(`Voucher ${appliedVoucher.code} tidak lagi memenuhi syarat minimal belanja. Voucher dilepaskan.`);
+                appliedVoucher = null;
+                vDisc = 0;
+                let vCodeInput = document.getElementById('checkout-voucher-code');
+                if(vCodeInput) vCodeInput.value = '';
+            }
+
             let pDisc = 0;
             if (document.getElementById('use-points-checkbox').checked && currentPhone && customers[currentPhone]) {
-                pDisc = customers[currentPhone].points * (storeSettings.point_value || 1000);
+                let pointVal = storeSettings.point_value || 1000;
+                let availablePoints = customers[currentPhone].points || 0;
+                let remainingSub = subtotal - vDisc;
+                let maxPoints = Math.min(availablePoints, Math.floor(remainingSub / pointVal));
+                pDisc = maxPoints * pointVal;
             }
+
             let totalDisc = vDisc + pDisc;
             if (totalDisc > subtotal) totalDisc = subtotal;
-            let finalTotal = subtotal - totalDisc;
+            let finalTotal = Math.max(0, subtotal - totalDisc);
+
             document.getElementById('cart-subtotal').innerText = `Rp ${subtotal.toLocaleString()}`;
             document.getElementById('cart-voucher-disc').innerText = `-Rp ${vDisc.toLocaleString()}`;
             document.getElementById('cart-total').innerText = `Rp ${finalTotal.toLocaleString()}`;
@@ -715,8 +761,9 @@
             let vDisc = appliedVoucher ? appliedVoucher.discount_amount : 0;
             let ptsUsed = 0, pDisc = 0;
             if (document.getElementById('use-points-checkbox').checked && customers[phone]) {
-                ptsUsed = Math.min(customers[phone].points, Math.floor((subtotal - vDisc)/(storeSettings.point_value||1000)));
-                pDisc = ptsUsed * (storeSettings.point_value||1000);
+                let pointVal = storeSettings.point_value || 1000;
+                ptsUsed = Math.min(customers[phone].points, Math.floor((subtotal - vDisc)/pointVal));
+                pDisc = ptsUsed * pointVal;
                 customers[phone].points -= ptsUsed;
             }
             let totalDisc = vDisc + pDisc;
@@ -999,6 +1046,8 @@
             if (!name || !promo_price) return alert("Tema paket dan harga setelah bundling wajib diisi!");
 
             let original_price = calculateBundleTotal();
+            if (original_price <= 0) return alert("Pilih minimal 1 produk untuk paket bundling!");
+
             let imgBase64 = await readFileAsBase64('b-img-file');
             let bundleData = { name, p1, p2, p3, p4, p5, original_price, promo_price, start_date, end_date };
             if (imgBase64) bundleData.img = imgBase64;
@@ -1065,7 +1114,7 @@
             let end_date = document.getElementById('tm-end').value;
 
             if (!prodVal || !tebus_price) return alert("Pilih produk dan masukkan harga tebus!");
-            let name = prodVal.split(' (Rp')[0];
+            let name = prodVal;
 
             let imgBase64 = await readFileAsBase64('tm-img-file');
             let tmData = { name, normal_price, tebus_price, min_cart_amount, start_date, end_date };
@@ -1088,6 +1137,7 @@
             let tm = tebusMurahList.find(x => x.id === id);
             if (!tm) return;
             document.getElementById('edit-tm-id').value = tm.id;
+            document.getElementById('tm-prod-select').value = tm.name || '';
             document.getElementById('tm-normal').value = tm.normal_price || 0;
             document.getElementById('tm-price').value = tm.tebus_price || 0;
             document.getElementById('tm-min').value = tm.min_cart_amount || 0;
