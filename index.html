@@ -52,7 +52,7 @@
             <!-- Voucher Belanja -->
             <div id="customer-vouchers"></div>
 
-            <!-- Paket Bundling Slider (Di atas Tebus Murah, ukuran seperti headline, geser jika > 1) -->
+            <!-- Paket Bundling Slider (Di atas Tebus Murah) -->
             <div id="customer-bundles-container"></div>
 
             <!-- Promo Tebus Murah -->
@@ -125,7 +125,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                                 <input type="text" id="new-p-name" placeholder="Nama Produk" class="border p-2 rounded-lg">
                                 <div>
-                                    <label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Produk (Penyimpanan Lokal):</label>
+                                    <label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Produk (Lokal):</label>
                                     <input type="file" id="new-p-img-file" accept="image/*" class="w-full border p-1 rounded-lg text-xs bg-orange-50/30">
                                 </div>
                                 <input type="number" id="new-p-hpp" placeholder="Harga HPP (Modal) Rp" class="border p-2 rounded-lg">
@@ -205,13 +205,13 @@
                             <input type="hidden" id="edit-tm-id" value="">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                                 <div><label class="block text-[10px] text-slate-500 mb-1">Pilih Produk Tebus:</label><select id="tm-prod-select" onchange="onSelectTebusProduct()" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Harga Normal (Otomatis / Manual):</label><input type="number" id="tm-normal" placeholder="Harga Normal Rp" class="border p-2 rounded-lg w-full"></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Harga Normal:</label><input type="number" id="tm-normal" placeholder="Harga Normal Rp" class="border p-2 rounded-lg w-full"></div>
                                 <div><label class="block text-[10px] text-slate-500 mb-1">Harga Tebus Murah Rp:</label><input type="number" id="tm-price" placeholder="Harga Tebus Rp" class="border p-2 rounded-lg w-full"></div>
                                 <div><label class="block text-[10px] text-slate-500 mb-1">Syarat Min. Belanja Rp:</label><input type="number" id="tm-min" placeholder="Min. Belanja Rp" class="border p-2 rounded-lg w-full"></div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
                                 <div>
-                                    <label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Tebus Murah (Lokal):</label>
+                                    <label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Tebus Murah:</label>
                                     <input type="file" id="tm-img-file" accept="image/*" class="w-full border p-1 rounded-lg bg-orange-50/30">
                                 </div>
                                 <div class="grid grid-cols-2 gap-1">
@@ -231,10 +231,9 @@
                     <div id="admin-tab-headlines" class="hidden space-y-4">
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 class="font-bold text-sm text-orange-600">🖼️ Kelola Headline / Banner Toko (Maksimal 5)</h3>
-                            <p class="text-slate-500">Rekomendasi ukuran gambar poster banner: <strong>1080 x 1980 piksel</strong> (Format Portrait).</p>
                             <input type="text" id="hl-title" placeholder="Judul / Keterangan Headline" class="w-full border p-2 rounded-lg">
                             <div>
-                                <label class="block font-medium mb-1">Pilih Gambar Headline dari Perangkat:</label>
+                                <label class="block font-medium mb-1">Pilih Gambar Headline:</label>
                                 <input type="file" id="hl-img-file" accept="image/*" class="w-full border p-2 rounded-lg bg-orange-50/30">
                             </div>
                             <button onclick="addHeadlineSupabase()" class="w-full bg-orange-600 text-white py-2.5 rounded-lg font-bold hover:bg-orange-700">+ Tambah Headline Banner</button>
@@ -268,7 +267,7 @@
                             <h3 class="font-bold text-sm text-orange-600">⚙️ Pengaturan Profil Toko & Logo</h3>
                             <div><label class="font-medium block mb-1">Nama Toko:</label><input type="text" id="set-store-name" class="w-full border p-2 rounded-lg"></div>
                             <div>
-                                <label class="font-medium block mb-1">Upload Logo Toko (Dari Perangkat):</label>
+                                <label class="font-medium block mb-1">Upload Logo Toko:</label>
                                 <input type="file" id="set-store-logo-file" accept="image/*" class="w-full border p-2 rounded-lg bg-orange-50/30">
                             </div>
                             <div><label class="font-medium block mb-1">Nomor WhatsApp Admin (62...):</label><input type="text" id="set-wa-admin" class="w-full border p-2 rounded-lg"></div>
@@ -394,7 +393,7 @@
                         document.getElementById('header-logo-container').innerHTML = `<img src="${storeSettings.logo_url}" class="w-full h-full object-cover">`;
                     }
                 }
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("Sync error:", e); }
         }
 
         function router() {
@@ -506,7 +505,7 @@
                 vContainer.innerHTML = `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">🎟️ Voucher Belanja Aktif:</p><div class="flex gap-2 overflow-x-auto pb-1">${vouchers.map(v => `<div class="bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg text-xs shrink-0"><span class="font-bold text-orange-700 block">${v.code}</span><span class="text-[10px] text-slate-600">Potongan Rp ${(v.discount_amount||0).toLocaleString()} (Min Rp ${(v.min_spend||0).toLocaleString()})</span></div>`).join('')}</div></div>`;
             } else { vContainer.innerHTML = ''; }
 
-            // 3. Paket Bundling Slider (Di atas Tebus Murah, ukuran seperti headline, geser jika > 1)
+            // 3. Paket Bundling Slider (Di atas Tebus Murah)
             const bContainer = document.getElementById('customer-bundles-container');
             if (bundles.length > 0) {
                 bContainer.innerHTML = `
@@ -542,7 +541,7 @@
                     </div>`;
             } else { bContainer.innerHTML = ''; }
 
-            // 4. Promo Tebus Murah (Di bawah Bundling)
+            // 4. Promo Tebus Murah
             const tmContainer = document.getElementById('customer-tebus-container');
             if (tebusMurahList.length > 0) {
                 tmContainer.innerHTML = `
@@ -817,7 +816,11 @@
             };
 
             if (sb) {
-                await sb.from('orders').insert([newOrder]);
+                let { error: ordErr } = await sb.from('orders').insert([newOrder]);
+                if (ordErr) {
+                    alert("Gagal mengirim pesanan ke database: " + ordErr.message);
+                    return;
+                }
                 let custObj = customers[phone] || { phone, name, address, points: 10, total_spend: 0 };
                 custObj.name = name; custObj.address = address;
                 await sb.from('customers').upsert([custObj]);
@@ -1008,15 +1011,16 @@
             
             if (imgBase64) prodData.img = imgBase64;
 
+            let res;
             if (editId) {
-                await sb.from('products').update(prodData).eq('id', editId);
-                alert("Produk berhasil diperbarui!");
+                res = await sb.from('products').update(prodData).eq('id', editId);
             } else {
                 prodData.id = Date.now();
                 if(!prodData.img) prodData.img = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80';
-                await sb.from('products').insert([prodData]);
-                alert("Produk baru berhasil ditambahkan!");
+                res = await sb.from('products').insert([prodData]);
             }
+            if (res.error) { alert("Gagal menyimpan produk: " + res.error.message); return; }
+            alert("Produk berhasil disimpan!");
             resetProductForm();
             await syncFromCloud();
             renderAdminData();
@@ -1078,14 +1082,15 @@
             let bundleData = { name, p1, p2, p3, p4, p5, original_price, promo_price, start_date, end_date };
             if (imgBase64) bundleData.img = imgBase64;
 
+            let res;
             if (editId) {
-                await sb.from('bundles').update(bundleData).eq('id', editId);
-                alert("Paket bundling berhasil diperbarui!");
+                res = await sb.from('bundles').update(bundleData).eq('id', editId);
             } else {
                 bundleData.id = Date.now();
-                await sb.from('bundles').insert([bundleData]);
-                alert("Paket bundling baru berhasil ditambahkan!");
+                res = await sb.from('bundles').insert([bundleData]);
             }
+            if (res.error) { alert("Gagal menyimpan bundling ke database: " + res.error.message); return; }
+            alert("Paket bundling berhasil disimpan!");
             resetBundleForm();
             await syncFromCloud();
             renderAdminData();
@@ -1145,14 +1150,15 @@
             let tmData = { name, normal_price, tebus_price, min_cart_amount, start_date, end_date };
             if (imgBase64) tmData.img = imgBase64;
 
+            let res;
             if (editId) {
-                await sb.from('tebus_murah').update(tmData).eq('id', editId);
-                alert("Promo tebus murah berhasil diperbarui!");
+                res = await sb.from('tebus_murah').update(tmData).eq('id', editId);
             } else {
                 tmData.id = Date.now();
-                await sb.from('tebus_murah').insert([tmData]);
-                alert("Promo tebus murah baru berhasil ditambahkan!");
+                res = await sb.from('tebus_murah').insert([tmData]);
             }
+            if (res.error) { alert("Gagal menyimpan tebus murah: " + res.error.message); return; }
+            alert("Promo tebus murah berhasil disimpan!");
             resetTebusForm();
             await syncFromCloud();
             renderAdminData();
@@ -1252,7 +1258,8 @@
             let discount_amount = parseInt(document.getElementById('v-disc').value) || 0;
             let min_spend = parseInt(document.getElementById('v-min').value) || 0;
             if (!code || !discount_amount) return alert("Kode dan potongan wajib diisi!");
-            await sb.from('vouchers').insert([{ id: Date.now(), code, name, discount_amount, min_spend }]);
+            let res = await sb.from('vouchers').insert([{ id: Date.now(), code, name, discount_amount, min_spend }]);
+            if (res.error) { alert("Gagal menambah voucher: " + res.error.message); return; }
             await syncFromCloud(); renderAdminData();
         }
 
@@ -1261,7 +1268,8 @@
             let title = document.getElementById('hl-title').value.trim();
             let imgBase64 = await readFileAsBase64('hl-img-file');
             if (!imgBase64) return alert("Pilih gambar headline terlebih dahulu!");
-            await sb.from('headlines').insert([{ id: Date.now(), title, img: imgBase64 }]);
+            let res = await sb.from('headlines').insert([{ id: Date.now(), title, img: imgBase64 }]);
+            if (res.error) { alert("Gagal menambah headline: " + res.error.message); return; }
             document.getElementById('hl-title').value = '';
             document.getElementById('hl-img-file').value = '';
             await syncFromCloud(); renderAdminData();
@@ -1305,13 +1313,14 @@
             if (newPin) updateData.admin_pin = newPin;
             if (logoBase64) updateData.logo_url = logoBase64;
 
-            await sb.from('store_settings').update(updateData).eq('id', 1);
+            let res = await sb.from('store_settings').update(updateData).eq('id', 1);
+            if (res.error) { alert("Gagal menyimpan pengaturan: " + res.error.message); return; }
             alert("Pengaturan toko berhasil disimpan!");
             await syncFromCloud();
         }
 
         function exportToExcel() {
-            let dataToExcel = orders.map(o => ({
+            let dataToExport = orders.map(o => ({
                 "ID Pesanan": o.id,
                 "Tanggal Pesan": o.display_date,
                 "Tanggal Lunas": o.paid_date || '-',
