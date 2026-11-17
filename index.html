@@ -12,6 +12,8 @@
         body { font-family: 'Poppins', sans-serif; background-color: #fff7ed; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #fdba74; border-radius: 4px; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800 flex flex-col justify-between">
@@ -47,8 +49,14 @@
                 </div>
             </div>
 
-            <!-- Promo Highlights -->
-            <div id="promo-highlights" class="space-y-3"></div>
+            <!-- Voucher Belanja -->
+            <div id="customer-vouchers"></div>
+
+            <!-- Paket Bundling Slider (Ukuran seperti headline, geser jika > 1, di atas tebus murah) -->
+            <div id="customer-bundles-container"></div>
+
+            <!-- Promo Tebus Murah -->
+            <div id="customer-tebus-container"></div>
 
             <!-- Header Katalog -->
             <div class="flex justify-between items-center pt-2">
@@ -136,7 +144,7 @@
                         <div id="admin-products-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                     </div>
 
-                    <!-- 3. TAB PROMO (BILDING DENGAN KALKULASI PRESISI) -->
+                    <!-- 3. TAB PROMO -->
                     <div id="admin-tab-promos" class="hidden space-y-6">
                         <!-- Voucher -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
@@ -151,7 +159,7 @@
                             <div id="admin-vouchers-list" class="space-y-2 pt-2"></div>
                         </div>
 
-                        <!-- BUNDLING (PRESISI KALKULASI TOTAL) -->
+                        <!-- BUNDLING -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 id="form-bundle-title" class="font-bold text-sm text-orange-600">📦 Kelola Paket Bundling (Hingga 5 Produk)</h3>
                             <input type="hidden" id="edit-bundle-id" value="">
@@ -450,7 +458,6 @@
             });
         }
 
-        // --- KALKULASI PRESISI BUNDLING ---
         function calculateBundleTotal() {
             let selectors = ['b-p1-select', 'b-p2-select', 'b-p3-select', 'b-p4-select', 'b-p5-select'];
             let total = 0;
@@ -475,6 +482,7 @@
         }
 
         function renderCatalog() {
+            // 1. Headline Banner
             const hlContainer = document.getElementById('customer-headlines');
             if (headlines.length > 0) {
                 hlContainer.innerHTML = `
@@ -492,58 +500,78 @@
                     </div>`;
             } else { hlContainer.innerHTML = ''; }
 
-            const promoDiv = document.getElementById('promo-highlights');
-            let promoHtml = '';
-            
+            // 2. Vouchers
+            const vContainer = document.getElementById('customer-vouchers');
             if (vouchers.length > 0) {
-                promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">🎟️ Voucher Belanja Aktif:</p><div class="flex gap-2 overflow-x-auto pb-1">${vouchers.map(v => `<div class="bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg text-xs shrink-0"><span class="font-bold text-orange-700 block">${v.code}</span><span class="text-[10px] text-slate-600">Potongan Rp ${(v.discount_amount||0).toLocaleString()} (Min Rp ${(v.min_spend||0).toLocaleString()})</span></div>`).join('')}</div></div>`;
-            }
+                vContainer.innerHTML = `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">🎟️ Voucher Belanja Aktif:</p><div class="flex gap-2 overflow-x-auto pb-1">${vouchers.map(v => `<div class="bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg text-xs shrink-0"><span class="font-bold text-orange-700 block">${v.code}</span><span class="text-[10px] text-slate-600">Potongan Rp ${(v.discount_amount||0).toLocaleString()} (Min Rp ${(v.min_spend||0).toLocaleString()})</span></div>`).join('')}</div></div>`;
+            } else { vContainer.innerHTML = ''; }
 
-            // Bundling Customer View
+            // 3. Paket Bundling Slider (Di atas Tebus Murah, ukuran seperti headline, geser jika > 1)
+            const bContainer = document.getElementById('customer-bundles-container');
             if (bundles.length > 0) {
-                promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">📦 Paket Bundling Hemat:</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${bundles.map(b => {
-                    let itemsDesc = [b.p1, b.p2, b.p3, b.p4, b.p5].filter(Boolean).join(' + ');
-                    let periodText = b.start_date && b.end_date ? `<p class="text-[10px] text-orange-700 font-medium">Periode: ${b.start_date} s/d ${b.end_date}</p>` : '';
-                    let imgTag = b.img ? `<img src="${b.img}" class="w-20 h-20 object-cover rounded-lg shrink-0">` : '';
-                    return `<div class="bg-orange-50/50 p-3 rounded-xl border border-orange-100 flex items-center space-x-3 text-xs">
-                        ${imgTag}
-                        <div class="flex-1">
-                            <p class="font-bold text-slate-900">${b.name}</p>
-                            <p class="text-[10px] text-slate-600">${itemsDesc}</p>
-                            <div class="flex items-center space-x-2 mt-1">
-                                <span class="font-bold text-orange-600 text-sm">Rp ${(b.promo_price||0).toLocaleString()}</span>
-                                <span class="text-[10px] text-slate-400 line-through">Rp ${(b.original_price||0).toLocaleString()}</span>
+                bContainer.innerHTML = `
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-sm text-orange-600 flex items-center gap-1">📦 Paket Bundling Hemat</h3>
+                        <div class="relative rounded-2xl overflow-hidden shadow-md border border-orange-200 bg-white">
+                            <div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-none">
+                                ${bundles.map(b => {
+                                    let itemsDesc = [b.p1, b.p2, b.p3, b.p4, b.p5].filter(Boolean).join(' + ');
+                                    let periodText = b.start_date && b.end_date ? `<p class="text-[10px] text-orange-200 font-medium mt-1">🗓️ Periode: ${b.start_date} s/d ${b.end_date}</p>` : '';
+                                    let imgUrl = b.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80';
+                                    return `
+                                        <div class="w-full shrink-0 snap-center relative">
+                                            <img src="${imgUrl}" class="w-full h-52 md:h-64 object-cover brightness-90">
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex flex-col justify-end p-4 text-white">
+                                                <span class="bg-orange-600 text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase w-fit mb-1 shadow">Paket Bundling Spesial</span>
+                                                <h4 class="font-bold text-base md:text-lg leading-tight mb-0.5">${b.name}</h4>
+                                                <p class="text-xs text-orange-100 line-clamp-1 mb-2">Isi: ${itemsDesc}</p>
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-baseline space-x-2">
+                                                        <span class="font-bold text-orange-400 text-base md:text-lg">Rp ${(b.promo_price||0).toLocaleString()}</span>
+                                                        <span class="text-xs text-slate-300 line-through">Rp ${(b.original_price||0).toLocaleString()}</span>
+                                                    </div>
+                                                    <button onclick="addSpecialToCart('bundle-${b.id}', '${b.name}', ${b.promo_price})" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md transition">+ Ambil Paket</button>
+                                                </div>
+                                                ${periodText}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
                             </div>
-                            ${periodText}
                         </div>
-                        <button onclick="addSpecialToCart('bundle-${b.id}', '${b.name}', ${b.promo_price})" class="bg-orange-600 text-white px-3 py-2 rounded-lg font-semibold shrink-0 shadow">+ Ambil</button>
                     </div>`;
-                }).join('')}</div></div>`;
-            }
+            } else { bContainer.innerHTML = ''; }
 
-            // Tebus Murah Customer View
+            // 4. Promo Tebus Murah (Di bawah Bundling)
+            const tmContainer = document.getElementById('customer-tebus-container');
             if (tebusMurahList.length > 0) {
-                promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">⚡ Promo Tebus Murah:</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${tebusMurahList.map(tm => {
-                    let periodText = tm.start_date && tm.end_date ? `<p class="text-[10px] text-orange-700 font-medium">Periode: ${tm.start_date} s/d ${tm.end_date}</p>` : '';
-                    let imgTag = tm.img ? `<img src="${tm.img}" class="w-20 h-20 object-cover rounded-lg shrink-0">` : '';
-                    return `<div class="bg-orange-50/50 p-3 rounded-xl border border-orange-100 flex items-center space-x-3 text-xs">
-                        ${imgTag}
-                        <div class="flex-1">
-                            <span class="bg-orange-600 text-white text-[9px] px-2 py-0.5 rounded font-bold uppercase">Tebus Murah</span>
-                            <p class="font-bold text-slate-900 mt-1">${tm.name}</p>
-                            <div class="flex items-center space-x-2 mt-1">
-                                <span class="font-bold text-orange-600 text-sm">Rp ${(tm.tebus_price||0).toLocaleString()}</span>
-                                <span class="text-[10px] text-slate-400 line-through">Rp ${(tm.normal_price||0).toLocaleString()}</span>
-                            </div>
-                            <p class="text-[10px] text-slate-500">Min. Belanja Rp ${(tm.min_cart_amount||0).toLocaleString()}</p>
-                            ${periodText}
+                tmContainer.innerHTML = `
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-sm text-orange-600 flex items-center gap-1">⚡ Promo Tebus Murah</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            ${tebusMurahList.map(tm => {
+                                let periodText = tm.start_date && tm.end_date ? `<p class="text-[10px] text-orange-700 font-medium">Periode: ${tm.start_date} s/d ${tm.end_date}</p>` : '';
+                                let imgTag = tm.img ? `<img src="${tm.img}" class="w-20 h-20 object-cover rounded-lg shrink-0">` : '';
+                                return `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm flex items-center space-x-3 text-xs">
+                                    ${imgTag}
+                                    <div class="flex-1">
+                                        <span class="bg-orange-600 text-white text-[9px] px-2 py-0.5 rounded font-bold uppercase">Tebus Murah</span>
+                                        <p class="font-bold text-slate-900 mt-1">${tm.name}</p>
+                                        <div class="flex items-center space-x-2 mt-1">
+                                            <span class="font-bold text-orange-600 text-sm">Rp ${(tm.tebus_price||0).toLocaleString()}</span>
+                                            <span class="text-[10px] text-slate-400 line-through">Rp ${(tm.normal_price||0).toLocaleString()}</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-500">Min. Belanja Rp ${(tm.min_cart_amount||0).toLocaleString()}</p>
+                                        ${periodText}
+                                    </div>
+                                    <button onclick="addTebusMurahToCart(${tm.id})" class="bg-orange-600 text-white px-3 py-2 rounded-lg font-semibold shrink-0 shadow">+ Tebus</button>
+                                </div>`;
+                            }).join('')}
                         </div>
-                        <button onclick="addTebusMurahToCart(${tm.id})" class="bg-orange-600 text-white px-3 py-2 rounded-lg font-semibold shrink-0 shadow">+ Tebus</button>
                     </div>`;
-                }).join('')}</div></div>`;
-            }
-            promoDiv.innerHTML = promoHtml;
+            } else { tmContainer.innerHTML = ''; }
 
+            // 5. Katalog Produk
             const grid = document.getElementById('product-grid');
             if (products.length === 0) {
                 grid.innerHTML = `<p class="text-xs text-slate-500 col-span-full text-center py-6 bg-white rounded-xl border">Belum ada produk.</p>`;
@@ -629,7 +657,6 @@
             } else {
                 cart.push({ ...prod, cartKey, promoPrice: finalPrice, name: chosenVariant ? `${prod.name} (${chosenVariant})` : prod.name, qty: 1 });
             }
-            // Sinkronisasi harga tier untuk item sejenis di keranjang
             cart.forEach(item => {
                 if (!item.isSpecial && item.id === prod.id) {
                     item.promoPrice = getItemPrice(prod, item.qty);
@@ -885,7 +912,7 @@
             // Promos Lists
             document.getElementById('admin-vouchers-list').innerHTML = vouchers.map(v => `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border text-xs"><span><strong>${v.code}</strong> - Potongan Rp ${(v.discount_amount||0).toLocaleString()}</span><button onclick="deleteRow('vouchers', ${v.id})" class="text-red-500 font-bold">Hapus</button></div>`).join('');
             
-            // Bundling Admin List with Edit & Delete
+            // Bundling Admin List
             document.getElementById('admin-bundles-list').innerHTML = bundles.map(b => {
                 let desc = [b.p1, b.p2, b.p3, b.p4, b.p5].filter(Boolean).join(' | ');
                 return `<div class="bg-orange-50/50 p-2 rounded border text-xs flex justify-between items-center">
@@ -901,7 +928,7 @@
                 </div>`;
             }).join('');
 
-            // Tebus Murah Admin List with Edit & Delete
+            // Tebus Murah Admin List
             document.getElementById('admin-tm-list').innerHTML = tebusMurahList.map(tm => `<div class="bg-orange-50/50 p-2 rounded border text-xs flex justify-between items-center">
                 <div>
                     <strong>${tm.name}</strong> - Tebus Rp ${(tm.tebus_price||0).toLocaleString()} (Normal: Rp ${(tm.normal_price||0).toLocaleString()})<br>
@@ -921,7 +948,7 @@
                     <button onclick="deleteRow('headlines', ${hl.id})" class="text-red-500 font-bold px-2 py-1">Hapus</button>
                 </div>`).join('');
 
-            // Customers + WA + Edit & Delete
+            // Customers
             let custArray = Object.values(customers);
             document.getElementById('admin-customers-list').innerHTML = custArray.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pelanggan.</p>` : custArray.map(c => `
                 <div class="bg-white p-3 rounded-xl shadow-sm border flex justify-between items-center text-xs">
@@ -948,7 +975,7 @@
                 <div class="bg-blue-50 p-3 rounded-lg border border-blue-200"><p class="text-slate-500">Total Diskon / Potongan</p><p class="font-bold text-sm text-blue-700">Rp ${totalDiskon.toLocaleString()}</p></div>
                 <div class="bg-purple-50 p-3 rounded-lg border border-purple-200"><p class="text-slate-500">Jumlah Transaksi Lunas</p><p class="font-bold text-sm text-purple-700">${totalTx} Transaksi</p></div>`;
 
-            // Profile Settings Form
+            // Profile Settings
             document.getElementById('set-store-name').value = storeSettings.store_name || '';
             document.getElementById('set-wa-admin').value = storeSettings.wa_admin || '';
             document.getElementById('set-bank-accounts').value = storeSettings.bank_accounts || '';
@@ -1030,7 +1057,6 @@
             document.getElementById('btn-cancel-edit').classList.add('hidden');
         }
 
-        // --- BUNDLING EDIT & SAVE ---
         async function saveBundleSupabase() {
             let editId = document.getElementById('edit-bundle-id').value;
             let name = document.getElementById('b-theme').value.trim();
@@ -1103,7 +1129,6 @@
             document.getElementById('btn-cancel-bundle-edit').classList.add('hidden');
         }
 
-        // --- TEBUS MURAH EDIT & SAVE ---
         async function saveTebusMurahSupabase() {
             let editId = document.getElementById('edit-tm-id').value;
             let prodVal = document.getElementById('tm-prod-select').value;
@@ -1163,7 +1188,6 @@
             document.getElementById('btn-cancel-tm-edit').classList.add('hidden');
         }
 
-        // --- CUSTOMER EDIT & DELETE ---
         function openEditCustomerModal(phone) {
             let c = customers[phone];
             if (!c) return;
@@ -1206,7 +1230,6 @@
             }
         }
 
-        // --- RESET LAPORAN DENGAN VERIFIKASI PIN ADMIN ---
         async function resetReportsWithPin() {
             let pin = prompt("Masukkan PIN Admin untuk konfirmasi reset laporan keuangan:");
             if (pin === null) return;
