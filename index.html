@@ -3,26 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arrahmah Mart - Belanja & Kelola Toko</title>
+    <title>Arrahmah Mart Surabaya - Cloud Realtime</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SheetJS untuk Ekspor Laporan Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #fff7ed; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #fdba74; border-radius: 4px; }
     </style>
 </head>
-<body class="min-h-screen text-slate-800">
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
 
-    <!-- HEADER / BRANDING (ORANYE MURNI DOMINAN) -->
+    <!-- HEADER / BRANDING (ORANYE MURNI) -->
     <header class="bg-orange-600 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow">
+                <div id="header-logo-container" class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow overflow-hidden">
                     <span class="text-orange-600 font-bold text-xs text-center leading-tight">AR</span>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg leading-tight">Arrahmah Mart</h1>
-                    <p class="text-xs text-orange-100">Surabaya • Cloud Realtime</p>
+                    <h1 id="store-title-display" class="font-bold text-lg leading-tight">Arrahmah Mart</h1>
+                    <p class="text-xs text-orange-100">Surabaya • Cloud Realtime Edition</p>
                 </div>
             </div>
             <div id="nav-switcher" class="text-sm"></div>
@@ -30,17 +34,17 @@
     </header>
 
     <!-- KONTEN UTAMA -->
-    <main class="max-w-4xl mx-auto p-4 pb-24">
+    <main class="max-w-6xl mx-auto p-4 w-full flex-1 pb-24">
         
-        <!-- HALAMAN CUSTOMER (#customer) -->
+        <!-- ================= HALAMAN CUSTOMER (#customer) ================= -->
         <section id="view-customer" class="space-y-5">
             <!-- Box Poin Pelanggan -->
             <div class="bg-white border border-orange-200 p-4 rounded-xl shadow-sm">
                 <h2 class="font-bold text-orange-600 text-base mb-1">🪙 Program Poin Pelanggan</h2>
                 <p class="text-xs text-slate-600">Setiap belanja mengumpulkan poin yang bisa ditukar diskon di pesanan berikutnya!</p>
                 <div class="mt-3 flex items-center justify-between bg-orange-50 p-2.5 rounded-lg border border-orange-100 text-xs">
-                    <span>No WA: <strong id="cust-phone-display" class="text-orange-700">-</strong> (<strong id="cust-points-display" class="text-emerald-600">0 Poin</strong>)</span>
-                    <button onclick="changeCustomerPhone()" class="text-orange-600 underline font-semibold">Ubah</button>
+                    <span>No WA Anda: <strong id="cust-phone-display" class="text-orange-700">-</strong> (<strong id="cust-points-display" class="text-emerald-600">0 Poin</strong>)</span>
+                    <button onclick="changeCustomerPhone()" class="text-orange-600 underline font-semibold">Ubah / Daftar</button>
                 </div>
             </div>
 
@@ -54,14 +58,14 @@
             </div>
 
             <!-- Grid Produk -->
-            <div id="product-grid" class="grid grid-cols-2 gap-3 md:grid-cols-3">
+            <div id="product-grid" class="grid grid-cols-2 gap-3 md:grid-cols-4">
                 <p class="text-xs text-slate-500 col-span-full text-center py-6">Memuat katalog produk...</p>
             </div>
         </section>
 
-        <!-- HALAMAN ADMIN (#admin) -->
+        <!-- ================= HALAMAN ADMIN (#admin) ================= -->
         <section id="view-admin" class="hidden">
-            <!-- Login PIN -->
+            <!-- Login PIN Admin -->
             <div id="admin-login-box" class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-md border border-orange-100 mt-10">
                 <h2 class="font-bold text-xl text-slate-900 mb-2">🔒 Panel Login Admin</h2>
                 <p class="text-xs text-slate-500 mb-4">Masukkan PIN akses admin (Default PIN: <strong>1234</strong>)</p>
@@ -69,98 +73,143 @@
                 <button onclick="verifyAdminPin()" class="w-full bg-orange-600 text-white font-semibold py-2.5 rounded-lg text-sm hover:bg-orange-700 transition">Masuk Dashboard</button>
             </div>
 
-            <!-- Dashboard Utama Admin -->
-            <div id="admin-dashboard" class="hidden space-y-6">
-                <!-- Info Link Tautan -->
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-xs space-y-2">
-                    <p class="font-bold text-slate-700">📌 Tautan Akses Terpisah:</p>
-                    <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded border border-orange-100">
-                        <span class="truncate mr-2 text-slate-600">Link Customer: <code id="link-cust-url"></code></span>
-                        <button onclick="copyLink('customer')" class="bg-orange-100 px-2.5 py-1 rounded text-orange-700 font-semibold hover:bg-orange-200">Salin</button>
-                    </div>
-                    <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded border border-orange-100">
-                        <span class="truncate mr-2 text-slate-600">Link Admin: <code id="link-admin-url"></code></span>
-                        <button onclick="copyLink('admin')" class="bg-orange-100 px-2.5 py-1 rounded text-orange-700 font-semibold hover:bg-orange-200">Salin</button>
-                    </div>
+            <!-- Dashboard Utama Admin (Sidebar Vertikal + Konten) -->
+            <div id="admin-dashboard" class="hidden grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- SIDEBAR VERTIKAL DROPDOWN/MENU -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-2 h-fit">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Menu Kelola Admin</p>
+                    <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="w-full text-left px-3 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white flex items-center justify-between"><span>📦 Pesanan Masuk</span><span id="badge-order-count" class="bg-white text-orange-600 px-1.5 py-0.5 rounded-full text-[10px]">0</span></button>
+                    <button onclick="switchAdminTab('products')" id="tab-btn-products" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">🏷️ Produk & Varian</button>
+                    <button onclick="switchAdminTab('promos')" id="tab-btn-promos" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">🎁 Voucher, Bundling & Tebus Murah</button>
+                    <button onclick="switchAdminTab('customers')" id="tab-btn-customers" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">👥 Database Pelanggan</button>
+                    <button onclick="switchAdminTab('reports')" id="tab-btn-reports" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">📊 Laporan & Keuangan</button>
+                    <button onclick="switchAdminTab('profile')" id="tab-btn-profile" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">⚙️ Profil & Pengaturan</button>
+                    <hr class="my-2 border-orange-100">
+                    <button onclick="logoutAdmin()" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg text-red-600 hover:bg-red-50">🚪 Keluar Admin</button>
                 </div>
 
-                <!-- Tab Menu Admin Lengkap -->
-                <div class="flex flex-wrap gap-2 border-b border-orange-200 pb-2">
-                    <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="px-3 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white">📦 Pesanan Masuk</button>
-                    <button onclick="switchAdminTab('products')" id="tab-btn-products" class="px-3 py-2 text-xs font-bold rounded-lg bg-white text-slate-700 border">🏷️ Produk & Varian</button>
-                    <button onclick="switchAdminTab('promos')" id="tab-btn-promos" class="px-3 py-2 text-xs font-bold rounded-lg bg-white text-slate-700 border">🎁 Voucher, Bundling & Tebus Murah</button>
-                    <button onclick="switchAdminTab('customers')" id="tab-btn-customers" class="px-3 py-2 text-xs font-bold rounded-lg bg-white text-slate-700 border">👥 Database Pelanggan</button>
-                </div>
-
-                <!-- Konten Tab Pesanan -->
-                <div id="admin-tab-orders" class="space-y-3">
-                    <h3 class="font-bold text-sm">Daftar Pesanan Customer</h3>
-                    <div id="admin-orders-list" class="space-y-3"></div>
-                </div>
-
-                <!-- Konten Tab Produk & 6 Varian -->
-                <div id="admin-tab-products" class="hidden space-y-4">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
-                        <h3 class="font-bold text-sm text-orange-600">+ Tambah Produk & Varian (Hingga 6 Varian + Stok)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                            <input type="text" id="new-p-name" placeholder="Nama Produk" class="border p-2 rounded-lg">
-                            <input type="text" id="new-p-img" placeholder="URL Gambar Produk (Opsional)" class="border p-2 rounded-lg">
-                            <input type="number" id="new-p-price" placeholder="Harga Coret / Normal (Rp)" class="border p-2 rounded-lg">
-                            <input type="number" id="new-p-promo" placeholder="Harga Promo / Jual (Rp)" class="border p-2 rounded-lg">
-                            <input type="number" id="new-p-stock" placeholder="Total Stok Utama" class="border p-2 rounded-lg">
-                            <input type="number" id="new-p-points" placeholder="Poin Hadiah (Contoh: 5)" class="border p-2 rounded-lg">
+                <!-- KONTEN UTAMA ADMIN -->
+                <div class="md:col-span-3 space-y-6">
+                    <!-- Info Link Tautan -->
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-xs space-y-2">
+                        <p class="font-bold text-slate-700">📌 Tautan Akses Terpisah:</p>
+                        <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded border border-orange-100">
+                            <span class="truncate mr-2 text-slate-600">Link Customer: <code id="link-cust-url"></code></span>
+                            <button onclick="copyLink('customer')" class="bg-orange-100 px-2.5 py-1 rounded text-orange-700 font-semibold hover:bg-orange-200">Salin</button>
                         </div>
-                        <input type="text" id="new-p-variants" placeholder="Varian & Stok (Format: Merah:10, Biru:5, Hijau:8 - Max 6 varian)" class="w-full text-xs border p-2 rounded-lg">
-                        <button onclick="addProductSupabase()" class="w-full bg-orange-600 text-white py-2.5 rounded-lg text-xs font-bold hover:bg-orange-700">Simpan Produk ke Cloud</button>
-                    </div>
-                    <div id="admin-products-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-                </div>
-
-                <!-- Konten Tab Voucher, Bundling & Tebus Murah -->
-                <div id="admin-tab-promos" class="hidden space-y-6">
-                    <!-- Kelola Voucher (Max 5) -->
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
-                        <h3 class="font-bold text-sm text-orange-600">🎟️ Kelola Voucher Belanja (Maksimal 5 Voucher Aktif)</h3>
-                        <div class="grid grid-cols-2 gap-2 text-xs">
-                            <input type="text" id="v-code" placeholder="Kode Voucher (Contoh: HEMAT10)" class="border p-2 rounded-lg uppercase">
-                            <input type="text" id="v-name" placeholder="Nama Promo Voucher" class="border p-2 rounded-lg">
-                            <input type="number" id="v-disc" placeholder="Potongan Harga (Rp)" class="border p-2 rounded-lg">
-                            <input type="number" id="v-min" placeholder="Min. Belanja (Rp)" class="border p-2 rounded-lg">
+                        <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded border border-orange-100">
+                            <span class="truncate mr-2 text-slate-600">Link Admin: <code id="link-admin-url"></code></span>
+                            <button onclick="copyLink('admin')" class="bg-orange-100 px-2.5 py-1 rounded text-orange-700 font-semibold hover:bg-orange-200">Salin</button>
                         </div>
-                        <button onclick="addVoucherSupabase()" class="w-full bg-orange-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-orange-700">+ Tambah Voucher</button>
-                        <div id="admin-vouchers-list" class="space-y-2 pt-2"></div>
                     </div>
 
-                    <!-- Kelola Tebus Murah -->
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
-                        <h3 class="font-bold text-sm text-orange-600">⚡ Kelola Produk Tebus Murah</h3>
-                        <div class="grid grid-cols-2 gap-2 text-xs">
-                            <input type="text" id="tm-name" placeholder="Nama Produk Tebus Murah" class="border p-2 rounded-lg">
-                            <input type="number" id="tm-normal" placeholder="Harga Normal (Rp)" class="border p-2 rounded-lg">
-                            <input type="number" id="tm-price" placeholder="Harga Tebus Murah (Rp)" class="border p-2 rounded-lg">
-                            <input type="number" id="tm-min" placeholder="Syarat Min. Belanja (Rp)" class="border p-2 rounded-lg">
+                    <!-- 1. TAB PESANAN -->
+                    <div id="admin-tab-orders" class="space-y-3">
+                        <h3 class="font-bold text-sm text-slate-800">Daftar Pesanan Masuk & Konfirmasi Poin</h3>
+                        <div id="admin-orders-list" class="space-y-3"></div>
+                    </div>
+
+                    <!-- 2. TAB PRODUK & VARIAN -->
+                    <div id="admin-tab-products" class="hidden space-y-4">
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
+                            <h3 class="font-bold text-sm text-orange-600">+ Tambah Produk Baru (HPP, Harga Jual, Varian, Tier, Poin)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                <input type="text" id="new-p-name" placeholder="Nama Produk" class="border p-2 rounded-lg">
+                                <input type="text" id="new-p-img" placeholder="URL Gambar Produk (Opsional)" class="border p-2 rounded-lg">
+                                <input type="number" id="new-p-hpp" placeholder="Harga HPP (Modal) Rp" class="border p-2 rounded-lg">
+                                <input type="number" id="new-p-price" placeholder="Harga Jual Normal / Coret Rp" class="border p-2 rounded-lg">
+                                <input type="number" id="new-p-promo" placeholder="Harga Jual Promo Rp" class="border p-2 rounded-lg">
+                                <input type="number" id="new-p-stock" placeholder="Stok Utama" class="border p-2 rounded-lg">
+                                <input type="number" id="new-p-points" placeholder="Poin Hadiah (Contoh: 5)" class="border p-2 rounded-lg">
+                                <input type="text" id="new-p-tiers" placeholder="Harga Bertingkat (Format: 3:60000, 5:58000)" class="border p-2 rounded-lg">
+                            </div>
+                            <input type="text" id="new-p-variants" placeholder="Varian & Stok (Format: Merah:10, Biru:5, Hijau:8 - Max 6 varian)" class="w-full text-xs border p-2 rounded-lg">
+                            <button onclick="addProductSupabase()" class="w-full bg-orange-600 text-white py-2.5 rounded-lg text-xs font-bold hover:bg-orange-700">Simpan Produk ke Cloud</button>
                         </div>
-                        <button onclick="addTebusMurahSupabase()" class="w-full bg-orange-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-orange-700">+ Tambah Tebus Murah</button>
-                        <div id="admin-tm-list" class="space-y-2 pt-2"></div>
+                        <div id="admin-products-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                     </div>
 
-                    <!-- Kelola Promo Bundling -->
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
-                        <h3 class="font-bold text-sm text-orange-600">📦 Kelola Paket Bundling</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
-                            <input type="text" id="b-name" placeholder="Nama Paket (Contoh: Paket Sembako Hemat)" class="border p-2 rounded-lg">
-                            <input type="number" id="b-orig" placeholder="Total Harga Normal (Rp)" class="border p-2 rounded-lg">
-                            <input type="number" id="b-promo" placeholder="Harga Paket Bundling (Rp)" class="border p-2 rounded-lg">
+                    <!-- 3. TAB PROMO (Voucher, Bundling, Tebus Murah) -->
+                    <div id="admin-tab-promos" class="hidden space-y-6">
+                        <!-- Voucher (Max 5) -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
+                            <h3 class="font-bold text-sm text-orange-600">🎟️ Kelola Voucher Belanja (Maksimal 5)</h3>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <input type="text" id="v-code" placeholder="Kode Voucher (Misal: HEMAT10)" class="border p-2 rounded-lg uppercase">
+                                <input type="text" id="v-name" placeholder="Nama Voucher" class="border p-2 rounded-lg">
+                                <input type="number" id="v-disc" placeholder="Jumlah Potongan Rp" class="border p-2 rounded-lg">
+                                <input type="number" id="v-min" placeholder="Minimal Belanja Rp" class="border p-2 rounded-lg">
+                            </div>
+                            <button onclick="addVoucherSupabase()" class="w-full bg-orange-600 text-white py-2 rounded-lg text-xs font-bold">+ Tambah Voucher</button>
+                            <div id="admin-vouchers-list" class="space-y-2 pt-2"></div>
                         </div>
-                        <button onclick="addBundleSupabase()" class="w-full bg-orange-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-orange-700">+ Tambah Paket Bundling</button>
-                        <div id="admin-bundles-list" class="space-y-2 pt-2"></div>
-                    </div>
-                </div>
 
-                <!-- Konten Tab Pelanggan & WA Chat -->
-                <div id="admin-tab-customers" class="hidden space-y-3">
-                    <h3 class="font-bold text-sm">Database Pelanggan & Chat WhatsApp</h3>
-                    <div id="admin-customers-list" class="space-y-2"></div>
+                        <!-- Promo Bundling -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
+                            <h3 class="font-bold text-sm text-orange-600">📦 Kelola Promo Bundling (Max 5 Produk Paket)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+                                <input type="text" id="b-name" placeholder="Nama Paket Bundling" class="border p-2 rounded-lg">
+                                <input type="number" id="b-orig" placeholder="Total Harga Normal Rp" class="border p-2 rounded-lg">
+                                <input type="number" id="b-promo" placeholder="Harga Paket Bundling Rp" class="border p-2 rounded-lg">
+                            </div>
+                            <button onclick="addBundleSupabase()" class="w-full bg-orange-600 text-white py-2 rounded-lg text-xs font-bold">+ Tambah Bundling</button>
+                            <div id="admin-bundles-list" class="space-y-2 pt-2"></div>
+                        </div>
+
+                        <!-- Tebus Murah -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
+                            <h3 class="font-bold text-sm text-orange-600">⚡ Kelola Produk Tebus Murah</h3>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <input type="text" id="tm-name" placeholder="Nama Produk Tebus" class="border p-2 rounded-lg">
+                                <input type="number" id="tm-normal" placeholder="Harga Normal Rp" class="border p-2 rounded-lg">
+                                <input type="number" id="tm-price" placeholder="Harga Tebus Murah Rp" class="border p-2 rounded-lg">
+                                <input type="number" id="tm-min" placeholder="Syarat Min. Belanja Rp" class="border p-2 rounded-lg">
+                            </div>
+                            <button onclick="addTebusMurahSupabase()" class="w-full bg-orange-600 text-white py-2 rounded-lg text-xs font-bold">+ Tambah Tebus Murah</button>
+                            <div id="admin-tm-list" class="space-y-2 pt-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- 4. TAB DATABASE CUSTOMER -->
+                    <div id="admin-tab-customers" class="hidden space-y-3">
+                        <h3 class="font-bold text-sm text-slate-800">Database Pelanggan & Chat WhatsApp</h3>
+                        <div id="admin-customers-list" class="space-y-2"></div>
+                    </div>
+
+                    <!-- 5. TAB LAPORAN & KEUANGAN -->
+                    <div id="admin-tab-reports" class="hidden space-y-4">
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-4">
+                            <div class="flex justify-between items-center flex-wrap gap-2">
+                                <h3 class="font-bold text-sm text-orange-600">📊 Laporan Penjualan & Keuangan</h3>
+                                <button onclick="exportToExcel()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700 shadow">📥 Unduh Laporan Excel (.xlsx)</button>
+                            </div>
+                            <div id="report-summary-cards" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs"></div>
+                        </div>
+                    </div>
+
+                    <!-- 6. TAB PROFIL & PENGATURAN TOKO -->
+                    <div id="admin-tab-profile" class="hidden space-y-4">
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
+                            <h3 class="font-bold text-sm text-orange-600">⚙️ Pengaturan Profil Toko & WhatsApp</h3>
+                            <div>
+                                <label class="font-medium block mb-1">Nama Toko:</label>
+                                <input type="text" id="set-store-name" class="w-full border p-2 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="font-medium block mb-1">URL Logo Toko (Gambar):</label>
+                                <input type="text" id="set-store-logo" class="w-full border p-2 rounded-lg" placeholder="https://...">
+                            </div>
+                            <div>
+                                <label class="font-medium block mb-1">Nomor WhatsApp Admin (Format 62...):</label>
+                                <input type="text" id="set-wa-admin" class="w-full border p-2 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="font-medium block mb-1">Daftar Rekening / Pembayaran:</label>
+                                <textarea id="set-bank-accounts" rows="4" class="w-full border p-2 rounded-lg"></textarea>
+                            </div>
+                            <button onclick="saveStoreSettings()" class="bg-orange-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-orange-700">Simpan Pengaturan Toko</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -175,40 +224,35 @@
             </div>
             <div id="cart-items-container" class="space-y-3 mb-4"></div>
             
-            <!-- Input Kode Voucher -->
+            <!-- Input Voucher -->
             <div class="flex gap-2 mb-3 text-xs">
-                <input type="text" id="checkout-voucher-code" placeholder="Masukkan Kode Voucher..." class="flex-1 border rounded-lg p-2 uppercase">
+                <input type="text" id="checkout-voucher-code" placeholder="Kode Voucher..." class="flex-1 border rounded-lg p-2 uppercase">
                 <button onclick="applyVoucher()" class="bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold">Pakai</button>
             </div>
 
             <div class="bg-orange-50 p-3 rounded-xl space-y-2 text-xs mb-4 border border-orange-100">
                 <div class="flex justify-between"><span>Subtotal:</span><span id="cart-subtotal">Rp 0</span></div>
                 <div class="flex justify-between text-emerald-600"><span>Potongan Voucher:</span><span id="cart-voucher-disc">-Rp 0</span></div>
-                <div class="flex justify-between text-orange-700"><span>Poin Dimiliki: <strong id="modal-user-points">0</strong></span><span><input type="checkbox" id="use-points-checkbox" onchange="calculateCartTotal()"> Gunakan Poin</span></div>
+                <div class="flex justify-between text-orange-700"><span>Poin Dimiliki (<strong id="modal-user-points">0</strong>):</span><span><input type="checkbox" id="use-points-checkbox" onchange="calculateCartTotal()"> Gunakan Poin</span></div>
                 <div class="flex justify-between font-bold text-sm pt-2 border-t border-orange-200 text-slate-900"><span>Total Bayar:</span><span id="cart-total">Rp 0</span></div>
             </div>
 
             <div class="space-y-3 text-xs mb-4">
-                <div>
-                    <label class="font-medium block mb-1">Nama Pemesan:</label>
-                    <input type="text" id="order-name" class="w-full border rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-orange-500" placeholder="Nama lengkap">
-                </div>
-                <div>
-                    <label class="font-medium block mb-1">Nomor WhatsApp:</label>
-                    <input type="tel" id="order-phone" class="w-full border rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-orange-500" placeholder="08xxxxxxxxxx">
-                </div>
+                <div><label class="font-medium block mb-1">Nama Pemesan:</label><input type="text" id="order-name" class="w-full border rounded-lg p-2.5 outline-none" placeholder="Nama lengkap"></div>
+                <div><label class="font-medium block mb-1">Nomor WhatsApp:</label><input type="tel" id="order-phone" class="w-full border rounded-lg p-2.5 outline-none" placeholder="08xxxxxxxxxx"></div>
+                <div><label class="font-medium block mb-1">Alamat Lengkap:</label><textarea id="order-address" rows="2" class="w-full border rounded-lg p-2.5 outline-none" placeholder="Nama jalan, nomor rumah, kelurahan..."></textarea></div>
                 <div>
                     <label class="font-medium block mb-1">Metode Pengiriman:</label>
                     <select id="order-shipping" class="w-full border rounded-lg p-2.5 outline-none bg-white">
-                        <option value="Ambil di Toko (Jln Teluk Buli 1 No 15 Perak Surabaya)">Ambil di Toko (Jln Teluk Buli 1 No 15 Perak Surabaya)</option>
                         <option value="Kurir Toko Lokal Surabaya">Kurir Toko Lokal Surabaya</option>
-                        <option value="Ojek Online (GoSend/Grab)">Ojek Online (GoSend/Grab)</option>
+                        <option value="Ambil di Tempat (Toko)">Ambil di Tempat (Toko)</option>
+                        <option value="Kurir Ekspedisi / Luar Kota">Kurir Ekspedisi / Luar Kota</option>
                     </select>
                 </div>
                 <div>
                     <label class="font-medium block mb-1">Metode Pembayaran:</label>
                     <select id="order-payment" class="w-full border rounded-lg p-2.5 outline-none bg-white">
-                        <option value="Transfer BSI (7123456789)">Transfer BSI (7123456789)</option>
+                        <option value="Transfer BSI (7199953748) a.n Masjid Arrahmah Mart Surabaya">Transfer BSI (7199953748) a.n Masjid Arrahmah Mart Surabaya</option>
                         <option value="QRIS Arrahmah Mart">QRIS Arrahmah Mart</option>
                         <option value="COD (Bayar di Tempat)">COD (Bayar di Tempat)</option>
                     </select>
@@ -219,79 +263,54 @@
         </div>
     </div>
 
-    <!-- SCRIPT APLIKASI TERHUBUNG SUPABASE -->
+    <!-- SCRIPT APLIKASI -->
     <script>
         const SUPABASE_URL = 'https://oeoskmyvumfwihbrmfkx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_VriQAQ-FC3JGp7-ojoEGHw_YoU5RCDu';
         let sb = null;
-        try {
-            if (window.supabase && window.supabase.createClient) {
-                sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            }
-        } catch (e) { console.error("Init warning:", e); }
+        try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e){}
 
-        let products = [];
-        let orders = [];
-        let customers = {};
-        let vouchers = [];
-        let bundles = [];
-        let tebusMurahList = [];
-        let cart = [];
-        let appliedVoucher = null;
-        let currentPhone = localStorage.getItem('ar_active_phone') || '';
+        let products = [], orders = [], customers = {}, vouchers = [], bundles = [], tebusMurahList = [], storeSettings = {};
+        let cart = [], appliedVoucher = null, currentPhone = localStorage.getItem('ar_active_phone') || '';
 
         window.addEventListener('hashchange', router);
         window.addEventListener('load', async () => {
             if (!window.location.hash) window.location.hash = '#customer';
-            router();
             await syncFromCloud();
             router();
-            setupRealtime();
         });
 
         async function syncFromCloud() {
             if (!sb) return;
             try {
-                let [pRes, oRes, cRes, vRes, bRes, tmRes] = await Promise.all([
-                    sb.from('products').select('*').order('id', { ascending: true }),
-                    sb.from('orders').select('*').order('id', { ascending: false }),
+                let [pRes, oRes, cRes, vRes, bRes, tmRes, sRes] = await Promise.all([
+                    sb.from('products').select('*').order('id', {ascending:true}),
+                    sb.from('orders').select('*').order('id', {ascending:false}),
                     sb.from('customers').select('*'),
                     sb.from('vouchers').select('*'),
                     sb.from('bundles').select('*'),
-                    sb.from('tebus_murah').select('*')
+                    sb.from('tebus_murah').select('*'),
+                    sb.from('store_settings').select('*').eq('id', 1).single()
                 ]);
 
-                if (pRes && pRes.data) products = pRes.data.map(p => ({
+                if (pRes.data) products = pRes.data.map(p => ({
                     ...p,
-                    promoPrice: p.promo_price || (p.price - (p.discount || 0)),
+                    promoPrice: p.promo_price || p.price,
                     pointsEarned: p.points_earned || 5
                 }));
-                if (oRes && oRes.data) orders = oRes.data;
-                if (cRes && cRes.data) {
-                    customers = {};
-                    cRes.data.forEach(c => customers[c.phone] = c);
+                if (oRes.data) orders = oRes.data;
+                if (cRes.data) { customers = {}; cRes.data.forEach(c => customers[c.phone] = c); }
+                if (vRes.data) vouchers = vRes.data;
+                if (bRes.data) bundles = bRes.data;
+                if (tmRes.data) tebusMurahList = tmRes.data;
+                if (sRes.data) {
+                    storeSettings = sRes.data;
+                    document.getElementById('store-title-display').innerText = storeSettings.store_name || 'Arrahmah Mart Surabaya';
+                    if (storeSettings.logo_url) {
+                        document.getElementById('header-logo-container').innerHTML = `<img src="${storeSettings.logo_url}" class="w-full h-full object-cover">`;
+                    }
                 }
-                if (vRes && vRes.data) vouchers = vRes.data;
-                if (bRes && bRes.data) bundles = bRes.data;
-                if (tmRes && tmRes.data) tebusMurahList = tmRes.data;
-            } catch (err) {
-                console.error("Sync error:", err);
-            }
-        }
-
-        function setupRealtime() {
-            if (!sb) return;
-            try {
-                sb.channel('public:all')
-                    .on('postgres_changes', { event: '*', schema: 'public' }, async () => {
-                        await syncFromCloud();
-                        if (window.location.hash.includes('#admin')) {
-                            if (!document.getElementById('admin-dashboard').classList.contains('hidden')) renderAdminData();
-                        } else {
-                            renderCatalog();
-                        }
-                    }).subscribe();
-            } catch (e) {}
+            } catch(e) { console.error(e); }
         }
 
         function router() {
@@ -321,12 +340,12 @@
         }
 
         async function changeCustomerPhone() {
-            let phone = prompt("Masukkan nomor WhatsApp Anda untuk mengumpulkan poin belanja:", currentPhone || "08");
+            let phone = prompt("Masukkan nomor WhatsApp Anda:", currentPhone || "08");
             if (phone && phone.trim().length > 5) {
                 currentPhone = phone.trim();
                 localStorage.setItem('ar_active_phone', currentPhone);
                 if (!customers[currentPhone]) {
-                    let newCust = { phone: currentPhone, name: "Pelanggan", points: 10, total_spend: 0 };
+                    let newCust = { phone: currentPhone, name: "Pelanggan", points: 10, total_spend: 0, address: "" };
                     customers[currentPhone] = newCust;
                     if (sb) await sb.from('customers').upsert([newCust]);
                 }
@@ -337,71 +356,24 @@
         function renderCatalog() {
             const promoDiv = document.getElementById('promo-highlights');
             let promoHtml = '';
-
             if (vouchers.length > 0) {
-                promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm">
-                    <p class="font-bold text-xs text-orange-600 mb-2">🎟️ Voucher Belanja Tersedia (Salin Kode saat Checkout):</p>
-                    <div class="flex gap-2 overflow-x-auto pb-1">
-                        ${vouchers.map(v => `
-                            <div class="bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg text-xs shrink-0">
-                                <span class="font-bold text-orange-700 block">${v.code}</span>
-                                <span class="text-[10px] text-slate-600">Potongan Rp ${(v.discount_amount||0).toLocaleString()} (Min. Rp ${(v.min_spend||0).toLocaleString()})</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
+                promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">🎟️ Voucher Belanja Aktif:</p><div class="flex gap-2 overflow-x-auto pb-1">${vouchers.map(v => `<div class="bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg text-xs shrink-0"><span class="font-bold text-orange-700 block">${v.code}</span><span class="text-[10px] text-slate-600">Potongan Rp ${(v.discount_amount||0).toLocaleString()} (Min Rp ${(v.min_spend||0).toLocaleString()})</span></div>`).join('')}</div></div>`;
             }
-
             if (bundles.length > 0) {
-                promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm">
-                    <p class="font-bold text-xs text-orange-600 mb-2">📦 Paket Bundling Hemat:</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        ${bundles.map(b => `
-                            <div class="bg-orange-50/50 p-2.5 rounded-lg border border-orange-100 flex justify-between items-center text-xs">
-                                <div>
-                                    <p class="font-bold text-slate-800">${b.name}</p>
-                                    <span class="text-[10px] text-slate-400 line-through">Rp ${(b.original_price||0).toLocaleString()}</span>
-                                    <span class="font-bold text-orange-600 ml-1">Rp ${(b.promo_price||0).toLocaleString()}</span>
-                                </div>
-                                <button onclick="addSpecialToCart('bundle-${b.id}', '${b.name}', ${b.promo_price})" class="bg-orange-600 text-white px-2.5 py-1.5 rounded-lg font-semibold">+ Ambil</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
+                promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">📦 Paket Bundling Hemat:</p><div class="grid grid-cols-1 md:grid-cols-2 gap-2">${bundles.map(b => `<div class="bg-orange-50/50 p-2.5 rounded-lg border border-orange-100 flex justify-between items-center text-xs"><div><p class="font-bold text-slate-800">${b.name}</p><span class="text-[10px] text-slate-400 line-through">Rp ${(b.original_price||0).toLocaleString()}</span><span class="font-bold text-orange-600 ml-1">Rp ${(b.promo_price||0).toLocaleString()}</span></div><button onclick="addSpecialToCart('bundle-${b.id}', '${b.name}', ${b.promo_price})" class="bg-orange-600 text-white px-2.5 py-1.5 rounded-lg font-semibold">+ Ambil</button></div>`).join('')}</div></div>`;
             }
-
             if (tebusMurahList.length > 0) {
-                promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm">
-                    <p class="font-bold text-xs text-orange-600 mb-2">⚡ Promo Tebus Murah:</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        ${tebusMurahList.map(tm => `
-                            <div class="bg-orange-50/50 p-2.5 rounded-lg border border-orange-100 flex justify-between items-center text-xs">
-                                <div>
-                                    <p class="font-bold text-slate-800">${tm.name}</p>
-                                    <span class="text-[10px] text-slate-400 line-through">Rp ${(tm.normal_price||0).toLocaleString()}</span>
-                                    <span class="font-bold text-orange-600 ml-1">Rp ${(tm.tebus_price||0).toLocaleString()}</span>
-                                    <p class="text-[10px] text-slate-500">Min. Belanja Rp ${(tm.min_cart_amount||0).toLocaleString()}</p>
-                                </div>
-                                <button onclick="addTebusMurahToCart(${tm.id})" class="bg-orange-600 text-white px-2.5 py-1.5 rounded-lg font-semibold">+ Tebus</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
+                promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">⚡ Promo Tebus Murah:</p><div class="grid grid-cols-1 md:grid-cols-2 gap-2">${tebusMurahList.map(tm => `<div class="bg-orange-50/50 p-2.5 rounded-lg border border-orange-100 flex justify-between items-center text-xs"><div><p class="font-bold text-slate-800">${tm.name}</p><span class="text-[10px] text-slate-400 line-through">Rp ${(tm.normal_price||0).toLocaleString()}</span><span class="font-bold text-orange-600 ml-1">Rp ${(tm.tebus_price||0).toLocaleString()}</span><p class="text-[10px] text-slate-500">Min. Belanja Rp ${(tm.min_cart_amount||0).toLocaleString()}</p></div><button onclick="addTebusMurahToCart(${tm.id})" class="bg-orange-600 text-white px-2.5 py-1.5 rounded-lg font-semibold">+ Tebus</button></div>`).join('')}</div></div>`;
             }
             promoDiv.innerHTML = promoHtml;
 
             const grid = document.getElementById('product-grid');
             if (products.length === 0) {
-                grid.innerHTML = `<p class="text-xs text-slate-500 col-span-full text-center py-6 bg-white rounded-xl border border-orange-100">Belum ada produk di katalog atau sedang menyinkronkan data...</p>`;
+                grid.innerHTML = `<p class="text-xs text-slate-500 col-span-full text-center py-6 bg-white rounded-xl border">Belum ada produk.</p>`;
             } else {
                 grid.innerHTML = products.map(p => {
                     let vars = Array.isArray(p.variants) ? p.variants : [];
-                    let variantSelect = vars.length > 0 ? `
-                        <select id="var-select-${p.id}" class="w-full border border-orange-200 rounded p-1 text-[10px] mt-1.5 bg-orange-50/40">
-                            ${vars.map(v => `<option value="${v}">${v}</option>`).join('')}
-                        </select>
-                    ` : '';
-
+                    let variantSelect = vars.length > 0 ? `<select id="var-select-${p.id}" class="w-full border border-orange-200 rounded p-1 text-[10px] mt-1.5 bg-orange-50/40">${vars.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>` : '';
                     return `
                     <div class="bg-white rounded-xl shadow-sm border border-orange-100 overflow-hidden flex flex-col justify-between">
                         <div>
@@ -422,8 +394,8 @@
                         <div class="p-3 pt-0">
                             <button onclick="addToCart(${p.id})" ${p.stock <= 0 ? 'disabled class="w-full bg-slate-200 text-slate-400 font-medium py-2 rounded-lg text-xs cursor-not-allowed"' : 'class="w-full bg-orange-600 text-white font-semibold py-2 rounded-lg text-xs hover:bg-orange-700 transition"'}>${p.stock <= 0 ? 'Stok Habis' : '+ Keranjang'}</button>
                         </div>
-                    </div>
-                `}).join('');
+                    </div>`;
+                }).join('');
             }
             updateCartFloatingUI();
         }
@@ -431,100 +403,85 @@
         function updateCartFloatingUI() {
             const totalItems = cart.reduce((a, b) => a + b.qty, 0);
             document.getElementById('cart-count-badge').innerText = `${totalItems} Produk di Keranjang`;
-
             let floatBtn = document.getElementById('floating-cart-btn');
             if (!floatBtn) {
                 floatBtn = document.createElement('div');
                 floatBtn.id = 'floating-cart-btn';
-                floatBtn.className = 'fixed bottom-4 left-4 right-4 max-w-4xl mx-auto px-4 z-40';
+                floatBtn.className = 'fixed bottom-4 left-4 right-4 max-w-6xl mx-auto px-4 z-40';
                 document.body.appendChild(floatBtn);
             }
             if (totalItems > 0) {
-                floatBtn.innerHTML = `
-                    <button onclick="toggleCartModal(true)" class="w-full bg-orange-600 text-white py-3 px-4 rounded-xl shadow-lg flex justify-between items-center text-sm font-bold border-2 border-white">
-                        <span>🛒 ${totalItems} Produk di Keranjang</span>
-                        <span>Lihat Pesanan →</span>
-                    </button>
-                `;
-            } else {
-                floatBtn.innerHTML = '';
-            }
+                floatBtn.innerHTML = `<button onclick="toggleCartModal(true)" class="w-full bg-orange-600 text-white py-3 px-4 rounded-xl shadow-lg flex justify-between items-center text-sm font-bold border-2 border-white"><span>🛒 ${totalItems} Produk di Keranjang</span><span>Lihat Pesanan →</span></button>`;
+            } else { floatBtn.innerHTML = ''; }
         }
 
         function addToCart(id) {
             const prod = products.find(p => p.id === id);
             if (!prod) return;
-            const varEl = document.getElementById(`var-select-${id}`);
-            const chosenVariant = varEl ? varEl.value : '';
-            const cartKey = chosenVariant ? `${id}-${chosenVariant}` : `${id}`;
-
-            const exist = cart.find(item => item.cartKey === cartKey);
-            if ((exist ? exist.qty : 0) + 1 > prod.stock) {
-                alert("Stok produk tidak mencukupi!");
-                return;
-            }
-            if (exist) exist.qty++;
-            else cart.push({ ...prod, cartKey, name: chosenVariant ? `${prod.name} (${chosenVariant})` : prod.name, qty: 1 });
+            let chosenVariant = document.getElementById(`var-select-${id}`)?.value || '';
+            let cartKey = chosenVariant ? `${id}-${chosenVariant}` : `${id}`;
+            let exist = cart.find(i => i.cartKey === cartKey);
+            let currentQty = exist ? exist.qty : 0;
             
+            // Cek harga tier jika ada
+            let finalPrice = prod.promoPrice;
+            if (Array.isArray(prod.tiers) && prod.tiers.length > 0) {
+                let targetQty = currentQty + 1;
+                // Format tier misal: [{min: 3, price: 60000}]
+                let sortedTiers = [...prod.tiers].sort((a,b)=>b.min - a.min);
+                for(let t of sortedTiers) {
+                    if (targetQty >= t.min) { finalPrice = t.price; break; }
+                }
+            }
+
+            if (currentQty + 1 > prod.stock) { alert("Stok tidak mencukupi!"); return; }
+            if (exist) { exist.qty++; exist.promoPrice = finalPrice; }
+            else { cart.push({ ...prod, cartKey, promoPrice: finalPrice, name: chosenVariant ? `${prod.name} (${chosenVariant})` : prod.name, qty: 1 }); }
             updateCartFloatingUI();
         }
 
         function addSpecialToCart(key, name, price) {
-            const exist = cart.find(item => item.cartKey === key);
+            let exist = cart.find(i => i.cartKey === key);
             if (exist) exist.qty++;
             else cart.push({ id: key, cartKey: key, name, promoPrice: price, pointsEarned: 5, qty: 1, isSpecial: true });
             updateCartFloatingUI();
         }
 
         function addTebusMurahToCart(tmId) {
-            const tm = tebusMurahList.find(t => t.id === tmId);
+            let tm = tebusMurahList.find(t => t.id === tmId);
             if (!tm) return;
-            let currentSub = cart.reduce((sum, item) => sum + (item.promoPrice * item.qty), 0);
-            if (currentSub < (tm.min_cart_amount || 0)) {
-                alert(`Minimal belanja Rp ${(tm.min_cart_amount||0).toLocaleString()} untuk menebus produk ini!`);
-                return;
-            }
+            let sub = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
+            if (sub < tm.min_cart_amount) { alert(`Minimal belanja Rp ${tm.min_cart_amount.toLocaleString()} untuk tebus murah ini!`); return; }
             addSpecialToCart(`tm-${tm.id}`, `[Tebus Murah] ${tm.name}`, tm.tebus_price);
         }
 
         function toggleCartModal(show) {
             const modal = document.getElementById('cart-modal');
-            if (show) {
-                modal.classList.remove('hidden');
-                renderCartModalContent();
-            } else {
-                modal.classList.add('hidden');
-            }
+            if (show) { modal.classList.remove('hidden'); renderCartModalContent(); }
+            else { modal.classList.add('hidden'); }
         }
 
         function renderCartModalContent() {
             const container = document.getElementById('cart-items-container');
-            if (cart.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Keranjang masih kosong.</p>`;
-            } else {
+            if (cart.length === 0) { container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Keranjang kosong.</p>`; }
+            else {
                 container.innerHTML = cart.map(item => `
                     <div class="flex justify-between items-center bg-orange-50/60 p-2.5 rounded-lg text-xs border border-orange-100">
-                        <div>
-                            <p class="font-bold">${item.name}</p>
-                            <p class="text-slate-500">Rp ${item.promoPrice.toLocaleString()} x ${item.qty}</p>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <button onclick="updateQty('${item.cartKey}', -1)" class="px-2 py-0.5 bg-white border rounded font-bold">-</button>
-                            <span>${item.qty}</span>
-                            <button onclick="updateQty('${item.cartKey}', 1)" class="px-2 py-0.5 bg-white border rounded font-bold">+</button>
-                        </div>
-                    </div>
-                `).join('');
+                        <div><p class="font-bold">${item.name}</p><p class="text-slate-500">Rp ${item.promoPrice.toLocaleString()} x ${item.qty}</p></div>
+                        <div class="flex items-center space-x-2"><button onclick="updateQty('${item.cartKey}', -1)" class="px-2 py-0.5 bg-white border rounded font-bold">-</button><span>${item.qty}</span><button onclick="updateQty('${item.cartKey}', 1)" class="px-2 py-0.5 bg-white border rounded font-bold">+</button></div>
+                    </div>`).join('');
             }
             if (currentPhone && customers[currentPhone]) {
                 document.getElementById('modal-user-points').innerText = customers[currentPhone].points;
                 document.getElementById('order-phone').value = currentPhone;
+                if (customers[currentPhone].name && customers[currentPhone].name !== "Pelanggan") document.getElementById('order-name').value = customers[currentPhone].name;
+                if (customers[currentPhone].address) document.getElementById('order-address').value = customers[currentPhone].address;
             }
             calculateCartTotal();
         }
 
         function updateQty(cartKey, delta) {
-            const item = cart.find(i => i.cartKey === cartKey);
+            let item = cart.find(i => i.cartKey === cartKey);
             if (item) {
                 item.qty += delta;
                 if (item.qty <= 0) cart = cart.filter(i => i.cartKey !== cartKey);
@@ -534,109 +491,90 @@
         }
 
         function applyVoucher() {
-            const code = document.getElementById('checkout-voucher-code').value.trim().toUpperCase();
-            const found = vouchers.find(v => v.code === code);
-            if (!found) {
-                alert("Kode voucher tidak valid!");
-                appliedVoucher = null;
-            } else {
-                let subtotal = cart.reduce((sum, item) => sum + (item.promoPrice * item.qty), 0);
-                if (subtotal < (found.min_spend || 0)) {
-                    alert(`Minimal belanja untuk voucher ini adalah Rp ${(found.min_spend||0).toLocaleString()}`);
-                    appliedVoucher = null;
-                } else {
-                    appliedVoucher = found;
-                    alert(`Voucher ${found.code} berhasil dipakai!`);
-                }
+            let code = document.getElementById('checkout-voucher-code').value.trim().toUpperCase();
+            let found = vouchers.find(v => v.code === code);
+            if (!found) { alert("Voucher tidak valid!"); appliedVoucher = null; }
+            else {
+                let sub = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
+                if (sub < found.min_spend) { alert(`Minimal belanja Rp ${found.min_spend.toLocaleString()}`); appliedVoucher = null; }
+                else { appliedVoucher = found; alert(`Voucher ${found.code} berhasil dipakai!`); }
             }
             calculateCartTotal();
         }
 
         function calculateCartTotal() {
-            let subtotal = cart.reduce((sum, item) => sum + (item.promoPrice * item.qty), 0);
-            let voucherDisc = appliedVoucher ? (appliedVoucher.discount_amount || 0) : 0;
-            let pointDisc = 0;
-
-            const usePoints = document.getElementById('use-points-checkbox').checked;
-            if (usePoints && currentPhone && customers[currentPhone]) {
-                pointDisc = customers[currentPhone].points * 1000;
+            let subtotal = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
+            let vDisc = appliedVoucher ? appliedVoucher.discount_amount : 0;
+            let pDisc = 0;
+            if (document.getElementById('use-points-checkbox').checked && currentPhone && customers[currentPhone]) {
+                pDisc = customers[currentPhone].points * (storeSettings.point_value || 1000);
             }
-
-            let totalDisc = voucherDisc + pointDisc;
+            let totalDisc = vDisc + pDisc;
             if (totalDisc > subtotal) totalDisc = subtotal;
-
             let finalTotal = subtotal - totalDisc;
             document.getElementById('cart-subtotal').innerText = `Rp ${subtotal.toLocaleString()}`;
-            document.getElementById('cart-voucher-disc').innerText = `-Rp ${voucherDisc.toLocaleString()}`;
+            document.getElementById('cart-voucher-disc').innerText = `-Rp ${vDisc.toLocaleString()}`;
             document.getElementById('cart-total').innerText = `Rp ${finalTotal.toLocaleString()}`;
         }
 
         async function submitOrder() {
-            const name = document.getElementById('order-name').value.trim();
-            const phone = document.getElementById('order-phone').value.trim();
-            const shipping = document.getElementById('order-shipping').value;
-            const payment = document.getElementById('order-payment').value;
+            let name = document.getElementById('order-name').value.trim();
+            let phone = document.getElementById('order-phone').value.trim();
+            let address = document.getElementById('order-address').value.trim();
+            let shipping = document.getElementById('order-shipping').value;
+            let payment = document.getElementById('order-payment').value;
 
-            if (!name || !phone || cart.length === 0) {
-                alert("Harap isi nama, nomor WhatsApp, dan pastikan keranjang tidak kosong!");
-                return;
-            }
-
+            if (!name || !phone || !address || cart.length === 0) { alert("Harap lengkapi nama, no WA, alamat, dan keranjang!"); return; }
             currentPhone = phone;
             localStorage.setItem('ar_active_phone', currentPhone);
 
-            let subtotal = cart.reduce((sum, item) => sum + (item.promoPrice * item.qty), 0);
-            let voucherDisc = appliedVoucher ? (appliedVoucher.discount_amount || 0) : 0;
-            let pointsUsed = 0;
-            let pointDisc = 0;
-
+            let subtotal = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
+            let vDisc = appliedVoucher ? appliedVoucher.discount_amount : 0;
+            let ptsUsed = 0, pDisc = 0;
             if (document.getElementById('use-points-checkbox').checked && customers[phone]) {
-                pointsUsed = Math.min(customers[phone].points, Math.floor((subtotal - voucherDisc) / 1000));
-                pointDisc = pointsUsed * 1000;
-                customers[phone].points -= pointsUsed;
+                ptsUsed = Math.min(customers[phone].points, Math.floor((subtotal - vDisc)/(storeSettings.point_value||1000)));
+                pDisc = ptsUsed * (storeSettings.point_value||1000);
+                customers[phone].points -= ptsUsed;
             }
+            let totalDisc = vDisc + pDisc;
+            let finalTotal = Math.max(0, subtotal - totalDisc);
+            let ptsEarned = cart.reduce((s,i)=>s+((i.pointsEarned||5)*i.qty),0);
 
-            let discount = voucherDisc + pointDisc;
-            let finalTotal = Math.max(0, subtotal - discount);
-            let pointsEarned = cart.reduce((sum, item) => sum + ((item.pointsEarned || 5) * item.qty), 0);
-
-            if (sb) {
-                for (let item of cart) {
-                    if (!item.isSpecial) {
-                        let p = products.find(prod => prod.id === item.id);
-                        if (p) {
-                            let newStock = Math.max(0, p.stock - item.qty);
-                            await sb.from('products').update({ stock: newStock }).eq('id', p.id);
-                        }
+            let totalHpp = 0;
+            for(let i of cart) {
+                if(!i.isSpecial) {
+                    let p = products.find(prod => prod.id === i.id);
+                    if(p) {
+                        totalHpp += (p.hpp || 0) * i.qty;
+                        if(sb) await sb.from('products').update({stock: Math.max(0, p.stock - i.qty)}).eq('id', p.id);
                     }
                 }
             }
+            let netProfit = finalTotal - totalHpp;
 
             let newOrder = {
                 id: 'ORD-' + Date.now().toString().slice(-6),
                 display_date: new Date().toLocaleDateString('id-ID'),
-                name, phone, items: cart, subtotal, total_discount: discount, points_used: pointsUsed,
-                final_total: finalTotal, points_earned: pointsEarned, shipping, payment, status: 'Menunggu Pembayaran'
+                name, phone, address, items: cart, subtotal, total_hpp: totalHpp, total_discount: totalDisc,
+                points_used: ptsUsed, net_profit: netProfit, points_earned: ptsEarned, shipping, payment, status: 'Menunggu Pembayaran'
             };
 
             if (sb) {
                 await sb.from('orders').insert([newOrder]);
-                let custObj = customers[phone] || { phone, name, points: 10, total_spend: 0 };
-                custObj.name = name;
+                let custObj = customers[phone] || { phone, name, address, points: 10, total_spend: 0 };
+                custObj.name = name; custObj.address = address;
                 await sb.from('customers').upsert([custObj]);
             }
 
-            let waText = `Halo Admin Arrahmah Mart 👋, saya ingin memesan produk:\n\n`;
-            waText += `No Pesanan: *${newOrder.id}*\nNama: *${name}*\nNo WA: *${phone}*\n\n`;
-            cart.forEach(i => { waText += `- ${i.name} (${i.qty}x) = Rp ${(i.promoPrice * i.qty).toLocaleString()}\n`; });
+            let waText = `Halo Admin *${storeSettings.store_name||'Arrahmah Mart'}* 👋,\nSaya ingin memesan produk:\n\nNo Pesanan: *${newOrder.id}*\nNama: *${name}*\nNo WA: *${phone}*\nAlamat: *${address}*\n\n`;
+            cart.forEach(i => { waText += `- ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}\n`; });
             waText += `\nSubtotal: Rp ${subtotal.toLocaleString()}\n`;
-            if (discount > 0) waText += `Total Diskon/Poin: -Rp ${discount.toLocaleString()}\n`;
+            if (totalDisc > 0) waText += `Total Diskon/Poin: -Rp ${totalDisc.toLocaleString()}\n`;
             waText += `*Total Pembayaran: Rp ${finalTotal.toLocaleString()}*\n\nPengiriman: ${shipping}\nPembayaran: ${payment}\n\nMohon konfirmasinya, terima kasih!`;
 
-            let waUrl = `https://wa.me/6281331999525?text=${encodeURIComponent(waText)}`;
-            cart = [];
-            appliedVoucher = null;
-            toggleCartModal(false);
+            let adminWa = storeSettings.wa_admin || '6281331999525';
+            let waUrl = `https://wa.me/${adminWa}?text=${encodeURIComponent(waText)}`;
+            cart = []; appliedVoucher = null; toggleCartModal(false);
             window.open(waUrl, '_blank');
             await syncFromCloud();
             router();
@@ -644,14 +582,18 @@
 
         // --- ADMIN LOGIC ---
         function verifyAdminPin() {
-            const pin = document.getElementById('admin-pin-input').value;
-            if (pin === '1234') {
+            let pin = document.getElementById('admin-pin-input').value;
+            if (pin === (storeSettings.admin_pin || '1234')) {
                 document.getElementById('admin-login-box').classList.add('hidden');
                 document.getElementById('admin-dashboard').classList.remove('hidden');
                 renderAdminData();
-            } else {
-                alert("PIN salah! Gunakan PIN: 1234");
-            }
+            } else { alert("PIN salah!"); }
+        }
+
+        function logoutAdmin() {
+            document.getElementById('admin-dashboard').classList.add('hidden');
+            document.getElementById('admin-login-box').classList.remove('hidden');
+            document.getElementById('admin-pin-input').value = '';
         }
 
         function copyLink(type) {
@@ -661,93 +603,98 @@
         }
 
         function switchAdminTab(tab) {
-            ['orders', 'products', 'promos', 'customers'].forEach(t => {
+            ['orders', 'products', 'promos', 'customers', 'reports', 'profile'].forEach(t => {
                 document.getElementById(`admin-tab-${t}`).classList.add('hidden');
-                document.getElementById(`tab-btn-${t}`).className = "px-3 py-2 text-xs font-bold rounded-lg bg-white text-slate-700 border";
+                let btn = document.getElementById(`tab-btn-${t}`);
+                if (btn) btn.className = "w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50";
             });
             document.getElementById(`admin-tab-${tab}`).classList.remove('hidden');
-            document.getElementById(`tab-btn-${tab}`).className = "px-3 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white";
+            let activeBtn = document.getElementById(`tab-btn-${tab}`);
+            if (activeBtn) activeBtn.className = "w-full text-left px-3 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white flex items-center justify-between";
             renderAdminData();
         }
 
         function renderAdminData() {
-            const ordersList = document.getElementById('admin-orders-list');
-            ordersList.innerHTML = orders.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pesanan masuk.</p>` : orders.map(o => `
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-2 text-xs">
-                    <div class="flex justify-between font-bold">
-                        <span>${o.id} - ${o.name}</span>
-                        <span class="px-2 py-0.5 rounded ${o.status === 'LUNAS' ? 'bg-emerald-100 text-emerald-800' : 'bg-orange-100 text-orange-800'}">${o.status}</span>
-                    </div>
-                    <p class="text-slate-500">WA: ${o.phone} | Total: <strong>Rp ${(o.final_total||0).toLocaleString()}</strong></p>
-                    <p class="text-slate-500">Pengiriman: ${o.shipping || '-'} | Pembayaran: ${o.payment || '-'}</p>
-                    ${o.status !== 'LUNAS' ? `<button onclick="confirmOrder('${o.id}')" class="bg-emerald-600 text-white font-semibold px-3 py-1.5 rounded-lg">Konfirmasi Lunas (+Poin Hadiah)</button>` : ''}
-                </div>
-            `).join('');
+            document.getElementById('badge-order-count').innerText = orders.filter(o => o.status !== 'LUNAS').length;
 
-            const prodList = document.getElementById('admin-products-list');
-            prodList.innerHTML = products.map(p => `
+            // Orders
+            document.getElementById('admin-orders-list').innerHTML = orders.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pesanan.</p>` : orders.map(o => `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-2 text-xs">
+                    <div class="flex justify-between font-bold"><span>${o.id} - ${o.name} (${o.phone})</span><span class="px-2 py-0.5 rounded ${o.status==='LUNAS'?'bg-emerald-100 text-emerald-800':'bg-orange-100 text-orange-800'}">${o.status}</span></div>
+                    <p class="text-slate-500">Alamat: ${o.address || '-'}</p>
+                    <p class="text-slate-500">Total: <strong>Rp ${(o.final_total||o.finalTotal||0).toLocaleString()}</strong> | Profit: <strong class="text-emerald-600">Rp ${(o.net_profit||0).toLocaleString()}</strong></p>
+                    <p class="text-slate-500">Kirim: ${o.shipping} | Bayar: ${o.payment}</p>
+                    <div class="pt-1">${o.status !== 'LUNAS' ? `<button onclick="confirmOrder('${o.id}')" class="bg-emerald-600 text-white font-semibold px-3 py-1.5 rounded-lg">Konfirmasi Lunas (+Poin Pelanggan)</button>` : ''}</div>
+                </div>`).join('');
+
+            // Products
+            document.getElementById('admin-products-list').innerHTML = products.map(p => `
                 <div class="bg-white p-3 rounded-xl shadow-sm border border-orange-100 flex items-center space-x-3 text-xs">
                     <img src="${p.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80'}" class="w-14 h-14 object-cover rounded-lg">
                     <div class="flex-1">
                         <p class="font-bold">${p.name}</p>
-                        <p class="text-slate-500">Jual: Rp ${p.promoPrice.toLocaleString()} | Stok: <strong>${p.stock}</strong></p>
+                        <p class="text-slate-500">HPP: Rp ${(p.hpp||0).toLocaleString()} | Jual: Rp ${p.promoPrice.toLocaleString()} | Stok: <strong>${p.stock}</strong></p>
                         <p class="text-[10px] text-orange-600">Varian: ${Array.isArray(p.variants) && p.variants.length > 0 ? p.variants.join(', ') : 'Tidak ada'}</p>
                     </div>
                     <button onclick="deleteProduct(${p.id})" class="text-red-500 font-bold px-2 py-1">Hapus</button>
-                </div>
-            `).join('');
+                </div>`).join('');
 
-            document.getElementById('admin-vouchers-list').innerHTML = vouchers.map(v => `
-                <div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border border-orange-100 text-xs">
-                    <span><strong>${v.code}</strong> - Potongan Rp ${(v.discount_amount||0).toLocaleString()}</span>
-                    <button onclick="deleteRow('vouchers', ${v.id})" class="text-red-500 font-bold">Hapus</button>
-                </div>
-            `).join('');
+            // Promos Lists
+            document.getElementById('admin-vouchers-list').innerHTML = vouchers.map(v => `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border text-xs"><span><strong>${v.code}</strong> - Potongan Rp ${(v.discount_amount||0).toLocaleString()}</span><button onclick="deleteRow('vouchers', ${v.id})" class="text-red-500 font-bold">Hapus</button></div>`).join('');
+            document.getElementById('admin-bundles-list').innerHTML = bundles.map(b => `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border text-xs"><span><strong>${b.name}</strong> - Paket Rp ${(b.promo_price||0).toLocaleString()}</span><button onclick="deleteRow('bundles', ${b.id})" class="text-red-500 font-bold">Hapus</button></div>`).join('');
+            document.getElementById('admin-tm-list').innerHTML = tebusMurahList.map(tm => `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border text-xs"><span><strong>${tm.name}</strong> - Tebus Rp ${(tm.tebus_price||0).toLocaleString()}</span><button onclick="deleteRow('tebus_murah', ${tm.id})" class="text-red-500 font-bold">Hapus</button></div>`).join('');
 
-            document.getElementById('admin-tm-list').innerHTML = tebusMurahList.map(tm => `
-                <div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border border-orange-100 text-xs">
-                    <span><strong>${tm.name}</strong> - Tebus Rp ${(tm.tebus_price||0).toLocaleString()}</span>
-                    <button onclick="deleteRow('tebus_murah', ${tm.id})" class="text-red-500 font-bold">Hapus</button>
-                </div>
-            `).join('');
-
-            document.getElementById('admin-bundles-list').innerHTML = bundles.map(b => `
-                <div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border border-orange-100 text-xs">
-                    <span><strong>${b.name}</strong> - Paket Rp ${(b.promo_price||0).toLocaleString()}</span>
-                    <button onclick="deleteRow('bundles', ${b.id})" class="text-red-500 font-bold">Hapus</button>
-                </div>
-            `).join('');
-
-            const custsList = document.getElementById('admin-customers-list');
+            // Customers + WA
             let custArray = Object.values(customers);
-            custsList.innerHTML = custArray.length === 0 ? `<p class="text-xs text-slate-500">Belum ada data pelanggan.</p>` : custArray.map(c => `
-                <div class="bg-white p-3 rounded-xl shadow-sm border border-orange-100 flex justify-between items-center text-xs">
-                    <div>
-                        <p class="font-bold">${c.name} (${c.phone})</p>
-                        <p class="text-slate-500">Saldo Poin: <strong class="text-orange-600">${c.points} Poin</strong></p>
-                    </div>
-                    <a href="https://wa.me/${c.phone.replace(/^0/, '62')}?text=${encodeURIComponent('Halo ' + c.name + ', terima kasih telah berbelanja di Arrahmah Mart Surabaya. Ada yang bisa kami bantu?')}" target="_blank" class="bg-emerald-600 text-white px-3 py-2 rounded-lg font-semibold flex items-center space-x-1">
-                        <span>💬 Chat WA</span>
-                    </a>
-                </div>
-            `).join('');
+            document.getElementById('admin-customers-list').innerHTML = custArray.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pelanggan.</p>` : custArray.map(c => `
+                <div class="bg-white p-3 rounded-xl shadow-sm border flex justify-between items-center text-xs">
+                    <div><p class="font-bold">${c.name || 'Pelanggan'} (${c.phone})</p><p class="text-slate-500">Alamat: ${c.address || '-'}</p><p class="text-slate-500">Poin: <strong class="text-orange-600">${c.points} Poin</strong></p></div>
+                    <a href="https://wa.me/${c.phone.replace(/^0/,'62')}?text=${encodeURIComponent('Halo '+(c.name||'Pelanggan')+', terima kasih telah berbelanja di Arrahmah Mart Surabaya.')}" target="_blank" class="bg-emerald-600 text-white px-3 py-2 rounded-lg font-semibold flex items-center space-x-1"><span>💬 Chat WA</span></a>
+                </div>`).join('');
+
+            // Reports Summary
+            let totalOmset = orders.filter(o=>o.status==='LUNAS').reduce((s,o)=>s+(o.final_total||0),0);
+            let totalProfit = orders.filter(o=>o.status==='LUNAS').reduce((s,o)=>s+(o.net_profit||0),0);
+            let totalDiskon = orders.filter(o=>o.status==='LUNAS').reduce((s,o)=>s+(o.total_discount||0),0);
+            let totalTx = orders.filter(o=>o.status==='LUNAS').length;
+            document.getElementById('report-summary-cards').innerHTML = `
+                <div class="bg-orange-50 p-3 rounded-lg border border-orange-200"><p class="text-slate-500">Total Omset Lunas</p><p class="font-bold text-sm text-orange-700">Rp ${totalOmset.toLocaleString()}</p></div>
+                <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-200"><p class="text-slate-500">Total Keuntungan Bersih</p><p class="font-bold text-sm text-emerald-700">Rp ${totalProfit.toLocaleString()}</p></div>
+                <div class="bg-blue-50 p-3 rounded-lg border border-blue-200"><p class="text-slate-500">Total Diskon / Potongan</p><p class="font-bold text-sm text-blue-700">Rp ${totalDiskon.toLocaleString()}</p></div>
+                <div class="bg-purple-50 p-3 rounded-lg border border-purple-200"><p class="text-slate-500">Jumlah Transaksi Lunas</p><p class="font-bold text-sm text-purple-700">${totalTx} Transaksi</p></div>`;
+
+            // Profile Settings Form
+            document.getElementById('set-store-name').value = storeSettings.store_name || '';
+            document.getElementById('set-store-logo').value = storeSettings.logo_url || '';
+            document.getElementById('set-wa-admin').value = storeSettings.wa_admin || '';
+            document.getElementById('set-bank-accounts').value = storeSettings.bank_accounts || '';
         }
 
         async function addProductSupabase() {
             let name = document.getElementById('new-p-name').value.trim();
             let img = document.getElementById('new-p-img').value.trim();
+            let hpp = parseInt(document.getElementById('new-p-hpp').value) || 0;
             let price = parseInt(document.getElementById('new-p-price').value) || 0;
             let promoPrice = parseInt(document.getElementById('new-p-promo').value) || price;
             let stock = parseInt(document.getElementById('new-p-stock').value) || 0;
             let pointsEarned = parseInt(document.getElementById('new-p-points').value) || 5;
+            let tierText = document.getElementById('new-p-tiers').value.trim();
             let varText = document.getElementById('new-p-variants').value.trim();
-            let variants = varText ? varText.split(',').map(v => v.trim()).slice(0, 6) : [];
+            let variants = varText ? varText.split(',').map(v => v.trim()).slice(0,6) : [];
+            let tiers = [];
+            if (tierText) {
+                // format min:harga misal 3:60000, 5:58000
+                tierText.split(',').forEach(t => {
+                    let parts = t.split(':');
+                    if(parts.length === 2) tiers.push({min: parseInt(parts[0]), price: parseInt(parts[1])});
+                });
+            }
 
             if (!name || !price) return alert("Nama dan harga produk wajib diisi!");
             await sb.from('products').insert([{
-                id: Date.now(), name, img, price, promo_price: promoPrice, discount: price - promoPrice, stock, points_earned: pointsEarned, variants
+                id: Date.now(), name, img, hpp, price, promo_price: promoPrice, discount: price - promoPrice, stock, points_earned: pointsEarned, variants, tiers
             }]);
-            alert("Produk berhasil ditambahkan ke Supabase!");
+            alert("Produk berhasil ditambahkan!");
             await syncFromCloud();
             renderAdminData();
         }
@@ -759,8 +706,17 @@
             let discount_amount = parseInt(document.getElementById('v-disc').value) || 0;
             let min_spend = parseInt(document.getElementById('v-min').value) || 0;
             if (!code || !discount_amount) return alert("Kode dan potongan wajib diisi!");
+            await sb.from('vouchers').insert([{ id: Date.now(), code, name, discount_amount, min_spend }]);
+            await syncFromCloud();
+            renderAdminData();
+        }
 
-            await sb.from('vouchers').insert([{ code, name, discount_amount, min_spend }]);
+        async function addBundleSupabase() {
+            let name = document.getElementById('b-name').value.trim();
+            let original_price = parseInt(document.getElementById('b-orig').value) || 0;
+            let promo_price = parseInt(document.getElementById('b-promo').value) || 0;
+            if (!name || !promo_price) return alert("Nama dan harga paket wajib diisi!");
+            await sb.from('bundles').insert([{ id: Date.now(), name, original_price, promo_price }]);
             await syncFromCloud();
             renderAdminData();
         }
@@ -771,19 +727,7 @@
             let tebus_price = parseInt(document.getElementById('tm-price').value) || 0;
             let min_cart_amount = parseInt(document.getElementById('tm-min').value) || 0;
             if (!name || !tebus_price) return alert("Nama dan harga tebus wajib diisi!");
-
-            await sb.from('tebus_murah').insert([{ name, normal_price, tebus_price, min_cart_amount, stock: 50 }]);
-            await syncFromCloud();
-            renderAdminData();
-        }
-
-        async function addBundleSupabase() {
-            let name = document.getElementById('b-name').value.trim();
-            let original_price = parseInt(document.getElementById('b-orig').value) || 0;
-            let promo_price = parseInt(document.getElementById('b-promo').value) || 0;
-            if (!name || !promo_price) return alert("Nama dan harga paket wajib diisi!");
-
-            await sb.from('bundles').insert([{ name, original_price, promo_price }]);
+            await sb.from('tebus_murah').insert([{ id: Date.now(), name, normal_price, tebus_price, min_cart_amount }]);
             await syncFromCloud();
             renderAdminData();
         }
@@ -791,15 +735,13 @@
         async function deleteProduct(id) {
             if (confirm("Hapus produk ini?")) {
                 await sb.from('products').delete().eq('id', id);
-                await syncFromCloud();
-                renderAdminData();
+                await syncFromCloud(); renderAdminData();
             }
         }
 
         async function deleteRow(table, id) {
             await sb.from(table).delete().eq('id', id);
-            await syncFromCloud();
-            renderAdminData();
+            await syncFromCloud(); renderAdminData();
         }
 
         async function confirmOrder(orderId) {
@@ -808,13 +750,44 @@
                 await sb.from('orders').update({ status: 'LUNAS' }).eq('id', orderId);
                 if (customers[order.phone]) {
                     let newPts = (customers[order.phone].points || 0) + (order.points_earned || 0);
-                    let newSpend = (customers[order.phone].total_spend || 0) + (order.final_total || 0);
+                    let newSpend = (customers[order.phone].total_spend || 0) + (order.final_total || order.finalTotal || 0);
                     await sb.from('customers').update({ points: newPts, total_spend: newSpend }).eq('phone', order.phone);
                 }
-                alert("Pesanan LUNAS & poin pelanggan bertambah otomatis!");
-                await syncFromCloud();
-                renderAdminData();
+                alert("Pesanan dikonfirmasi LUNAS & poin otomatis masuk ke akun pelanggan!");
+                await syncFromCloud(); renderAdminData();
             }
+        }
+
+        async function saveStoreSettings() {
+            let store_name = document.getElementById('set-store-name').value.trim();
+            let logo_url = document.getElementById('set-store-logo').value.trim();
+            let wa_admin = document.getElementById('set-wa-admin').value.trim();
+            let bank_accounts = document.getElementById('set-bank-accounts').value.trim();
+            
+            await sb.from('store_settings').update({ store_name, logo_url, wa_admin, bank_accounts }).eq('id', 1);
+            alert("Pengaturan toko berhasil disimpan!");
+            await syncFromCloud();
+        }
+
+        function exportToExcel() {
+            let dataToExport = orders.map(o => ({
+                "ID Pesanan": o.id,
+                "Tanggal": o.display_date,
+                "Nama Customer": o.name,
+                "No WA": o.phone,
+                "Alamat": o.address,
+                "Subtotal": o.subtotal,
+                "Total Diskon": o.total_discount,
+                "Total Bayar": o.final_total || o.finalTotal,
+                "Keuntungan Bersih": o.net_profit,
+                "Pengiriman": o.shipping,
+                "Pembayaran": o.payment,
+                "Status": o.status
+            }));
+            let worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            let workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Penjualan");
+            XLSX.writeFile(workbook, "Laporan_Arrahmah_Mart.xlsx");
         }
     </script>
 </body>
