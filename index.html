@@ -6,7 +6,6 @@
     <title>Arrahmah Mart Surabaya - Cloud Realtime</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- SheetJS untuk Ekspor Laporan Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -17,19 +16,16 @@
 </head>
 <body class="min-h-screen text-slate-800 flex flex-col justify-between">
 
-    <!-- HEADER / BRANDING (ORANYE MURNI) -->
+    <!-- HEADER BERSIH (TANPA TOMBOL SWITCHER) -->
     <header class="bg-orange-600 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div id="header-logo-container" class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow overflow-hidden">
-                    <span class="text-orange-600 font-bold text-xs text-center leading-tight">AR</span>
-                </div>
-                <div>
-                    <h1 id="store-title-display" class="font-bold text-lg leading-tight">Arrahmah Mart</h1>
-                    <p class="text-xs text-orange-100">Surabaya • Cloud Realtime Edition</p>
-                </div>
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center space-x-3">
+            <div id="header-logo-container" class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow overflow-hidden">
+                <span class="text-orange-600 font-bold text-xs text-center leading-tight">AR</span>
             </div>
-            <div id="nav-switcher" class="text-sm"></div>
+            <div>
+                <h1 id="store-title-display" class="font-bold text-lg leading-tight">Arrahmah Mart</h1>
+                <p class="text-xs text-orange-100">Surabaya • Cloud Realtime Edition</p>
+            </div>
         </div>
     </header>
 
@@ -38,6 +34,9 @@
         
         <!-- ================= HALAMAN CUSTOMER (#customer) ================= -->
         <section id="view-customer" class="space-y-5">
+            <!-- Slider / Headline Banner (Maks 5) -->
+            <div id="customer-headlines" class="space-y-2"></div>
+
             <!-- Box Poin Pelanggan -->
             <div class="bg-white border border-orange-200 p-4 rounded-xl shadow-sm">
                 <h2 class="font-bold text-orange-600 text-base mb-1">🪙 Program Poin Pelanggan</h2>
@@ -48,7 +47,7 @@
                 </div>
             </div>
 
-            <!-- Banner Voucher, Bundling & Tebus Murah -->
+            <!-- Promo Highlights -->
             <div id="promo-highlights" class="space-y-3"></div>
 
             <!-- Header Katalog -->
@@ -73,14 +72,15 @@
                 <button onclick="verifyAdminPin()" class="w-full bg-orange-600 text-white font-semibold py-2.5 rounded-lg text-sm hover:bg-orange-700 transition">Masuk Dashboard</button>
             </div>
 
-            <!-- Dashboard Utama Admin (Sidebar Vertikal + Konten) -->
+            <!-- Dashboard Utama Admin (Sidebar Vertikal) -->
             <div id="admin-dashboard" class="hidden grid grid-cols-1 md:grid-cols-4 gap-6">
-                <!-- SIDEBAR VERTIKAL DROPDOWN/MENU -->
+                <!-- SIDEBAR VERTIKAL -->
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-2 h-fit">
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Menu Kelola Admin</p>
                     <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="w-full text-left px-3 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white flex items-center justify-between"><span>📦 Pesanan Masuk</span><span id="badge-order-count" class="bg-white text-orange-600 px-1.5 py-0.5 rounded-full text-[10px]">0</span></button>
                     <button onclick="switchAdminTab('products')" id="tab-btn-products" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">🏷️ Produk & Varian</button>
                     <button onclick="switchAdminTab('promos')" id="tab-btn-promos" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">🎁 Voucher, Bundling & Tebus Murah</button>
+                    <button onclick="switchAdminTab('headlines')" id="tab-btn-headlines" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">🖼️ Kelola Headline (Maks 5)</button>
                     <button onclick="switchAdminTab('customers')" id="tab-btn-customers" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">👥 Database Pelanggan</button>
                     <button onclick="switchAdminTab('reports')" id="tab-btn-reports" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">📊 Laporan & Keuangan</button>
                     <button onclick="switchAdminTab('profile')" id="tab-btn-profile" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">⚙️ Profil & Pengaturan</button>
@@ -95,11 +95,11 @@
                         <p class="font-bold text-slate-700">📌 Tautan Akses Terpisah:</p>
                         <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded border border-orange-100">
                             <span class="truncate mr-2 text-slate-600">Link Customer: <code id="link-cust-url"></code></span>
-                            <button onclick="copyLink('customer')" class="bg-orange-100 px-2.5 py-1 rounded text-orange-700 font-semibold hover:bg-orange-200">Salin</button>
+                            <button onclick="copyLink('customer')" class="bg-orange-100 px-2.5 py-1 rounded text-orange-700 font-semibold">Salin</button>
                         </div>
                         <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded border border-orange-100">
                             <span class="truncate mr-2 text-slate-600">Link Admin: <code id="link-admin-url"></code></span>
-                            <button onclick="copyLink('admin')" class="bg-orange-100 px-2.5 py-1 rounded text-orange-700 font-semibold hover:bg-orange-200">Salin</button>
+                            <button onclick="copyLink('admin')" class="bg-orange-100 px-2.5 py-1 rounded text-orange-700 font-semibold">Salin</button>
                         </div>
                     </div>
 
@@ -109,13 +109,17 @@
                         <div id="admin-orders-list" class="space-y-3"></div>
                     </div>
 
-                    <!-- 2. TAB PRODUK & VARIAN -->
+                    <!-- 2. TAB PRODUK & VARIAN (DENGAN FITUR EDIT) -->
                     <div id="admin-tab-products" class="hidden space-y-4">
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
-                            <h3 class="font-bold text-sm text-orange-600">+ Tambah Produk Baru (HPP, Harga Jual, Varian, Tier, Poin)</h3>
+                            <h3 id="form-product-title" class="font-bold text-sm text-orange-600">+ Tambah Produk Baru</h3>
+                            <input type="hidden" id="edit-product-id" value="">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                                 <input type="text" id="new-p-name" placeholder="Nama Produk" class="border p-2 rounded-lg">
-                                <input type="text" id="new-p-img" placeholder="URL Gambar Produk (Opsional)" class="border p-2 rounded-lg">
+                                <div>
+                                    <label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Produk (Penyimpanan Lokal):</label>
+                                    <input type="file" id="new-p-img-file" accept="image/*" class="w-full border p-1 rounded-lg text-xs bg-orange-50/30">
+                                </div>
                                 <input type="number" id="new-p-hpp" placeholder="Harga HPP (Modal) Rp" class="border p-2 rounded-lg">
                                 <input type="number" id="new-p-price" placeholder="Harga Jual Normal / Coret Rp" class="border p-2 rounded-lg">
                                 <input type="number" id="new-p-promo" placeholder="Harga Jual Promo Rp" class="border p-2 rounded-lg">
@@ -123,15 +127,18 @@
                                 <input type="number" id="new-p-points" placeholder="Poin Hadiah (Contoh: 5)" class="border p-2 rounded-lg">
                                 <input type="text" id="new-p-tiers" placeholder="Harga Bertingkat (Format: 3:60000, 5:58000)" class="border p-2 rounded-lg">
                             </div>
-                            <input type="text" id="new-p-variants" placeholder="Varian & Stok (Format: Merah:10, Biru:5, Hijau:8 - Max 6 varian)" class="w-full text-xs border p-2 rounded-lg">
-                            <button onclick="addProductSupabase()" class="w-full bg-orange-600 text-white py-2.5 rounded-lg text-xs font-bold hover:bg-orange-700">Simpan Produk ke Cloud</button>
+                            <input type="text" id="new-p-variants" placeholder="Varian & Stok (Format: Merah:10, Biru:5 - Max 6 varian)" class="w-full text-xs border p-2 rounded-lg">
+                            <div class="flex gap-2">
+                                <button id="btn-save-product" onclick="saveProductSupabase()" class="flex-1 bg-orange-600 text-white py-2.5 rounded-lg text-xs font-bold hover:bg-orange-700">Simpan Produk ke Cloud</button>
+                                <button onclick="resetProductForm()" id="btn-cancel-edit" class="hidden bg-slate-300 text-slate-700 px-4 py-2.5 rounded-lg text-xs font-bold">Batal</button>
+                            </div>
                         </div>
                         <div id="admin-products-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                     </div>
 
-                    <!-- 3. TAB PROMO (Voucher, Bundling, Tebus Murah) -->
+                    <!-- 3. TAB PROMO -->
                     <div id="admin-tab-promos" class="hidden space-y-6">
-                        <!-- Voucher (Max 5) -->
+                        <!-- Voucher -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
                             <h3 class="font-bold text-sm text-orange-600">🎟️ Kelola Voucher Belanja (Maksimal 5)</h3>
                             <div class="grid grid-cols-2 gap-2 text-xs">
@@ -144,7 +151,7 @@
                             <div id="admin-vouchers-list" class="space-y-2 pt-2"></div>
                         </div>
 
-                        <!-- Promo Bundling -->
+                        <!-- Bundling -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
                             <h3 class="font-bold text-sm text-orange-600">📦 Kelola Promo Bundling (Max 5 Produk Paket)</h3>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
@@ -170,13 +177,28 @@
                         </div>
                     </div>
 
-                    <!-- 4. TAB DATABASE CUSTOMER -->
+                    <!-- 4. TAB HEADLINE (MAKS 5, UKURAN 1080x1980 / POTRAIT) -->
+                    <div id="admin-tab-headlines" class="hidden space-y-4">
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
+                            <h3 class="font-bold text-sm text-orange-600">🖼️ Kelola Headline / Banner Toko (Maksimal 5)</h3>
+                            <p class="text-slate-500">Rekomendasi ukuran gambar poster banner: <strong>1080 x 1980 piksel</strong> (Format Portrait).</p>
+                            <input type="text" id="hl-title" placeholder="Judul / Keterangan Headline" class="w-full border p-2 rounded-lg">
+                            <div>
+                                <label class="block font-medium mb-1">Pilih Gambar Headline dari Perangkat:</label>
+                                <input type="file" id="hl-img-file" accept="image/*" class="w-full border p-2 rounded-lg bg-orange-50/30">
+                            </div>
+                            <button onclick="addHeadlineSupabase()" class="w-full bg-orange-600 text-white py-2.5 rounded-lg font-bold hover:bg-orange-700">+ Tambah Headline Banner</button>
+                        </div>
+                        <div id="admin-headlines-list" class="space-y-3"></div>
+                    </div>
+
+                    <!-- 5. TAB DATABASE CUSTOMER -->
                     <div id="admin-tab-customers" class="hidden space-y-3">
                         <h3 class="font-bold text-sm text-slate-800">Database Pelanggan & Chat WhatsApp</h3>
                         <div id="admin-customers-list" class="space-y-2"></div>
                     </div>
 
-                    <!-- 5. TAB LAPORAN & KEUANGAN -->
+                    <!-- 6. TAB LAPORAN -->
                     <div id="admin-tab-reports" class="hidden space-y-4">
                         <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-4">
                             <div class="flex justify-between items-center flex-wrap gap-2">
@@ -187,26 +209,17 @@
                         </div>
                     </div>
 
-                    <!-- 6. TAB PROFIL & PENGATURAN TOKO -->
+                    <!-- 7. TAB PROFIL & PENGATURAN -->
                     <div id="admin-tab-profile" class="hidden space-y-4">
                         <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
-                            <h3 class="font-bold text-sm text-orange-600">⚙️ Pengaturan Profil Toko & WhatsApp</h3>
+                            <h3 class="font-bold text-sm text-orange-600">⚙️ Pengaturan Profil Toko & Logo</h3>
+                            <div><label class="font-medium block mb-1">Nama Toko:</label><input type="text" id="set-store-name" class="w-full border p-2 rounded-lg"></div>
                             <div>
-                                <label class="font-medium block mb-1">Nama Toko:</label>
-                                <input type="text" id="set-store-name" class="w-full border p-2 rounded-lg">
+                                <label class="font-medium block mb-1">Upload Logo Toko (Dari Perangkat):</label>
+                                <input type="file" id="set-store-logo-file" accept="image/*" class="w-full border p-2 rounded-lg bg-orange-50/30">
                             </div>
-                            <div>
-                                <label class="font-medium block mb-1">URL Logo Toko (Gambar):</label>
-                                <input type="text" id="set-store-logo" class="w-full border p-2 rounded-lg" placeholder="https://...">
-                            </div>
-                            <div>
-                                <label class="font-medium block mb-1">Nomor WhatsApp Admin (Format 62...):</label>
-                                <input type="text" id="set-wa-admin" class="w-full border p-2 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="font-medium block mb-1">Daftar Rekening / Pembayaran:</label>
-                                <textarea id="set-bank-accounts" rows="4" class="w-full border p-2 rounded-lg"></textarea>
-                            </div>
+                            <div><label class="font-medium block mb-1">Nomor WhatsApp Admin (62...):</label><input type="text" id="set-wa-admin" class="w-full border p-2 rounded-lg"></div>
+                            <div><label class="font-medium block mb-1">Daftar Rekening / Pembayaran:</label><textarea id="set-bank-accounts" rows="4" class="w-full border p-2 rounded-lg"></textarea></div>
                             <button onclick="saveStoreSettings()" class="bg-orange-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-orange-700">Simpan Pengaturan Toko</button>
                         </div>
                     </div>
@@ -215,7 +228,7 @@
         </section>
     </main>
 
-    <!-- MODAL KERANJANG / CHECKOUT -->
+    <!-- MODAL KERANJANG -->
     <div id="cart-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-end md:items-center justify-center p-0 md:p-4">
         <div class="bg-white w-full max-w-lg rounded-t-2xl md:rounded-2xl p-5 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 border-b pb-2">
@@ -224,7 +237,6 @@
             </div>
             <div id="cart-items-container" class="space-y-3 mb-4"></div>
             
-            <!-- Input Voucher -->
             <div class="flex gap-2 mb-3 text-xs">
                 <input type="text" id="checkout-voucher-code" placeholder="Kode Voucher..." class="flex-1 border rounded-lg p-2 uppercase">
                 <button onclick="applyVoucher()" class="bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold">Pakai</button>
@@ -240,7 +252,7 @@
             <div class="space-y-3 text-xs mb-4">
                 <div><label class="font-medium block mb-1">Nama Pemesan:</label><input type="text" id="order-name" class="w-full border rounded-lg p-2.5 outline-none" placeholder="Nama lengkap"></div>
                 <div><label class="font-medium block mb-1">Nomor WhatsApp:</label><input type="tel" id="order-phone" class="w-full border rounded-lg p-2.5 outline-none" placeholder="08xxxxxxxxxx"></div>
-                <div><label class="font-medium block mb-1">Alamat Lengkap:</label><textarea id="order-address" rows="2" class="w-full border rounded-lg p-2.5 outline-none" placeholder="Nama jalan, nomor rumah, kelurahan..."></textarea></div>
+                <div><label class="font-medium block mb-1">Alamat Lengkap:</label><textarea id="order-address" rows="2" class="w-full border rounded-lg p-2.5 outline-none" placeholder="Alamat pengiriman..."></textarea></div>
                 <div>
                     <label class="font-medium block mb-1">Metode Pengiriman:</label>
                     <select id="order-shipping" class="w-full border rounded-lg p-2.5 outline-none bg-white">
@@ -270,7 +282,7 @@
         let sb = null;
         try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e){}
 
-        let products = [], orders = [], customers = {}, vouchers = [], bundles = [], tebusMurahList = [], storeSettings = {};
+        let products = [], orders = [], customers = {}, vouchers = [], bundles = [], tebusMurahList = [], storeSettings = {}, headlines = [];
         let cart = [], appliedVoucher = null, currentPhone = localStorage.getItem('ar_active_phone') || '';
 
         window.addEventListener('hashchange', router);
@@ -283,14 +295,15 @@
         async function syncFromCloud() {
             if (!sb) return;
             try {
-                let [pRes, oRes, cRes, vRes, bRes, tmRes, sRes] = await Promise.all([
+                let [pRes, oRes, cRes, vRes, bRes, tmRes, sRes, hlRes] = await Promise.all([
                     sb.from('products').select('*').order('id', {ascending:true}),
                     sb.from('orders').select('*').order('id', {ascending:false}),
                     sb.from('customers').select('*'),
                     sb.from('vouchers').select('*'),
                     sb.from('bundles').select('*'),
                     sb.from('tebus_murah').select('*'),
-                    sb.from('store_settings').select('*').eq('id', 1).single()
+                    sb.from('store_settings').select('*').eq('id', 1).single(),
+                    sb.from('headlines').select('*').order('id', {ascending:true})
                 ]);
 
                 if (pRes.data) products = pRes.data.map(p => ({
@@ -303,6 +316,7 @@
                 if (vRes.data) vouchers = vRes.data;
                 if (bRes.data) bundles = bRes.data;
                 if (tmRes.data) tebusMurahList = tmRes.data;
+                if (hlRes.data) headlines = hlRes.data;
                 if (sRes.data) {
                     storeSettings = sRes.data;
                     document.getElementById('store-title-display').innerText = storeSettings.store_name || 'Arrahmah Mart Surabaya';
@@ -317,18 +331,15 @@
             const hash = window.location.hash;
             const viewCust = document.getElementById('view-customer');
             const viewAdmin = document.getElementById('view-admin');
-            const navSwitcher = document.getElementById('nav-switcher');
 
             if (hash.includes('#admin')) {
                 viewCust.classList.add('hidden');
                 viewAdmin.classList.remove('hidden');
-                navSwitcher.innerHTML = `<a href="#customer" class="bg-orange-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-orange-800 border border-orange-400">🛍️ Menu Customer</a>`;
                 document.getElementById('link-admin-url').innerText = window.location.href;
                 document.getElementById('link-cust-url').innerText = window.location.href.replace('#admin', '#customer');
             } else {
                 viewAdmin.classList.add('hidden');
                 viewCust.classList.remove('hidden');
-                navSwitcher.innerHTML = `<a href="#admin" class="bg-orange-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-orange-800 border border-orange-400">🔑 Masuk Admin</a>`;
                 updateCustomerDisplay();
                 renderCatalog();
             }
@@ -353,7 +364,42 @@
             }
         }
 
+        function readFileAsBase64(fileInputId) {
+            return new Promise((resolve, reject) => {
+                const fileInput = document.getElementById(fileInputId);
+                if (!fileInput || fileInput.files.length === 0) {
+                    resolve(null);
+                    return;
+                }
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
         function renderCatalog() {
+            // Render Headlines Banner
+            const hlContainer = document.getElementById('customer-headlines');
+            if (headlines.length > 0) {
+                hlContainer.innerHTML = `
+                    <div class="relative rounded-2xl overflow-hidden shadow-md border border-orange-200 bg-white">
+                        <div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-none">
+                            ${headlines.map(hl => `
+                                <div class="w-full shrink-0 snap-center relative">
+                                    <img src="${hl.img}" class="w-full h-48 md:h-64 object-cover">
+                                    <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
+                                        <p class="font-bold text-sm">${hl.title || ''}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>`;
+            } else {
+                hlContainer.innerHTML = '';
+            }
+
             const promoDiv = document.getElementById('promo-highlights');
             let promoHtml = '';
             if (vouchers.length > 0) {
@@ -374,6 +420,7 @@
                 grid.innerHTML = products.map(p => {
                     let vars = Array.isArray(p.variants) ? p.variants : [];
                     let variantSelect = vars.length > 0 ? `<select id="var-select-${p.id}" class="w-full border border-orange-200 rounded p-1 text-[10px] mt-1.5 bg-orange-50/40">${vars.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>` : '';
+                    let hasDiscount = p.price > p.promoPrice;
                     return `
                     <div class="bg-white rounded-xl shadow-sm border border-orange-100 overflow-hidden flex flex-col justify-between">
                         <div>
@@ -382,7 +429,7 @@
                                 <h4 class="font-bold text-xs text-slate-800 line-clamp-2 mb-1">${p.name}</h4>
                                 <div class="flex items-center space-x-2">
                                     <span class="font-bold text-orange-600 text-sm">Rp ${p.promoPrice.toLocaleString()}</span>
-                                    ${p.price > p.promoPrice ? `<span class="text-[10px] text-slate-400 line-through">Rp ${p.price.toLocaleString()}</span>` : ''}
+                                    ${hasDiscount ? `<span class="text-[10px] text-slate-400 line-through">Rp ${p.price.toLocaleString()}</span>` : ''}
                                 </div>
                                 <div class="flex justify-between items-center mt-1">
                                     <span class="inline-block bg-orange-50 text-orange-700 text-[10px] px-2 py-0.5 rounded font-medium">+${p.pointsEarned} Poin</span>
@@ -423,11 +470,9 @@
             let exist = cart.find(i => i.cartKey === cartKey);
             let currentQty = exist ? exist.qty : 0;
             
-            // Cek harga tier jika ada
             let finalPrice = prod.promoPrice;
             if (Array.isArray(prod.tiers) && prod.tiers.length > 0) {
                 let targetQty = currentQty + 1;
-                // Format tier misal: [{min: 3, price: 60000}]
                 let sortedTiers = [...prod.tiers].sort((a,b)=>b.min - a.min);
                 for(let t of sortedTiers) {
                     if (targetQty >= t.min) { finalPrice = t.price; break; }
@@ -603,12 +648,14 @@
         }
 
         function switchAdminTab(tab) {
-            ['orders', 'products', 'promos', 'customers', 'reports', 'profile'].forEach(t => {
-                document.getElementById(`admin-tab-${t}`).classList.add('hidden');
+            ['orders', 'products', 'promos', 'headlines', 'customers', 'reports', 'profile'].forEach(t => {
+                let el = document.getElementById(`admin-tab-${t}`);
+                if(el) el.classList.add('hidden');
                 let btn = document.getElementById(`tab-btn-${t}`);
                 if (btn) btn.className = "w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50";
             });
-            document.getElementById(`admin-tab-${tab}`).classList.remove('hidden');
+            let targetTab = document.getElementById(`admin-tab-${tab}`);
+            if(targetTab) targetTab.classList.remove('hidden');
             let activeBtn = document.getElementById(`tab-btn-${tab}`);
             if (activeBtn) activeBtn.className = "w-full text-left px-3 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white flex items-center justify-between";
             renderAdminData();
@@ -634,15 +681,25 @@
                     <div class="flex-1">
                         <p class="font-bold">${p.name}</p>
                         <p class="text-slate-500">HPP: Rp ${(p.hpp||0).toLocaleString()} | Jual: Rp ${p.promoPrice.toLocaleString()} | Stok: <strong>${p.stock}</strong></p>
-                        <p class="text-[10px] text-orange-600">Varian: ${Array.isArray(p.variants) && p.variants.length > 0 ? p.variants.join(', ') : 'Tidak ada'}</p>
                     </div>
-                    <button onclick="deleteProduct(${p.id})" class="text-red-500 font-bold px-2 py-1">Hapus</button>
+                    <div class="flex flex-col gap-1">
+                        <button onclick="editProduct(${p.id})" class="bg-orange-100 text-orange-700 font-bold px-2.5 py-1 rounded">Edit</button>
+                        <button onclick="deleteProduct(${p.id})" class="text-red-500 font-bold px-2 py-1">Hapus</button>
+                    </div>
                 </div>`).join('');
 
             // Promos Lists
             document.getElementById('admin-vouchers-list').innerHTML = vouchers.map(v => `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border text-xs"><span><strong>${v.code}</strong> - Potongan Rp ${(v.discount_amount||0).toLocaleString()}</span><button onclick="deleteRow('vouchers', ${v.id})" class="text-red-500 font-bold">Hapus</button></div>`).join('');
             document.getElementById('admin-bundles-list').innerHTML = bundles.map(b => `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border text-xs"><span><strong>${b.name}</strong> - Paket Rp ${(b.promo_price||0).toLocaleString()}</span><button onclick="deleteRow('bundles', ${b.id})" class="text-red-500 font-bold">Hapus</button></div>`).join('');
             document.getElementById('admin-tm-list').innerHTML = tebusMurahList.map(tm => `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border text-xs"><span><strong>${tm.name}</strong> - Tebus Rp ${(tm.tebus_price||0).toLocaleString()}</span><button onclick="deleteRow('tebus_murah', ${tm.id})" class="text-red-500 font-bold">Hapus</button></div>`).join('');
+
+            // Headlines List
+            document.getElementById('admin-headlines-list').innerHTML = headlines.length === 0 ? `<p class="text-xs text-slate-500">Belum ada headline (maksimal 5).</p>` : headlines.map(hl => `
+                <div class="bg-white p-3 rounded-xl shadow-sm border flex items-center space-x-3 text-xs">
+                    <img src="${hl.img}" class="w-12 h-20 object-cover rounded">
+                    <div class="flex-1"><p class="font-bold">${hl.title || 'Tanpa Judul'}</p></div>
+                    <button onclick="deleteRow('headlines', ${hl.id})" class="text-red-500 font-bold px-2 py-1">Hapus</button>
+                </div>`).join('');
 
             // Customers + WA
             let custArray = Object.values(customers);
@@ -665,14 +722,13 @@
 
             // Profile Settings Form
             document.getElementById('set-store-name').value = storeSettings.store_name || '';
-            document.getElementById('set-store-logo').value = storeSettings.logo_url || '';
             document.getElementById('set-wa-admin').value = storeSettings.wa_admin || '';
             document.getElementById('set-bank-accounts').value = storeSettings.bank_accounts || '';
         }
 
-        async function addProductSupabase() {
+        async function saveProductSupabase() {
+            let editId = document.getElementById('edit-product-id').value;
             let name = document.getElementById('new-p-name').value.trim();
-            let img = document.getElementById('new-p-img').value.trim();
             let hpp = parseInt(document.getElementById('new-p-hpp').value) || 0;
             let price = parseInt(document.getElementById('new-p-price').value) || 0;
             let promoPrice = parseInt(document.getElementById('new-p-promo').value) || price;
@@ -680,10 +736,10 @@
             let pointsEarned = parseInt(document.getElementById('new-p-points').value) || 5;
             let tierText = document.getElementById('new-p-tiers').value.trim();
             let varText = document.getElementById('new-p-variants').value.trim();
+            
             let variants = varText ? varText.split(',').map(v => v.trim()).slice(0,6) : [];
             let tiers = [];
             if (tierText) {
-                // format min:harga misal 3:60000, 5:58000
                 tierText.split(',').forEach(t => {
                     let parts = t.split(':');
                     if(parts.length === 2) tiers.push({min: parseInt(parts[0]), price: parseInt(parts[1])});
@@ -691,12 +747,58 @@
             }
 
             if (!name || !price) return alert("Nama dan harga produk wajib diisi!");
-            await sb.from('products').insert([{
-                id: Date.now(), name, img, hpp, price, promo_price: promoPrice, discount: price - promoPrice, stock, points_earned: pointsEarned, variants, tiers
-            }]);
-            alert("Produk berhasil ditambahkan!");
+
+            let imgBase64 = await readFileAsBase64('new-p-img-file');
+            let prodData = { name, hpp, price, promo_price: promoPrice, discount: price - promoPrice, stock, points_earned: pointsEarned, variants, tiers };
+            
+            if (imgBase64) prodData.img = imgBase64;
+
+            if (editId) {
+                await sb.from('products').update(prodData).eq('id', editId);
+                alert("Produk berhasil diperbarui!");
+            } else {
+                prodData.id = Date.now();
+                if(!prodData.img) prodData.img = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80';
+                await sb.from('products').insert([prodData]);
+                alert("Produk baru berhasil ditambahkan!");
+            }
+            resetProductForm();
             await syncFromCloud();
             renderAdminData();
+        }
+
+        function editProduct(id) {
+            let p = products.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('edit-product-id').value = p.id;
+            document.getElementById('new-p-name').value = p.name;
+            document.getElementById('new-p-hpp').value = p.hpp || 0;
+            document.getElementById('new-p-price').value = p.price;
+            document.getElementById('new-p-promo').value = p.promo_price || p.price;
+            document.getElementById('new-p-stock').value = p.stock;
+            document.getElementById('new-p-points').value = p.points_earned || 5;
+            document.getElementById('new-p-tiers').value = Array.isArray(p.tiers) ? p.tiers.map(t=>`${t.min}:${t.price}`).join(', ') : '';
+            document.getElementById('new-p-variants').value = Array.isArray(p.variants) ? p.variants.join(', ') : '';
+            document.getElementById('form-product-title').innerText = "Edit Produk & Varian";
+            document.getElementById('btn-save-product').innerText = "Update Produk ke Cloud";
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function resetProductForm() {
+            document.getElementById('edit-product-id').value = '';
+            document.getElementById('new-p-name').value = '';
+            document.getElementById('new-p-img-file').value = '';
+            document.getElementById('new-p-hpp').value = '';
+            document.getElementById('new-p-price').value = '';
+            document.getElementById('new-p-promo').value = '';
+            document.getElementById('new-p-stock').value = '';
+            document.getElementById('new-p-points').value = '';
+            document.getElementById('new-p-tiers').value = '';
+            document.getElementById('new-p-variants').value = '';
+            document.getElementById('form-product-title').innerText = "+ Tambah Produk Baru";
+            document.getElementById('btn-save-product').innerText = "Simpan Produk ke Cloud";
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
         }
 
         async function addVoucherSupabase() {
@@ -707,8 +809,7 @@
             let min_spend = parseInt(document.getElementById('v-min').value) || 0;
             if (!code || !discount_amount) return alert("Kode dan potongan wajib diisi!");
             await sb.from('vouchers').insert([{ id: Date.now(), code, name, discount_amount, min_spend }]);
-            await syncFromCloud();
-            renderAdminData();
+            await syncFromCloud(); renderAdminData();
         }
 
         async function addBundleSupabase() {
@@ -717,8 +818,7 @@
             let promo_price = parseInt(document.getElementById('b-promo').value) || 0;
             if (!name || !promo_price) return alert("Nama dan harga paket wajib diisi!");
             await sb.from('bundles').insert([{ id: Date.now(), name, original_price, promo_price }]);
-            await syncFromCloud();
-            renderAdminData();
+            await syncFromCloud(); renderAdminData();
         }
 
         async function addTebusMurahSupabase() {
@@ -728,8 +828,18 @@
             let min_cart_amount = parseInt(document.getElementById('tm-min').value) || 0;
             if (!name || !tebus_price) return alert("Nama dan harga tebus wajib diisi!");
             await sb.from('tebus_murah').insert([{ id: Date.now(), name, normal_price, tebus_price, min_cart_amount }]);
-            await syncFromCloud();
-            renderAdminData();
+            await syncFromCloud(); renderAdminData();
+        }
+
+        async function addHeadlineSupabase() {
+            if (headlines.length >= 5) return alert("Maksimal hanya 5 headline aktif!");
+            let title = document.getElementById('hl-title').value.trim();
+            let imgBase64 = await readFileAsBase64('hl-img-file');
+            if (!imgBase64) return alert("Pilih gambar headline terlebih dahulu!");
+            await sb.from('headlines').insert([{ id: Date.now(), title, img: imgBase64 }]);
+            document.getElementById('hl-title').value = '';
+            document.getElementById('hl-img-file').value = '';
+            await syncFromCloud(); renderAdminData();
         }
 
         async function deleteProduct(id) {
@@ -760,11 +870,14 @@
 
         async function saveStoreSettings() {
             let store_name = document.getElementById('set-store-name').value.trim();
-            let logo_url = document.getElementById('set-store-logo').value.trim();
             let wa_admin = document.getElementById('set-wa-admin').value.trim();
             let bank_accounts = document.getElementById('set-bank-accounts').value.trim();
+            let logoBase64 = await readFileAsBase64('set-store-logo-file');
             
-            await sb.from('store_settings').update({ store_name, logo_url, wa_admin, bank_accounts }).eq('id', 1);
+            let updateData = { store_name, wa_admin, bank_accounts };
+            if (logoBase64) updateData.logo_url = logoBase64;
+
+            await sb.from('store_settings').update(updateData).eq('id', 1);
             alert("Pengaturan toko berhasil disimpan!");
             await syncFromCloud();
         }
