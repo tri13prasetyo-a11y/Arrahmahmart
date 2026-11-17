@@ -47,7 +47,7 @@
                 </div>
             </div>
 
-            <!-- Promo Highlights (Bundling & Tebus Murah dengan Gambar & Periode) -->
+            <!-- Promo Highlights -->
             <div id="promo-highlights" class="space-y-3"></div>
 
             <!-- Header Katalog -->
@@ -136,7 +136,7 @@
                         <div id="admin-products-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                     </div>
 
-                    <!-- 3. TAB PROMO (VOUCHER, BUNDLING LENGKAP PILIHAN PRODUK, GAMBAR & PERIODE, TEBUS MURAH) -->
+                    <!-- 3. TAB PROMO (BILDING OTOMATIS HITUNG HARGA SEBELUM & SETELAH) -->
                     <div id="admin-tab-promos" class="hidden space-y-6">
                         <!-- Voucher -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
@@ -151,33 +151,39 @@
                             <div id="admin-vouchers-list" class="space-y-2 pt-2"></div>
                         </div>
 
-                        <!-- BUNDLING (Pilihan Produk dari Database, Gambar Lokal, Periode, Edit/Hapus) -->
+                        <!-- BUNDLING (DENGAN HITUNG TOTAL SEBELUM & SETELAH) -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 id="form-bundle-title" class="font-bold text-sm text-orange-600">📦 Kelola Paket Bundling (Hingga 5 Produk)</h3>
                             <input type="hidden" id="edit-bundle-id" value="">
                             <input type="text" id="b-theme" placeholder="Tema Paket Bundling (Misal: Paket Sembako Hemat)" class="w-full border p-2 rounded-lg font-bold">
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 1:</label><select id="b-p1-select" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 2:</label><select id="b-p2-select" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 3:</label><select id="b-p3-select" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 4:</label><select id="b-p4-select" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 5:</label><select id="b-p5-select" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div>
-                                    <label class="block text-[10px] text-slate-500 mb-1">Harga Setelah Bundling (Rp):</label>
-                                    <input type="number" id="b-promo" placeholder="Harga Spesial Bundling" class="w-full border p-2 rounded-lg font-bold text-orange-600">
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 1:</label><select id="b-p1-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 2:</label><select id="b-p2-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 3:</label><select id="b-p3-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 4:</label><select id="b-p4-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 5:</label><select id="b-p5-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div class="bg-orange-50 p-2.5 rounded-lg border border-orange-200 flex flex-col justify-center">
+                                    <span class="text-[10px] text-slate-600">Total Harga Sebelum Bundling:</span>
+                                    <span id="b-calc-orig-display" class="font-bold text-sm text-slate-900">Rp 0</span>
                                 </div>
                             </div>
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+                                <div>
+                                    <label class="block text-[10px] text-slate-500 mb-1">Harga Total Setelah Bundling (Rp):</label>
+                                    <input type="number" id="b-promo" placeholder="Harga Spesial Bundling" class="w-full border p-2 rounded-lg font-bold text-orange-600">
+                                </div>
                                 <div>
                                     <label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Paket Bundling (Lokal):</label>
                                     <input type="file" id="b-img-file" accept="image/*" class="w-full border p-1 rounded-lg bg-orange-50/30">
                                 </div>
-                                <div class="grid grid-cols-2 gap-1">
-                                    <div><label class="block text-[10px] text-slate-500 mb-1">Mulai Periode:</label><input type="date" id="b-start" class="w-full border p-1.5 rounded-lg"></div>
-                                    <div><label class="block text-[10px] text-slate-500 mb-1">Akhir Periode:</label><input type="date" id="b-end" class="w-full border p-1.5 rounded-lg"></div>
-                                </div>
                             </div>
+                            <div class="grid grid-cols-2 gap-2 pt-1">
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Mulai Periode:</label><input type="date" id="b-start" class="w-full border p-1.5 rounded-lg"></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Akhir Periode:</label><input type="date" id="b-end" class="w-full border p-1.5 rounded-lg"></div>
+                            </div>
+
                             <div class="flex gap-2 pt-2">
                                 <button id="btn-save-bundle" onclick="saveBundleSupabase()" class="flex-1 bg-orange-600 text-white py-2.5 rounded-lg font-bold hover:bg-orange-700">Simpan Paket Bundling</button>
                                 <button onclick="resetBundleForm()" id="btn-cancel-bundle-edit" class="hidden bg-slate-300 text-slate-700 px-4 py-2.5 rounded-lg font-bold">Batal</button>
@@ -185,7 +191,7 @@
                             <div id="admin-bundles-list" class="space-y-2 pt-2"></div>
                         </div>
 
-                        <!-- TEBUS MURAH (Pilihan dari Database, Gambar Lokal, Periode, Edit/Hapus) -->
+                        <!-- TEBUS MURAH -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 id="form-tm-title" class="font-bold text-sm text-orange-600">⚡ Kelola Produk Tebus Murah</h3>
                             <input type="hidden" id="edit-tm-id" value="">
@@ -444,6 +450,22 @@
             });
         }
 
+        function extractNum(str) {
+            let m = str ? str.match(/\d+/g) : null;
+            return m ? parseInt(m.join('')) : 0;
+        }
+
+        function calculateBundleTotal() {
+            let p1 = document.getElementById('b-p1-select').value;
+            let p2 = document.getElementById('b-p2-select').value;
+            let p3 = document.getElementById('b-p3-select').value;
+            let p4 = document.getElementById('b-p4-select').value;
+            let p5 = document.getElementById('b-p5-select').value;
+            let total = extractNum(p1) + extractNum(p2) + extractNum(p3) + extractNum(p4) + extractNum(p5);
+            document.getElementById('b-calc-orig-display').innerText = `Rp ${total.toLocaleString()}`;
+            return total;
+        }
+
         function onSelectTebusProduct() {
             let val = document.getElementById('tm-prod-select').value;
             let found = products.find(p => `${p.name} (Rp ${p.promoPrice.toLocaleString()})` === val);
@@ -477,7 +499,7 @@
                 promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">🎟️ Voucher Belanja Aktif:</p><div class="flex gap-2 overflow-x-auto pb-1">${vouchers.map(v => `<div class="bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg text-xs shrink-0"><span class="font-bold text-orange-700 block">${v.code}</span><span class="text-[10px] text-slate-600">Potongan Rp ${(v.discount_amount||0).toLocaleString()} (Min Rp ${(v.min_spend||0).toLocaleString()})</span></div>`).join('')}</div></div>`;
             }
 
-            // Bundling Customer View dengan Gambar & Harga Coret
+            // Bundling Customer View dengan Harga Coret Sebelum & Sesudah Bundling
             if (bundles.length > 0) {
                 promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">📦 Paket Bundling Hemat:</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${bundles.map(b => {
                     let itemsDesc = [b.p1, b.p2, b.p3, b.p4, b.p5].filter(Boolean).join(' + ');
@@ -499,7 +521,7 @@
                 }).join('')}</div></div>`;
             }
 
-            // Tebus Murah Customer View dengan Gambar & Periode
+            // Tebus Murah Customer View
             if (tebusMurahList.length > 0) {
                 promoHtml += `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">⚡ Promo Tebus Murah:</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${tebusMurahList.map(tm => {
                     let periodText = tm.start_date && tm.end_date ? `<p class="text-[10px] text-orange-700 font-medium">Periode: ${tm.start_date} s/d ${tm.end_date}</p>` : '';
@@ -823,7 +845,7 @@
                     <div>
                         <strong>${b.name}</strong><br>
                         <span class="text-[10px] text-slate-500">${desc}</span><br>
-                        Normal: Rp ${(b.original_price||0).toLocaleString()} → <strong>Bundling: Rp ${(b.promo_price||0).toLocaleString()}</strong> | Periode: ${b.start_date||'-'} s/d ${b.end_date||'-'}
+                        Sebelum: Rp ${(b.original_price||0).toLocaleString()} → <strong>Bundling: Rp ${(b.promo_price||0).toLocaleString()}</strong> | Periode: ${b.start_date||'-'} s/d ${b.end_date||'-'}
                     </div>
                     <div class="flex gap-1">
                         <button onclick="editBundle(${b.id})" class="bg-orange-100 text-orange-700 font-bold px-2 py-1 rounded">Edit</button>
@@ -976,9 +998,7 @@
 
             if (!name || !promo_price) return alert("Tema paket dan harga setelah bundling wajib diisi!");
 
-            let extractNum = (str) => { let m = str ? str.match(/\d+/g) : null; return m ? parseInt(m.join('')) : 0; };
-            let original_price = extractNum(p1) + extractNum(p2) + extractNum(p3) + extractNum(p4) + extractNum(p5);
-
+            let original_price = calculateBundleTotal();
             let imgBase64 = await readFileAsBase64('b-img-file');
             let bundleData = { name, p1, p2, p3, p4, p5, original_price, promo_price, start_date, end_date };
             if (imgBase64) bundleData.img = imgBase64;
@@ -1009,6 +1029,7 @@
             document.getElementById('b-promo').value = b.promo_price || '';
             document.getElementById('b-start').value = b.start_date || '';
             document.getElementById('b-end').value = b.end_date || '';
+            calculateBundleTotal();
             document.getElementById('form-bundle-title').innerText = "Edit Paket Bundling";
             document.getElementById('btn-save-bundle').innerText = "Update Bundling ke Cloud";
             document.getElementById('btn-cancel-bundle-edit').classList.remove('hidden');
@@ -1027,6 +1048,7 @@
             document.getElementById('b-img-file').value = '';
             document.getElementById('b-start').value = '';
             document.getElementById('b-end').value = '';
+            document.getElementById('b-calc-orig-display').innerText = 'Rp 0';
             document.getElementById('form-bundle-title').innerText = "📦 Kelola Paket Bundling (Hingga 5 Produk)";
             document.getElementById('btn-save-bundle').innerText = "Simpan Paket Bundling";
             document.getElementById('btn-cancel-bundle-edit').classList.add('hidden');
