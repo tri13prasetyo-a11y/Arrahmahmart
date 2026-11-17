@@ -52,7 +52,7 @@
             <!-- Voucher Belanja -->
             <div id="customer-vouchers"></div>
 
-            <!-- Paket Bundling Slider (Ukuran seperti headline, geser jika > 1, di atas tebus murah) -->
+            <!-- Paket Bundling Slider (Di atas Tebus Murah, ukuran seperti headline, geser jika > 1) -->
             <div id="customer-bundles-container"></div>
 
             <!-- Promo Tebus Murah -->
@@ -1311,7 +1311,7 @@
         }
 
         function exportToExcel() {
-            let dataToExport = orders.map(o => ({
+            let dataToExcel = orders.map(o => ({
                 "ID Pesanan": o.id,
                 "Tanggal Pesan": o.display_date,
                 "Tanggal Lunas": o.paid_date || '-',
