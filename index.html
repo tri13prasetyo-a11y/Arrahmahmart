@@ -166,11 +166,11 @@
                             <input type="text" id="b-theme" placeholder="Tema Paket Bundling (Misal: Paket Sembako Hemat)" class="w-full border p-2 rounded-lg font-bold">
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 1:</label><select id="b-p1-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 2:</label><select id="b-p2-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 3:</label><select id="b-p3-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 4:</label><select id="b-p4-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 5:</label><select id="b-p5-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 1 (Beserta HPP):</label><select id="b-p1-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 2 (Beserta HPP):</label><select id="b-p2-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 3 (Beserta HPP):</label><select id="b-p3-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 4 (Beserta HPP):</label><select id="b-p4-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 5 (Beserta HPP):</label><select id="b-p5-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
                                 <div class="bg-orange-50 p-2.5 rounded-lg border border-orange-200 flex flex-col justify-center">
                                     <span class="text-[10px] text-slate-600">Total Harga Sebelum Bundling:</span>
                                     <span id="b-calc-orig-display" class="font-bold text-sm text-slate-900">Rp 0</span>
@@ -204,7 +204,7 @@
                             <h3 id="form-tm-title" class="font-bold text-sm text-orange-600">⚡ Kelola Produk Tebus Murah</h3>
                             <input type="hidden" id="edit-tm-id" value="">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilih Produk Tebus:</label><select id="tm-prod-select" onchange="onSelectTebusProduct()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilih Produk Tebus (Beserta HPP):</label><select id="tm-prod-select" onchange="onSelectTebusProduct()" class="w-full border p-2 rounded-lg bg-white"></select></div>
                                 <div><label class="block text-[10px] text-slate-500 mb-1">Harga Normal:</label><input type="number" id="tm-normal" placeholder="Harga Normal Rp" class="border p-2 rounded-lg w-full"></div>
                                 <div><label class="block text-[10px] text-slate-500 mb-1">Harga Tebus Murah Rp:</label><input type="number" id="tm-price" placeholder="Harga Tebus Rp" class="border p-2 rounded-lg w-full"></div>
                                 <div><label class="block text-[10px] text-slate-500 mb-1">Syarat Min. Belanja Rp:</label><input type="number" id="tm-min" placeholder="Min. Belanja Rp" class="border p-2 rounded-lg w-full"></div>
@@ -450,7 +450,7 @@
         }
 
         function populateProductDropdowns() {
-            let opts = `<option value="">-- Pilih Produk --</option>` + products.map(p => `<option value="${p.name}">${p.name} - Rp ${p.promoPrice.toLocaleString()}</option>`).join('');
+            let opts = `<option value="">-- Pilih Produk --</option>` + products.map(p => `<option value="${p.name}">${p.name} (Jual: Rp ${p.promoPrice.toLocaleString()} | HPP: Rp ${(p.hpp||0).toLocaleString()})</option>`).join('');
             ['b-p1-select', 'b-p2-select', 'b-p3-select', 'b-p4-select', 'b-p5-select', 'tm-prod-select'].forEach(id => {
                 let el = document.getElementById(id);
                 if (el) el.innerHTML = opts;
@@ -480,13 +480,20 @@
             }
         }
 
+        function scrollSlider(containerId, direction) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.scrollBy({ left: direction * container.clientWidth, behavior: 'smooth' });
+            }
+        }
+
         function renderCatalog() {
-            // 1. Headline Banner
+            // 1. Headline Banner dengan Indikator Swipe & Panah
             const hlContainer = document.getElementById('customer-headlines');
             if (headlines.length > 0) {
                 hlContainer.innerHTML = `
-                    <div class="relative rounded-2xl overflow-hidden shadow-md border border-orange-200 bg-white">
-                        <div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-none">
+                    <div class="relative rounded-2xl overflow-hidden shadow-md border border-orange-200 bg-white group">
+                        <div id="headline-scroll-container" class="flex overflow-x-auto snap-x snap-mandatory scrollbar-none scroll-smooth">
                             ${headlines.map(hl => `
                                 <div class="w-full shrink-0 snap-center relative">
                                     <img src="${hl.img}" class="w-full h-48 md:h-64 object-cover">
@@ -496,6 +503,13 @@
                                 </div>
                             `).join('')}
                         </div>
+                        ${headlines.length > 1 ? `
+                            <button onclick="scrollSlider('headline-scroll-container', -1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">‹</button>
+                            <button onclick="scrollSlider('headline-scroll-container', 1)" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">›</button>
+                            <div class="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2.5 py-1 rounded-full pointer-events-none flex items-center gap-1 shadow">
+                                <span>‹ Geser / Swipe ›</span>
+                            </div>
+                        ` : ''}
                     </div>`;
             } else { hlContainer.innerHTML = ''; }
 
@@ -505,14 +519,14 @@
                 vContainer.innerHTML = `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">🎟️ Voucher Belanja Aktif:</p><div class="flex gap-2 overflow-x-auto pb-1">${vouchers.map(v => `<div class="bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg text-xs shrink-0"><span class="font-bold text-orange-700 block">${v.code}</span><span class="text-[10px] text-slate-600">Potongan Rp ${(v.discount_amount||0).toLocaleString()} (Min Rp ${(v.min_spend||0).toLocaleString()})</span></div>`).join('')}</div></div>`;
             } else { vContainer.innerHTML = ''; }
 
-            // 3. Paket Bundling Slider (Di atas Tebus Murah)
+            // 3. Paket Bundling Slider dengan Indikator Swipe & Panah
             const bContainer = document.getElementById('customer-bundles-container');
             if (bundles.length > 0) {
                 bContainer.innerHTML = `
                     <div class="space-y-2">
                         <h3 class="font-bold text-sm text-orange-600 flex items-center gap-1">📦 Paket Bundling Hemat</h3>
-                        <div class="relative rounded-2xl overflow-hidden shadow-md border border-orange-200 bg-white">
-                            <div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-none">
+                        <div class="relative rounded-2xl overflow-hidden shadow-md border border-orange-200 bg-white group">
+                            <div id="bundle-scroll-container" class="flex overflow-x-auto snap-x snap-mandatory scrollbar-none scroll-smooth">
                                 ${bundles.map(b => {
                                     let itemsDesc = [b.p1, b.p2, b.p3, b.p4, b.p5].filter(Boolean).join(' + ');
                                     let periodText = b.start_date && b.end_date ? `<p class="text-[10px] text-orange-200 font-medium mt-1">🗓️ Periode: ${b.start_date} s/d ${b.end_date}</p>` : '';
@@ -537,6 +551,13 @@
                                     `;
                                 }).join('')}
                             </div>
+                            ${bundles.length > 1 ? `
+                                <button onclick="scrollSlider('bundle-scroll-container', -1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">‹</button>
+                                <button onclick="scrollSlider('bundle-scroll-container', 1)" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">›</button>
+                                <div class="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2.5 py-1 rounded-full pointer-events-none flex items-center gap-1 shadow">
+                                    <span>‹ Geser / Swipe ›</span>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>`;
             } else { bContainer.innerHTML = ''; }
