@@ -76,7 +76,7 @@
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Menu Kelola Admin</p>
                     <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="w-full text-left px-3 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white flex items-center justify-between"><span>📦 Pesanan Masuk</span><span id="badge-order-count" class="bg-white text-orange-600 px-1.5 py-0.5 rounded-full text-[10px]">0</span></button>
                     <button onclick="switchAdminTab('products')" id="tab-btn-products" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">🏷️ Produk & Varian</button>
-                    <button onclick="switchAdminTab('promos')" id="tab-btn-promos" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">🎁 Voucher, Bundling & Tebus Murah</button>
+                    <button onclick="switchAdminTab('promos')" id="tab-btn-promos" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">🎁 Promo Toko</button>
                     <button onclick="switchAdminTab('headlines')" id="tab-btn-headlines" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">🖼️ Kelola Headline (Maks 5)</button>
                     <button onclick="switchAdminTab('customers')" id="tab-btn-customers" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">👥 Database Pelanggan</button>
                     <button onclick="switchAdminTab('reports')" id="tab-btn-reports" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">📊 Laporan & Keuangan</button>
@@ -129,8 +129,27 @@
                         <div id="admin-products-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                     </div>
 
-                    <!-- 3. TAB PROMO -->
+                    <!-- 3. TAB PROMO TOKO (Voucher, Bundling, Tebus Murah & Pengaturan Poin Pelanggan) -->
                     <div id="admin-tab-promos" class="hidden space-y-6">
+                        <!-- PENGATURAN POIN PELANGGAN -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
+                            <h3 class="font-bold text-sm text-orange-600">🪙 Pengaturan Poin Pelanggan</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] text-slate-500 mb-1">Nilai Konversi 1 Poin (Rupiah):</label>
+                                    <input type="number" id="set-point-value" placeholder="Contoh: 1000" class="w-full border p-2 rounded-lg">
+                                </div>
+                                <div class="flex items-end">
+                                    <button onclick="savePointSettings()" class="w-full bg-orange-600 text-white py-2 rounded-lg font-bold hover:bg-orange-700">Simpan Konversi Poin</button>
+                                </div>
+                            </div>
+                            <div class="pt-2 border-t flex justify-between items-center">
+                                <span class="text-slate-600">Hapus / Reset seluruh poin semua pelanggan secara berkala:</span>
+                                <button onclick="resetAllCustomerPoints()" class="bg-red-600 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-red-700">🗑️ Reset Semua Poin</button>
+                            </div>
+                        </div>
+
+                        <!-- VOUCHER -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 class="font-bold text-sm text-orange-600">🎟️ Kelola Voucher Belanja</h3>
                             <div class="grid grid-cols-2 gap-2">
@@ -144,6 +163,7 @@
                             <div id="admin-vouchers-list" class="space-y-2 pt-2"></div>
                         </div>
 
+                        <!-- BUNDLING -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 id="form-bundle-title" class="font-bold text-sm text-orange-600">📦 Kelola Paket Bundling</h3>
                             <input type="hidden" id="edit-bundle-id" value="">
@@ -174,6 +194,7 @@
                             <div id="admin-bundles-list" class="space-y-2 pt-2"></div>
                         </div>
 
+                        <!-- TEBUS MURAH -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 id="form-tm-title" class="font-bold text-sm text-orange-600">⚡ Kelola Produk Tebus Murah</h3>
                             <input type="hidden" id="edit-tm-id" value="">
@@ -238,7 +259,7 @@
                             <div id="report-summary-cards" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs"></div>
                         </div>
 
-                        <!-- Rincian Pesanan per Hari (Verifikasi, Cetak & Hapus Pesanan di Sini) -->
+                        <!-- Rincian Pesanan per Hari -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
                             <h3 class="font-bold text-sm text-slate-800">📋 Rincian, Verifikasi & Cetak Pesanan (Sesuai Filter)</h3>
                             <div id="admin-report-orders-list" class="space-y-3"></div>
@@ -295,7 +316,7 @@
             <div class="bg-orange-50 p-3 rounded-xl space-y-2 text-xs mb-4 border border-orange-100">
                 <div class="flex justify-between"><span>Subtotal:</span><span id="cart-subtotal">Rp 0</span></div>
                 <div class="flex justify-between text-emerald-600"><span>Potongan Voucher (Kelipatan):</span><span id="cart-voucher-disc">-Rp 0</span></div>
-                <div class="flex justify-between text-orange-700"><span>Poin Dimiliki (<strong id="modal-user-points">0</strong>):</span><span><input type="checkbox" id="use-points-checkbox" onchange="calculateCartTotal()"> Gunakan Poin</span></div>
+                <div class="flex justify-between text-orange-700"><span>Poin Dimiliki (<strong id="modal-user-points">0</strong>) [Konversi: Rp <span id="modal-point-value">1000</span>/poin]:</span><span><input type="checkbox" id="use-points-checkbox" onchange="calculateCartTotal()"> Gunakan Poin</span></div>
                 <div class="flex justify-between font-bold text-sm pt-2 border-t border-orange-200 text-slate-900"><span>Total Bayar:</span><span id="cart-total">Rp 0</span></div>
             </div>
 
@@ -699,6 +720,7 @@
             }
             if (currentPhone && customers[currentPhone]) {
                 document.getElementById('modal-user-points').innerText = customers[currentPhone].points;
+                document.getElementById('modal-point-value').innerText = (storeSettings.point_value || 1000).toLocaleString();
                 document.getElementById('order-phone').value = currentPhone;
                 if (customers[currentPhone].name && customers[currentPhone].name !== "Pelanggan") document.getElementById('order-name').value = customers[currentPhone].name;
                 if (customers[currentPhone].address) document.getElementById('order-address').value = customers[currentPhone].address;
@@ -835,6 +857,7 @@
                 }
                 let custObj = customers[phone] || { phone, name, address, points: 10, total_spend: 0 };
                 custObj.name = name; custObj.address = address;
+                custObj.points = customers[phone] ? customers[phone].points : 10;
                 await sb.from('customers').upsert([custObj]);
             }
 
@@ -1106,6 +1129,32 @@
             document.getElementById('set-store-name').value = storeSettings.store_name || '';
             document.getElementById('set-wa-admin').value = storeSettings.wa_admin || '';
             document.getElementById('set-bank-accounts').value = storeSettings.bank_accounts || '';
+            document.getElementById('set-point-value').value = storeSettings.point_value || 1000;
+        }
+
+        async function savePointSettings() {
+            let val = parseInt(document.getElementById('set-point-value').value) || 1000;
+            let res = await sb.from('store_settings').update({ point_value: val }).eq('id', 1);
+            if (res.error) { alert("Gagal menyimpan konversi poin: " + res.error.message); return; }
+            alert("Nilai konversi poin berhasil disimpan!");
+            await syncFromCloud();
+        }
+
+        async function resetAllCustomerPoints() {
+            let pin = prompt("Masukkan PIN Admin untuk konfirmasi reset seluruh poin pelanggan:");
+            if (pin === null) return;
+            if (pin !== (storeSettings.admin_pin || '1234')) {
+                alert("PIN salah! Reset poin dibatalkan.");
+                return;
+            }
+            if (confirm("PERINGATAN: Poin seluruh pelanggan akan di-reset menjadi 0. Lanjutkan?")) {
+                for (let phone in customers) {
+                    await sb.from('customers').update({ points: 0 }).eq('phone', phone);
+                }
+                alert("Semua poin pelanggan berhasil di-reset menjadi 0!");
+                await syncFromCloud();
+                renderAdminData();
+            }
         }
 
         async function saveProductSupabase() {
