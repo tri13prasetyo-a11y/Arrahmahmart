@@ -99,23 +99,20 @@
                         </div>
                     </div>
 
-                    <!-- 1. TAB PESANAN (Ringkasan Rapi & Tombol Cetak Struk) -->
+                    <!-- 1. TAB PESANAN -->
                     <div id="admin-tab-orders" class="space-y-3">
                         <h3 class="font-bold text-sm text-slate-800">📦 Daftar Pesanan Masuk (Ringkasan Bersih)</h3>
                         <div id="admin-orders-list" class="space-y-3"></div>
                     </div>
 
-                    <!-- 2. TAB PRODUK & VARIAN -->
+                    <!-- 2. TAB PRODUK -->
                     <div id="admin-tab-products" class="hidden space-y-4">
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
                             <h3 id="form-product-title" class="font-bold text-sm text-orange-600">+ Tambah Produk Baru</h3>
                             <input type="hidden" id="edit-product-id" value="">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                                 <input type="text" id="new-p-name" placeholder="Nama Produk" class="border p-2 rounded-lg">
-                                <div>
-                                    <label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Produk (Lokal):</label>
-                                    <input type="file" id="new-p-img-file" accept="image/*" class="w-full border p-1 rounded-lg text-xs bg-orange-50/30">
-                                </div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Produk (Lokal):</label><input type="file" id="new-p-img-file" accept="image/*" class="w-full border p-1 rounded-lg text-xs bg-orange-50/30"></div>
                                 <input type="number" id="new-p-hpp" placeholder="Harga HPP (Modal) Rp" class="border p-2 rounded-lg">
                                 <input type="number" id="new-p-price" placeholder="Harga Jual Normal / Coret Rp" class="border p-2 rounded-lg">
                                 <input type="number" id="new-p-promo" placeholder="Harga Jual Promo Rp" class="border p-2 rounded-lg">
@@ -218,7 +215,7 @@
                         <div id="admin-customers-list" class="space-y-2"></div>
                     </div>
 
-                    <!-- 6. TAB LAPORAN & KEUANGAN (Dengan Filter Periode & Verifikasi/Hapus/Cetak Pesanan) -->
+                    <!-- 6. TAB LAPORAN & KEUANGAN -->
                     <div id="admin-tab-reports" class="hidden space-y-4">
                         <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-4">
                             <div class="flex justify-between items-center flex-wrap gap-2">
@@ -678,7 +675,7 @@
             let currentTebusQty = exist ? exist.qty : 0;
 
             if (currentTebusQty >= maxKelipatan) {
-                alert(`Maksimal tebus murah untuk total belanja Anda saat ini adalah ${maxKelipatan} item (berlaku kelipatan Rp ${tm.min_cart_amount.toLocaleString()}).`);
+                alert(`Maksimal tebus murah untuk total belanja Anda saat ini adalah ${maxKelipatan} item.`);
                 return;
             }
             addSpecialToCart(key, `[Tebus Murah] ${tm.name}`, tm.tebus_price);
@@ -746,7 +743,7 @@
                 } else {
                     let sub = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
                     if (sub < found.min_spend) { alert(`Minimal belanja untuk voucher ini adalah Rp ${found.min_spend.toLocaleString()}`); appliedVoucher = null; }
-                    else { appliedVoucher = found; alert(`Voucher ${found.code} berhasil dipakai (Berlaku kelipatan)!`); }
+                    else { appliedVoucher = found; alert(`Voucher ${found.code} berhasil dipakai!`); }
                 }
             }
             calculateCartTotal();
@@ -831,7 +828,7 @@
 
             if (sb) {
                 let { error: ordErr } = await sb.from('orders').insert([newOrder]);
-                if (ordErr) { alert("Gagal mengirim pesanan ke database: " + ordErr.message); return; }
+                if (ordErr) { alert("Gagal mengirim pesanan: " + ordErr.message); return; }
                 if (appliedVoucher) {
                     let newUsedCount = (appliedVoucher.used_count || 0) + 1;
                     await sb.from('vouchers').update({ used_count: newUsedCount }).eq('id', appliedVoucher.id);
@@ -958,7 +955,7 @@
                     <div class="footer">
                         <p>Terima kasih telah berbelanja di ${storeSettings.store_name || 'Arrahmah Mart'}!</p>
                     </div>
-                    <script>window.onload = function() { window.print(); window.close(); }</script>
+                    <script>window.onload = function() { window.print(); window.close(); }<\/script>
                 </body>
                 </html>
             `);
@@ -968,7 +965,6 @@
         function renderAdminData() {
             document.getElementById('badge-order-count').innerText = orders.filter(o => o.status !== 'LUNAS').length;
 
-            // 1. Tab Pesanan Masuk (Hanya Ringkasan Bersih & Cetak Struk)
             document.getElementById('admin-orders-list').innerHTML = orders.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pesanan masuk.</p>` : orders.map(o => {
                 let itemsList = Array.isArray(o.items) ? o.items.map(i => `<li class="text-slate-600">• ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}</li>`).join('') : '<li>Tidak ada rincian</li>';
                 return `
@@ -996,7 +992,6 @@
                 </div>`;
             }).join('');
 
-            // Filter Pesanan untuk Laporan Keuangan
             let startVal = document.getElementById('report-start-date')?.value || '';
             let endVal = document.getElementById('report-end-date')?.value || '';
             let filteredOrders = orders.filter(o => {
@@ -1008,7 +1003,6 @@
                 return true;
             });
 
-            // 2. Tab Laporan (Rincian Pesanan + Tombol Verifikasi Lunas, Cetak & Hapus)
             document.getElementById('admin-report-orders-list').innerHTML = filteredOrders.length === 0 ? `<p class="text-xs text-slate-500">Tidak ada pesanan dalam periode ini.</p>` : filteredOrders.map(o => {
                 let itemsList = Array.isArray(o.items) ? o.items.map(i => `<li class="text-slate-600">• ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}</li>`).join('') : '<li>Tidak ada rincian</li>';
                 let paidInfo = o.paid_date ? `<p class="text-emerald-600 font-semibold">Tanggal Lunas: ${o.paid_date}</p>` : '';
@@ -1036,7 +1030,6 @@
                 </div>`;
             }).join('');
 
-            // Products list admin
             document.getElementById('admin-products-list').innerHTML = products.map(p => `
                 <div class="bg-white p-3 rounded-xl shadow-sm border border-orange-100 flex items-center space-x-3 text-xs">
                     <img src="${p.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80'}" class="w-14 h-14 object-cover rounded-lg">
@@ -1050,10 +1043,8 @@
                     </div>
                 </div>`).join('');
 
-            // Promos Lists
             document.getElementById('admin-vouchers-list').innerHTML = vouchers.map(v => `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border text-xs"><span><strong>${v.code}</strong> - Diskon Rp ${(v.discount_amount||0).toLocaleString()} (Min Rp ${(v.min_spend||0).toLocaleString()})</span><button onclick="deleteRow('vouchers', ${v.id})" class="text-red-500 font-bold">Hapus</button></div>`).join('');
             
-            // Bundling Admin List
             document.getElementById('admin-bundles-list').innerHTML = bundles.map(b => {
                 let desc = [b.p1, b.p2, b.p3, b.p4, b.p5].filter(Boolean).join(' | ');
                 return `<div class="bg-orange-50/50 p-2 rounded border text-xs flex justify-between items-center">
@@ -1069,7 +1060,6 @@
                 </div>`;
             }).join('');
 
-            // Tebus Murah Admin List
             document.getElementById('admin-tm-list').innerHTML = tebusMurahList.map(tm => `<div class="bg-orange-50/50 p-2 rounded border text-xs flex justify-between items-center">
                 <div>
                     <strong>${tm.name}</strong> - Tebus Rp ${(tm.tebus_price||0).toLocaleString()} (Normal: Rp ${(tm.normal_price||0).toLocaleString()})
@@ -1080,7 +1070,6 @@
                 </div>
             </div>`).join('');
 
-            // Headlines List
             document.getElementById('admin-headlines-list').innerHTML = headlines.length === 0 ? `<p class="text-xs text-slate-500">Belum ada headline (maksimal 5).</p>` : headlines.map(hl => `
                 <div class="bg-white p-3 rounded-xl shadow-sm border flex items-center space-x-3 text-xs">
                     <img src="${hl.img}" class="w-12 h-20 object-cover rounded">
@@ -1088,7 +1077,6 @@
                     <button onclick="deleteRow('headlines', ${hl.id})" class="text-red-500 font-bold px-2 py-1">Hapus</button>
                 </div>`).join('');
 
-            // Customers
             let custArray = Object.values(customers);
             document.getElementById('admin-customers-list').innerHTML = custArray.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pelanggan.</p>` : custArray.map(c => `
                 <div class="bg-white p-3 rounded-xl shadow-sm border flex justify-between items-center text-xs">
@@ -1104,7 +1092,6 @@
                     </div>
                 </div>`).join('');
 
-            // Reports Summary Cards
             let lunasFiltered = filteredOrders.filter(o=>o.status==='LUNAS');
             let totalOmset = lunasFiltered.reduce((s,o)=>s+(o.final_total||0),0);
             let totalProfit = lunasFiltered.reduce((s,o)=>s+(o.net_profit||0),0);
