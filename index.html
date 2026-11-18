@@ -36,10 +36,8 @@
         
         <!-- ================= HALAMAN CUSTOMER (#customer) ================= -->
         <section id="view-customer" class="space-y-5">
-            <!-- Slider / Headline Banner -->
             <div id="customer-headlines" class="space-y-2"></div>
 
-            <!-- Box Poin Pelanggan -->
             <div class="bg-white border border-orange-200 p-4 rounded-xl shadow-sm">
                 <h2 class="font-bold text-orange-600 text-base mb-1">🪙 Program Poin Pelanggan</h2>
                 <p class="text-xs text-slate-600">Setiap belanja mengumpulkan poin yang bisa ditukar diskon di pesanan berikutnya!</p>
@@ -49,22 +47,15 @@
                 </div>
             </div>
 
-            <!-- Voucher Belanja -->
             <div id="customer-vouchers"></div>
-
-            <!-- Paket Bundling Slider -->
             <div id="customer-bundles-container"></div>
-
-            <!-- Promo Tebus Murah -->
             <div id="customer-tebus-container"></div>
 
-            <!-- Header Katalog -->
             <div class="flex justify-between items-center pt-2">
                 <h3 class="font-bold text-lg text-slate-800">🛒 Katalog Produk</h3>
                 <span id="cart-count-badge" class="bg-orange-600 text-white text-xs px-3 py-1 rounded-full font-medium shadow-sm">0 Produk di Keranjang</span>
             </div>
 
-            <!-- Grid Produk -->
             <div id="product-grid" class="grid grid-cols-2 gap-3 md:grid-cols-4">
                 <p class="text-xs text-slate-500 col-span-full text-center py-6">Memuat katalog produk...</p>
             </div>
@@ -72,7 +63,6 @@
 
         <!-- ================= HALAMAN ADMIN (#admin) ================= -->
         <section id="view-admin" class="hidden">
-            <!-- Login PIN Admin -->
             <div id="admin-login-box" class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-md border border-orange-100 mt-10">
                 <h2 class="font-bold text-xl text-slate-900 mb-2">🔒 Panel Login Admin</h2>
                 <p class="text-xs text-slate-500 mb-4">Masukkan PIN akses admin (Default PIN: <strong>1234</strong>)</p>
@@ -80,7 +70,6 @@
                 <button onclick="verifyAdminPin()" class="w-full bg-orange-600 text-white font-semibold py-2.5 rounded-lg text-sm hover:bg-orange-700 transition">Masuk Dashboard</button>
             </div>
 
-            <!-- Dashboard Utama Admin -->
             <div id="admin-dashboard" class="hidden grid grid-cols-1 md:grid-cols-4 gap-6">
                 <!-- SIDEBAR VERTIKAL -->
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-2 h-fit">
@@ -98,7 +87,6 @@
 
                 <!-- KONTEN UTAMA ADMIN -->
                 <div class="md:col-span-3 space-y-6">
-                    <!-- Info Link Tautan -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-xs space-y-2">
                         <p class="font-bold text-slate-700">📌 Tautan Akses Terpisah:</p>
                         <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded border border-orange-100">
@@ -111,7 +99,7 @@
                         </div>
                     </div>
 
-                    <!-- 1. TAB PESANAN (Dengan Tombol Cetak Struk) -->
+                    <!-- 1. TAB PESANAN (Ringkasan Rapi & Tombol Cetak Struk) -->
                     <div id="admin-tab-orders" class="space-y-3">
                         <h3 class="font-bold text-sm text-slate-800">📦 Daftar Pesanan Masuk (Ringkasan Bersih)</h3>
                         <div id="admin-orders-list" class="space-y-3"></div>
@@ -146,54 +134,42 @@
 
                     <!-- 3. TAB PROMO -->
                     <div id="admin-tab-promos" class="hidden space-y-6">
-                        <!-- Voucher -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
-                            <h3 class="font-bold text-sm text-orange-600">🎟️ Kelola Voucher Belanja (Berlaku Kelipatan & Kuota Maksimal)</h3>
+                            <h3 class="font-bold text-sm text-orange-600">🎟️ Kelola Voucher Belanja</h3>
                             <div class="grid grid-cols-2 gap-2">
                                 <input type="text" id="v-code" placeholder="Kode Voucher (Misal: HEMAT10)" class="border p-2 rounded-lg uppercase">
                                 <input type="text" id="v-name" placeholder="Nama Voucher" class="border p-2 rounded-lg">
                                 <input type="number" id="v-disc" placeholder="Jumlah Potongan per Kelipatan Rp" class="border p-2 rounded-lg">
                                 <input type="number" id="v-min" placeholder="Minimal Belanja per Kelipatan Rp" class="border p-2 rounded-lg">
-                                <input type="number" id="v-max" placeholder="Maksimal Kuota Pemakaian (Misal: 50)" class="border p-2 rounded-lg col-span-2">
+                                <input type="number" id="v-max" placeholder="Maksimal Kuota Pemakaian" class="border p-2 rounded-lg col-span-2">
                             </div>
                             <button onclick="addVoucherSupabase()" class="w-full bg-orange-600 text-white py-2 rounded-lg font-bold">+ Tambah Voucher</button>
                             <div id="admin-vouchers-list" class="space-y-2 pt-2"></div>
                         </div>
 
-                        <!-- BUNDLING -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
-                            <h3 id="form-bundle-title" class="font-bold text-sm text-orange-600">📦 Kelola Paket Bundling (Hingga 5 Produk + Estimasi HPP)</h3>
+                            <h3 id="form-bundle-title" class="font-bold text-sm text-orange-600">📦 Kelola Paket Bundling</h3>
                             <input type="hidden" id="edit-bundle-id" value="">
-                            <input type="text" id="b-theme" placeholder="Tema Paket Bundling (Misal: Paket Sembako Hemat)" class="w-full border p-2 rounded-lg font-bold">
-                            
+                            <input type="text" id="b-theme" placeholder="Tema Paket Bundling" class="w-full border p-2 rounded-lg font-bold">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 1:</label><select id="b-p1-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 2:</label><select id="b-p2-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 3:</label><select id="b-p3-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 4:</label><select id="b-p4-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Pilihan Produk 5:</label><select id="b-p5-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
-                                
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Produk 1:</label><select id="b-p1-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Produk 2:</label><select id="b-p2-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Produk 3:</label><select id="b-p3-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Produk 4:</label><select id="b-p4-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Produk 5:</label><select id="b-p5-select" onchange="calculateBundleTotal()" class="w-full border p-2 rounded-lg bg-white"></select></div>
                                 <div class="bg-orange-50 p-2.5 rounded-lg border border-orange-200 flex flex-col justify-center space-y-1">
                                     <div class="flex justify-between text-[11px]"><span class="text-slate-600">Total HPP (Modal):</span><strong id="b-calc-hpp-display" class="text-red-600">Rp 0</strong></div>
                                     <div class="flex justify-between text-[11px]"><span class="text-slate-600">Total Harga Normal:</span><strong id="b-calc-orig-display" class="text-slate-900">Rp 0</strong></div>
                                 </div>
                             </div>
-
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
-                                <div>
-                                    <label class="block text-[10px] text-slate-500 mb-1">Harga Total Setelah Bundling (Rp):</label>
-                                    <input type="number" id="b-promo" placeholder="Harga Spesial Bundling" class="w-full border p-2 rounded-lg font-bold text-orange-600">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Paket Bundling (Lokal):</label>
-                                    <input type="file" id="b-img-file" accept="image/*" class="w-full border p-1 rounded-lg bg-orange-50/30">
-                                </div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Harga Total Setelah Bundling (Rp):</label><input type="number" id="b-promo" placeholder="Harga Spesial Bundling" class="w-full border p-2 rounded-lg font-bold text-orange-600"></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Paket:</label><input type="file" id="b-img-file" accept="image/*" class="w-full border p-1 rounded-lg bg-orange-50/30"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-2 pt-1">
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Mulai Periode:</label><input type="date" id="b-start" class="w-full border p-1.5 rounded-lg"></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Akhir Periode:</label><input type="date" id="b-end" class="w-full border p-1.5 rounded-lg"></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Mulai:</label><input type="date" id="b-start" class="w-full border p-1.5 rounded-lg"></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Akhir:</label><input type="date" id="b-end" class="w-full border p-1.5 rounded-lg"></div>
                             </div>
-
                             <div class="flex gap-2 pt-2">
                                 <button id="btn-save-bundle" onclick="saveBundleSupabase()" class="flex-1 bg-orange-600 text-white py-2.5 rounded-lg font-bold hover:bg-orange-700">Simpan Paket Bundling</button>
                                 <button onclick="resetBundleForm()" id="btn-cancel-bundle-edit" class="hidden bg-slate-300 text-slate-700 px-4 py-2.5 rounded-lg font-bold">Batal</button>
@@ -201,24 +177,20 @@
                             <div id="admin-bundles-list" class="space-y-2 pt-2"></div>
                         </div>
 
-                        <!-- TEBUS MURAH -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
-                            <h3 id="form-tm-title" class="font-bold text-sm text-orange-600">⚡ Kelola Produk Tebus Murah (Berlaku Kelipatan)</h3>
+                            <h3 id="form-tm-title" class="font-bold text-sm text-orange-600">⚡ Kelola Produk Tebus Murah</h3>
                             <input type="hidden" id="edit-tm-id" value="">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                                 <div><label class="block text-[10px] text-slate-500 mb-1">Pilih Produk Tebus:</label><select id="tm-prod-select" onchange="onSelectTebusProduct()" class="w-full border p-2 rounded-lg bg-white"></select></div>
                                 <div><label class="block text-[10px] text-slate-500 mb-1">Harga Normal:</label><input type="number" id="tm-normal" placeholder="Harga Normal Rp" class="border p-2 rounded-lg w-full"></div>
                                 <div><label class="block text-[10px] text-slate-500 mb-1">Harga Tebus Murah Rp:</label><input type="number" id="tm-price" placeholder="Harga Tebus Rp" class="border p-2 rounded-lg w-full"></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-1">Syarat Kelipatan Min. Belanja Rp:</label><input type="number" id="tm-min" placeholder="Min. Belanja Rp" class="border p-2 rounded-lg w-full"></div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Min. Belanja Rp:</label><input type="number" id="tm-min" placeholder="Min. Belanja Rp" class="border p-2 rounded-lg w-full"></div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
-                                <div>
-                                    <label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Tebus Murah:</label>
-                                    <input type="file" id="tm-img-file" accept="image/*" class="w-full border p-1 rounded-lg bg-orange-50/30">
-                                </div>
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Upload Gambar:</label><input type="file" id="tm-img-file" accept="image/*" class="w-full border p-1 rounded-lg bg-orange-50/30"></div>
                                 <div class="grid grid-cols-2 gap-1">
-                                    <div><label class="block text-[10px] text-slate-500 mb-1">Mulai Periode:</label><input type="date" id="tm-start" class="w-full border p-1.5 rounded-lg"></div>
-                                    <div><label class="block text-[10px] text-slate-500 mb-1">Akhir Periode:</label><input type="date" id="tm-end" class="w-full border p-1.5 rounded-lg"></div>
+                                    <div><label class="block text-[10px] text-slate-500 mb-1">Mulai:</label><input type="date" id="tm-start" class="w-full border p-1.5 rounded-lg"></div>
+                                    <div><label class="block text-[10px] text-slate-500 mb-1">Akhir:</label><input type="date" id="tm-end" class="w-full border p-1.5 rounded-lg"></div>
                                 </div>
                             </div>
                             <div class="flex gap-2 pt-2">
@@ -234,10 +206,7 @@
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 class="font-bold text-sm text-orange-600">🖼️ Kelola Headline / Banner Toko (Maksimal 5)</h3>
                             <input type="text" id="hl-title" placeholder="Judul / Keterangan Headline" class="w-full border p-2 rounded-lg">
-                            <div>
-                                <label class="block font-medium mb-1">Pilih Gambar Headline:</label>
-                                <input type="file" id="hl-img-file" accept="image/*" class="w-full border p-2 rounded-lg bg-orange-50/30">
-                            </div>
+                            <div><label class="block font-medium mb-1">Pilih Gambar Headline:</label><input type="file" id="hl-img-file" accept="image/*" class="w-full border p-2 rounded-lg bg-orange-50/30"></div>
                             <button onclick="addHeadlineSupabase()" class="w-full bg-orange-600 text-white py-2.5 rounded-lg font-bold hover:bg-orange-700">+ Tambah Headline Banner</button>
                         </div>
                         <div id="admin-headlines-list" class="space-y-3"></div>
@@ -249,7 +218,7 @@
                         <div id="admin-customers-list" class="space-y-2"></div>
                     </div>
 
-                    <!-- 6. TAB LAPORAN & KEUANGAN -->
+                    <!-- 6. TAB LAPORAN & KEUANGAN (Dengan Filter Periode & Verifikasi/Hapus/Cetak Pesanan) -->
                     <div id="admin-tab-reports" class="hidden space-y-4">
                         <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-4">
                             <div class="flex justify-between items-center flex-wrap gap-2">
@@ -272,9 +241,9 @@
                             <div id="report-summary-cards" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs"></div>
                         </div>
 
-                        <!-- Rincian Pesanan per Hari (Verifikasi, Cetak & Hapus) -->
+                        <!-- Rincian Pesanan per Hari (Verifikasi, Cetak & Hapus Pesanan di Sini) -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
-                            <h3 class="font-bold text-sm text-slate-800">📋 Rincian & Verifikasi Pesanan Masuk (Sesuai Filter)</h3>
+                            <h3 class="font-bold text-sm text-slate-800">📋 Rincian, Verifikasi & Cetak Pesanan (Sesuai Filter)</h3>
                             <div id="admin-report-orders-list" class="space-y-3"></div>
                         </div>
                     </div>
@@ -284,10 +253,7 @@
                         <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 class="font-bold text-sm text-orange-600">⚙️ Pengaturan Profil Toko & Logo</h3>
                             <div><label class="font-medium block mb-1">Nama Toko:</label><input type="text" id="set-store-name" class="w-full border p-2 rounded-lg"></div>
-                            <div>
-                                <label class="font-medium block mb-1">Upload Logo Toko:</label>
-                                <input type="file" id="set-store-logo-file" accept="image/*" class="w-full border p-2 rounded-lg bg-orange-50/30">
-                            </div>
+                            <div><label class="font-medium block mb-1">Upload Logo Toko:</label><input type="file" id="set-store-logo-file" accept="image/*" class="w-full border p-2 rounded-lg bg-orange-50/30"></div>
                             <div><label class="font-medium block mb-1">Nomor WhatsApp Admin (62...):</label><input type="text" id="set-wa-admin" class="w-full border p-2 rounded-lg"></div>
                             <div><label class="font-medium block mb-1">Daftar Rekening / Pembayaran:</label><textarea id="set-bank-accounts" rows="4" class="w-full border p-2 rounded-lg"></textarea></div>
                             <div><label class="font-medium block mb-1">PIN Akses Admin Baru:</label><input type="password" id="set-admin-pin" class="w-full border p-2 rounded-lg" placeholder="Kosongkan jika tidak diubah"></div>
@@ -527,9 +493,6 @@
                         ${headlines.length > 1 ? `
                             <button onclick="scrollSlider('headline-scroll-container', -1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">‹</button>
                             <button onclick="scrollSlider('headline-scroll-container', 1)" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">›</button>
-                            <div class="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2.5 py-1 rounded-full pointer-events-none flex items-center gap-1 shadow">
-                                <span>‹ Geser / Swipe ›</span>
-                            </div>
                         ` : ''}
                     </div>`;
             } else { hlContainer.innerHTML = ''; }
@@ -573,9 +536,6 @@
                             ${bundles.length > 1 ? `
                                 <button onclick="scrollSlider('bundle-scroll-container', -1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">‹</button>
                                 <button onclick="scrollSlider('bundle-scroll-container', 1)" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">›</button>
-                                <div class="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2.5 py-1 rounded-full pointer-events-none flex items-center gap-1 shadow">
-                                    <span>‹ Geser / Swipe ›</span>
-                                </div>
                             ` : ''}
                         </div>
                     </div>`;
@@ -617,12 +577,10 @@
                     let vars = Array.isArray(p.variants) ? p.variants : [];
                     let variantSelect = vars.length > 0 ? `<select id="var-select-${p.id}" class="w-full border border-orange-200 rounded p-1 text-[10px] mt-1.5 bg-orange-50/40">${vars.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>` : '';
                     let hasDiscount = p.price > p.promoPrice;
-                    
                     let tierInfo = '';
                     if (Array.isArray(p.tiers) && p.tiers.length > 0) {
                         tierInfo = `<div class="mt-1 bg-orange-50 p-1.5 rounded border border-orange-100 text-[10px] text-orange-700">📦 Grosir: ` + p.tiers.map(t=>`Min ${t.min} item @Rp ${t.price.toLocaleString()}`).join(', ') + `</div>`;
                     }
-
                     return `
                     <div class="bg-white rounded-xl shadow-sm border border-orange-100 overflow-hidden flex flex-col justify-between">
                         <div>
@@ -714,7 +672,6 @@
             if (!tm) return;
             let sub = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
             if (sub < tm.min_cart_amount) { alert(`Minimal belanja Rp ${tm.min_cart_amount.toLocaleString()} untuk tebus murah ini!`); return; }
-            
             let maxKelipatan = Math.floor(sub / tm.min_cart_amount);
             let key = `tm-${tm.id}`;
             let exist = cart.find(i => i.cartKey === key);
@@ -724,7 +681,6 @@
                 alert(`Maksimal tebus murah untuk total belanja Anda saat ini adalah ${maxKelipatan} item (berlaku kelipatan Rp ${tm.min_cart_amount.toLocaleString()}).`);
                 return;
             }
-
             addSpecialToCart(key, `[Tebus Murah] ${tm.name}`, tm.tebus_price);
         }
 
@@ -799,19 +755,14 @@
         function calculateCartTotal() {
             let subtotal = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
             let vDisc = 0;
-            
             if (appliedVoucher) {
                 if (subtotal < appliedVoucher.min_spend) {
-                    alert(`Voucher ${appliedVoucher.code} tidak lagi memenuhi syarat minimal belanja. Voucher dilepaskan.`);
                     appliedVoucher = null;
-                    let vCodeInput = document.getElementById('checkout-voucher-code');
-                    if(vCodeInput) vCodeInput.value = '';
                 } else {
                     let multiplier = Math.floor(subtotal / appliedVoucher.min_spend);
                     vDisc = appliedVoucher.discount_amount * multiplier;
                 }
             }
-
             let pDisc = 0;
             if (document.getElementById('use-points-checkbox').checked && currentPhone && customers[currentPhone]) {
                 let pointVal = storeSettings.point_value || 1000;
@@ -820,7 +771,6 @@
                 let maxPoints = Math.min(availablePoints, Math.floor(remainingSub / pointVal));
                 pDisc = maxPoints * pointVal;
             }
-
             let totalDisc = vDisc + pDisc;
             if (totalDisc > subtotal) totalDisc = subtotal;
             let finalTotal = Math.max(0, subtotal - totalDisc);
@@ -881,10 +831,7 @@
 
             if (sb) {
                 let { error: ordErr } = await sb.from('orders').insert([newOrder]);
-                if (ordErr) {
-                    alert("Gagal mengirim pesanan ke database: " + ordErr.message);
-                    return;
-                }
+                if (ordErr) { alert("Gagal mengirim pesanan ke database: " + ordErr.message); return; }
                 if (appliedVoucher) {
                     let newUsedCount = (appliedVoucher.used_count || 0) + 1;
                     await sb.from('vouchers').update({ used_count: newUsedCount }).eq('id', appliedVoucher.id);
@@ -950,7 +897,6 @@
             renderAdminData();
         }
 
-        // Fungsi Cetak Struk Pesanan
         function printOrder(orderId) {
             let order = orders.find(o => o.id === orderId);
             if (!order) return;
@@ -997,9 +943,7 @@
                                 <th style="text-align: right; padding-bottom: 4px;">Subtotal</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            ${itemsHtml}
-                        </tbody>
+                        <tbody>${itemsHtml}</tbody>
                     </table>
                     <div class="totals">
                         <div class="total-row"><span>Subtotal:</span> <span>Rp ${(order.subtotal || 0).toLocaleString()}</span></div>
@@ -1012,11 +956,9 @@
                         <div><strong>Status:</strong> ${order.status}</div>
                     </div>
                     <div class="footer">
-                        <p>Terima kasih telah berbelanja di ${storeSettings.store_name || 'Arrahmah Mart'}!<br>Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.</p>
+                        <p>Terima kasih telah berbelanja di ${storeSettings.store_name || 'Arrahmah Mart'}!</p>
                     </div>
-                    <script>
-                        window.onload = function() { window.print(); window.close(); }
-                    </script>
+                    <script>window.onload = function() { window.print(); window.close(); }</script>
                 </body>
                 </html>
             `);
@@ -1026,7 +968,7 @@
         function renderAdminData() {
             document.getElementById('badge-order-count').innerText = orders.filter(o => o.status !== 'LUNAS').length;
 
-            // 1. Tab Pesanan Masuk (Dengan Tombol Cetak Struk)
+            // 1. Tab Pesanan Masuk (Hanya Ringkasan Bersih & Cetak Struk)
             document.getElementById('admin-orders-list').innerHTML = orders.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pesanan masuk.</p>` : orders.map(o => {
                 let itemsList = Array.isArray(o.items) ? o.items.map(i => `<li class="text-slate-600">• ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}</li>`).join('') : '<li>Tidak ada rincian</li>';
                 return `
@@ -1057,7 +999,6 @@
             // Filter Pesanan untuk Laporan Keuangan
             let startVal = document.getElementById('report-start-date')?.value || '';
             let endVal = document.getElementById('report-end-date')?.value || '';
-            
             let filteredOrders = orders.filter(o => {
                 if (!startVal && !endVal) return true;
                 let oDate = o.raw_date || '';
@@ -1067,7 +1008,7 @@
                 return true;
             });
 
-            // 2. Tab Laporan (Rincian Pesanan + Tombol Verifikasi, Cetak & Hapus)
+            // 2. Tab Laporan (Rincian Pesanan + Tombol Verifikasi Lunas, Cetak & Hapus)
             document.getElementById('admin-report-orders-list').innerHTML = filteredOrders.length === 0 ? `<p class="text-xs text-slate-500">Tidak ada pesanan dalam periode ini.</p>` : filteredOrders.map(o => {
                 let itemsList = Array.isArray(o.items) ? o.items.map(i => `<li class="text-slate-600">• ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}</li>`).join('') : '<li>Tidak ada rincian</li>';
                 let paidInfo = o.paid_date ? `<p class="text-emerald-600 font-semibold">Tanggal Lunas: ${o.paid_date}</p>` : '';
@@ -1110,7 +1051,7 @@
                 </div>`).join('');
 
             // Promos Lists
-            document.getElementById('admin-vouchers-list').innerHTML = vouchers.map(v => `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border text-xs"><span><strong>${v.code}</strong> - Diskon Rp ${(v.discount_amount||0).toLocaleString()} (Min Rp ${(v.min_spend||0).toLocaleString()}) | Terpakai: ${v.used_count||0}/${v.max_usage||100}</span><button onclick="deleteRow('vouchers', ${v.id})" class="text-red-500 font-bold">Hapus</button></div>`).join('');
+            document.getElementById('admin-vouchers-list').innerHTML = vouchers.map(v => `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border text-xs"><span><strong>${v.code}</strong> - Diskon Rp ${(v.discount_amount||0).toLocaleString()} (Min Rp ${(v.min_spend||0).toLocaleString()})</span><button onclick="deleteRow('vouchers', ${v.id})" class="text-red-500 font-bold">Hapus</button></div>`).join('');
             
             // Bundling Admin List
             document.getElementById('admin-bundles-list').innerHTML = bundles.map(b => {
@@ -1119,7 +1060,7 @@
                     <div>
                         <strong>${b.name}</strong><br>
                         <span class="text-[10px] text-slate-500">${desc}</span><br>
-                        Normal: Rp ${(b.original_price||0).toLocaleString()} → <strong>Bundling: Rp ${(b.promo_price||0).toLocaleString()}</strong> | Periode: ${b.start_date||'-'} s/d ${b.end_date||'-'}
+                        Normal: Rp ${(b.original_price||0).toLocaleString()} → <strong>Bundling: Rp ${(b.promo_price||0).toLocaleString()}</strong>
                     </div>
                     <div class="flex gap-1">
                         <button onclick="editBundle(${b.id})" class="bg-orange-100 text-orange-700 font-bold px-2 py-1 rounded">Edit</button>
@@ -1131,8 +1072,7 @@
             // Tebus Murah Admin List
             document.getElementById('admin-tm-list').innerHTML = tebusMurahList.map(tm => `<div class="bg-orange-50/50 p-2 rounded border text-xs flex justify-between items-center">
                 <div>
-                    <strong>${tm.name}</strong> - Tebus Rp ${(tm.tebus_price||0).toLocaleString()} (Normal: Rp ${(tm.normal_price||0).toLocaleString()})<br>
-                    <span class="text-[10px] text-slate-500">Kelipatan Min. Belanja: Rp ${(tm.min_cart_amount||0).toLocaleString()} | Periode: ${tm.start_date||'-'} s/d ${tm.end_date||'-'}</span>
+                    <strong>${tm.name}</strong> - Tebus Rp ${(tm.tebus_price||0).toLocaleString()} (Normal: Rp ${(tm.normal_price||0).toLocaleString()})
                 </div>
                 <div class="flex gap-1">
                     <button onclick="editTebusMurah(${tm.id})" class="bg-orange-100 text-orange-700 font-bold px-2 py-1 rounded">Edit</button>
@@ -1176,7 +1116,6 @@
                 <div class="bg-blue-50 p-3 rounded-lg border border-blue-200"><p class="text-slate-500">Total Diskon / Potongan</p><p class="font-bold text-sm text-blue-700">Rp ${totalDiskon.toLocaleString()}</p></div>
                 <div class="bg-purple-50 p-3 rounded-lg border border-purple-200"><p class="text-slate-500">Jumlah Transaksi Lunas</p><p class="font-bold text-sm text-purple-700">${totalTx} Transaksi</p></div>`;
 
-            // Profile Settings
             document.getElementById('set-store-name').value = storeSettings.store_name || '';
             document.getElementById('set-wa-admin').value = storeSettings.wa_admin || '';
             document.getElementById('set-bank-accounts').value = storeSettings.bank_accounts || '';
@@ -1203,10 +1142,8 @@
             }
 
             if (!name || !price) return alert("Nama dan harga produk wajib diisi!");
-
             let imgBase64 = await readFileAsBase64('new-p-img-file');
             let prodData = { name, hpp, price, promo_price: promoPrice, discount: price - promoPrice, stock, points_earned: pointsEarned, variants, tiers };
-            
             if (imgBase64) prodData.img = imgBase64;
 
             let res;
@@ -1272,7 +1209,6 @@
             let end_date = document.getElementById('b-end').value;
 
             if (!name || !promo_price) return alert("Tema paket dan harga setelah bundling wajib diisi!");
-
             let original_price = calculateBundleTotal();
             if (original_price <= 0) return alert("Pilih minimal 1 produk untuk paket bundling!");
 
@@ -1287,7 +1223,7 @@
                 bundleData.id = Date.now();
                 res = await sb.from('bundles').insert([bundleData]);
             }
-            if (res.error) { alert("Gagal menyimpan bundling ke database: " + res.error.message); return; }
+            if (res.error) { alert("Gagal menyimpan bundling: " + res.error.message); return; }
             alert("Paket bundling berhasil disimpan!");
             resetBundleForm();
             await syncFromCloud();
@@ -1328,7 +1264,7 @@
             document.getElementById('b-end').value = '';
             document.getElementById('b-calc-orig-display').innerText = 'Rp 0';
             document.getElementById('b-calc-hpp-display').innerText = 'Rp 0';
-            document.getElementById('form-bundle-title').innerText = "📦 Kelola Paket Bundling (Hingga 5 Produk + Estimasi HPP)";
+            document.getElementById('form-bundle-title').innerText = "📦 Kelola Paket Bundling";
             document.getElementById('btn-save-bundle').innerText = "Simpan Paket Bundling";
             document.getElementById('btn-cancel-bundle-edit').classList.add('hidden');
         }
@@ -1344,7 +1280,6 @@
 
             if (!prodVal || !tebus_price) return alert("Pilih produk dan masukkan harga tebus!");
             let name = prodVal;
-
             let imgBase64 = await readFileAsBase64('tm-img-file');
             let tmData = { name, normal_price, tebus_price, min_cart_amount, start_date, end_date };
             if (imgBase64) tmData.img = imgBase64;
@@ -1388,7 +1323,7 @@
             document.getElementById('tm-img-file').value = '';
             document.getElementById('tm-start').value = '';
             document.getElementById('tm-end').value = '';
-            document.getElementById('form-tm-title').innerText = "⚡ Kelola Produk Tebus Murah (Berlaku Kelipatan)";
+            document.getElementById('form-tm-title').innerText = "⚡ Kelola Produk Tebus Murah";
             document.getElementById('btn-save-tm').innerText = "Simpan Tebus Murah";
             document.getElementById('btn-cancel-tm-edit').classList.add('hidden');
         }
@@ -1416,7 +1351,6 @@
             let points = parseInt(document.getElementById('edit-cust-points').value) || 0;
 
             if (!phone) return alert("Nomor WhatsApp wajib diisi!");
-
             if (origPhone !== phone) {
                 await sb.from('customers').delete().eq('phone', origPhone);
             }
@@ -1450,7 +1384,7 @@
                 alert("PIN salah! Reset laporan dibatalkan.");
                 return;
             }
-            if (confirm("PERINGATAN: Semua riwayat pesanan (orders) akan dihapus permanen dan laporan akan di-reset ke 0. Lanjutkan?")) {
+            if (confirm("PERINGATAN: Semua riwayat pesanan akan dihapus permanen dan laporan di-reset ke 0. Lanjutkan?")) {
                 await sb.from('orders').delete().neq('id', '0');
                 alert("Laporan keuangan berhasil di-reset!");
                 await syncFromCloud();
@@ -1506,7 +1440,7 @@
                     let newSpend = (customers[order.phone].total_spend || 0) + (order.final_total || order.finalTotal || 0);
                     await sb.from('customers').update({ points: newPts, total_spend: newSpend }).eq('phone', order.phone);
                 }
-                alert("Pesanan dikonfirmasi LUNAS & tanggal pelunasan tercatat otomatis!");
+                alert("Pesanan dikonfirmasi LUNAS & poin pelanggan bertambah otomatis!");
                 await syncFromCloud(); renderAdminData();
             }
         }
