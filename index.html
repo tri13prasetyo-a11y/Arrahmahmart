@@ -1,105 +1,120 @@
--- Buat tabel jika belum ada
-CREATE TABLE IF NOT EXISTS products (
-    id BIGINT PRIMARY KEY,
-    name TEXT NOT NULL,
-    hpp NUMERIC DEFAULT 0,
-    price NUMERIC NOT NULL,
-    promo_price NUMERIC,
-    discount NUMERIC DEFAULT 0,
-    stock INT DEFAULT 0,
-    img TEXT,
-    points_earned INT DEFAULT 5,
-    variants JSONB,
-    tiers JSONB
-);
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arrahmah Mart Surabaya - Cloud Realtime</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #fff7ed; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #fdba74; border-radius: 4px; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
 
-CREATE TABLE IF NOT EXISTS orders (
-    id TEXT PRIMARY KEY,
-    display_date TEXT,
-    name TEXT,
-    phone TEXT,
-    address TEXT,
-    items JSONB,
-    subtotal NUMERIC,
-    total_hpp NUMERIC,
-    total_discount NUMERIC,
-    points_used INT,
-    final_total NUMERIC,
-    net_profit NUMERIC,
-    points_earned INT,
-    shipping TEXT,
-    payment TEXT,
-    status TEXT,
-    paid_date TEXT
-);
+    <!-- HEADER BERSIH -->
+    <header class="bg-orange-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center space-x-3">
+            <div id="header-logo-container" class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow overflow-hidden">
+                <span class="text-orange-600 font-bold text-xs text-center leading-tight">AR</span>
+            </div>
+            <div>
+                <h1 id="store-title-display" class="font-bold text-lg leading-tight">Arrahmah Mart</h1>
+                <p class="text-xs text-orange-100">Surabaya • Cloud Realtime Edition</p>
+            </div>
+        </div>
+    </header>
 
-CREATE TABLE IF NOT EXISTS customers (
-    phone TEXT PRIMARY KEY,
-    name TEXT,
-    address TEXT,
-    points INT DEFAULT 0,
-    total_spend NUMERIC DEFAULT 0
-);
+    <!-- KONTEN UTAMA -->
+    <main class="max-w-6xl mx-auto p-4 w-full flex-1 pb-24">
+        
+        <!-- ================= HALAMAN CUSTOMER (#customer) ================= -->
+        <section id="view-customer" class="space-y-5">
+            <div id="customer-headlines" class="space-y-2"></div>
 
-CREATE TABLE IF NOT EXISTS vouchers (
-    id BIGINT PRIMARY KEY,
-    code TEXT,
-    name TEXT,
-    discount_amount NUMERIC,
-    min_spend NUMERIC,
-    max_usage INT,
-    used_count INT DEFAULT 0
-);
+            <div class="bg-white border border-orange-200 p-4 rounded-xl shadow-sm">
+                <h2 class="font-bold text-orange-600 text-base mb-1">🪙 Program Poin Pelanggan</h2>
+                <p class="text-xs text-slate-600">Setiap belanja mengumpulkan poin yang bisa ditukar diskon di pesanan berikutnya!</p>
+                <div class="mt-3 flex items-center justify-between bg-orange-50 p-2.5 rounded-lg border border-orange-100 text-xs">
+                    <span>No WA Anda: <strong id="cust-phone-display" class="text-orange-700">-</strong> (<strong id="cust-points-display" class="text-emerald-600">0 Poin</strong>)</span>
+                    <button onclick="changeCustomerPhone()" class="text-orange-600 underline font-semibold">Ubah / Daftar</button>
+                </div>
+            </div>
 
-CREATE TABLE IF NOT EXISTS bundles (
-    id BIGINT PRIMARY KEY,
-    name TEXT,
-    p1 TEXT,
-    p2 TEXT,
-    p3 TEXT,
-    p4 TEXT,
-    p5 TEXT,
-    original_price NUMERIC,
-    promo_price NUMERIC,
-    img TEXT,
-    start_date TEXT,
-    end_date TEXT
-);
+            <div id="customer-vouchers"></div>
+            <div id="customer-bundles-container"></div>
+            <div id="customer-tebus-container"></div>
 
-CREATE TABLE IF NOT EXISTS tebus_murah (
-    id BIGINT PRIMARY KEY,
-    name TEXT,
-    normal_price NUMERIC,
-    tebus_price NUMERIC,
-    min_cart_amount NUMERIC,
-    img TEXT,
-    start_date TEXT,
-    end_date TEXT
-);
+            <div class="flex justify-between items-center pt-2">
+                <h3 class="font-bold text-lg text-slate-800">🛒 Katalog Produk</h3>
+                <span id="cart-count-badge" class="bg-orange-600 text-white text-xs px-3 py-1 rounded-full font-medium shadow-sm">0 Produk di Keranjang</span>
+            </div>
 
-CREATE TABLE IF NOT EXISTS store_settings (
-    id INT PRIMARY KEY,
-    store_name TEXT,
-    wa_admin TEXT,
-    bank_accounts TEXT,
-    admin_pin TEXT,
-    point_value INT,
-    logo_url TEXT
-);
+            <div id="product-grid" class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <p class="text-xs text-slate-500 col-span-full text-center py-6">Memuat katalog produk...</p>
+            </div>
+        </section>
 
-CREATE TABLE IF NOT EXISTS headlines (
-    id BIGINT PRIMARY KEY,
-    title TEXT,
-    img TEXT
-);
+        <!-- ================= HALAMAN ADMIN (#admin) ================= -->
+        <section id="view-admin" class="hidden">
+            <div id="admin-login-box" class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-md border border-orange-100 mt-10">
+                <h2 class="font-bold text-xl text-slate-900 mb-2">🔒 Panel Login Admin</h2>
+                <p class="text-xs text-slate-500 mb-4">Masukkan PIN akses admin (Default PIN: <strong>1234</strong>)</p>
+                <input type="password" id="admin-pin-input" placeholder="Masukkan PIN" class="w-full border border-slate-300 rounded-lg p-3 text-sm mb-3 focus:ring-2 focus:ring-orange-500 outline-none">
+                <button onclick="verifyAdminPin()" class="w-full bg-orange-600 text-white font-semibold py-2.5 rounded-lg text-sm hover:bg-orange-700 transition">Masuk Dashboard</button>
+            </div>
 
--- Masukkan data pengaturan awal & produk contoh
-INSERT INTO store_settings (id, store_name, wa_admin, bank_accounts, admin_pin, point_value) 
-VALUES (1, 'Arrahmah Mart Surabaya', '6281331999525', 'Transfer BSI (7199953748) a.n Masjid Arrahmah Mart Surabaya', '1234', 1000)
-ON CONFLICT (id) DO NOTHING;
+            <div id="admin-dashboard" class="hidden grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- SIDEBAR VERTIKAL -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-2 h-fit">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Menu Kelola Admin</p>
+                    <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="w-full text-left px-3 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white flex items-center justify-between"><span>📦 Pesanan Masuk</span><span id="badge-order-count" class="bg-white text-orange-600 px-1.5 py-0.5 rounded-full text-[10px]">0</span></button>
+                    <button onclick="switchAdminTab('products')" id="tab-btn-products" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">🏷️ Produk & Varian</button>
+                    <button onclick="switchAdminTab('promos')" id="tab-btn-promos" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">🎁 Promo Toko</button>
+                    <button onclick="switchAdminTab('headlines')" id="tab-btn-headlines" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">🖼️ Kelola Headline (Maks 5)</button>
+                    <button onclick="switchAdminTab('customers')" id="tab-btn-customers" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">👥 Database Pelanggan</button>
+                    <button onclick="switchAdminTab('reports')" id="tab-btn-reports" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">📊 Laporan & Keuangan</button>
+                    <button onclick="switchAdminTab('profile')" id="tab-btn-profile" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 hover:bg-orange-50">⚙️ Profil & Pengaturan</button>
+                    <hr class="my-2 border-orange-100">
+                    <button onclick="logoutAdmin()" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg text-red-600 hover:bg-red-50">🚪 Keluar Admin</button>
+                </div>
 
-INSERT INTO products (id, name, hpp, price, promo_price, discount, stock, img, points_earned, variants) VALUES
-(1, 'Beras Premium Pinpin 5kg', 60000, 65000, 65000, 0, 25, 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80', 5, '["5kg"]'::jsonb),
-(2, 'Minyak Goreng Bimoli 2L', 35000, 38000, 38000, 0, 40, 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80', 5, '["2 Liter"]'::jsonb),
-(3, 'Gula Pasir Manis Kita 1kg', 15000, 16500, 16500, 0, 50, 'https://images.unsplash.com/photo-1581441363689-1ed3dcf21cba?auto=format&fit=crop&w=300&q=80', 5, '["1kg"]'::jsonb)
-ON CONFLICT (id) DO NOTHING;
+                <!-- KONTEN UTAMA ADMIN -->
+                <div class="md:col-span-3 space-y-6">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-xs space-y-2">
+                        <p class="font-bold text-slate-700">📌 Tautan Akses Terpisah:</p>
+                        <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded border border-orange-100">
+                            <span class="truncate mr-2 text-slate-600">Link Customer: <code id="link-cust-url"></code></span>
+                            <button onclick="copyLink('customer')" class="bg-orange-100 px-2.5 py-1 rounded text-orange-700 font-semibold">Salin</button>
+                        </div>
+                        <div class="flex items-center justify-between bg-orange-50/50 p-2 rounded border border-orange-100">
+                            <span class="truncate mr-2 text-slate-600">Link Admin: <code id="link-admin-url"></code></span>
+                            <button onclick="copyLink('admin')" class="bg-orange-100 px-2.5 py-1 rounded text-orange-700 font-semibold">Salin</button>
+                        </div>
+                    </div>
+
+                    <!-- 1. TAB PESANAN -->
+                    <div id="admin-tab-orders" class="space-y-3">
+                        <h3 class="font-bold text-sm text-slate-800">📦 Daftar Pesanan Masuk</h3>
+                        <div id="admin-orders-list" class="space-y-3"></div>
+                    </div>
+
+                    <!-- 2. TAB PRODUK -->
+                    <div id="admin-tab-products" class="hidden space-y-4">
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
+                            <h3 id="form-product-title" class="font-bold text-sm text-orange-600">+ Tambah Produk Baru</h3>
+                            <input type="hidden" id="edit-product-id" value="">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                <input type="text" id="new-p-name" placeholder="Nama Produk" class="border p-2 rounded-lg">
+                                <div><label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Produk (Lokal):</label><input type="file" id="new-p-img-file" accept="image/*" class="w-full border p-1 rounded-lg text-xs bg-orange-50/30"></div>
+                                <input type="number" id="new-p-hpp" placeholder="Harga HPP (Modal) Rp" class="border p-2 rounded-lg">
+                                <input type="number" id="new-p-price" placeholder="Harga Jual Normal / Coret Rp" class="border p-2 rounded-lg">
+                                <input type="number" id="new-p-promo" placeholder="Harga Jual Promo Rp" class="border p-2 rounded-lg">
+                                <input type="number" id="new-p-stock" placeholder="Stok Utama" class="border p-2 rounded-lg">
+                                <input type="number" id="new-p-points" placeholder="P
