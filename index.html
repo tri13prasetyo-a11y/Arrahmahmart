@@ -377,11 +377,14 @@
                     sb.from('headlines').select('*').order('id', {ascending:true})
                 ]);
 
-                if (pRes.data) products = pRes.data.map(p => ({
-                    ...p,
-                    promoPrice: p.promo_price || p.price,
-                    pointsEarned: p.points_earned || 5
-                }));
+                if (pRes.data) {
+                    products = pRes.data.map(p => ({
+                        ...p,
+                        promoPrice: p.promo_price || p.price,
+                        pointsEarned: p.points_earned || 5
+                    }));
+                    populateProductDropdowns();
+                }
                 if (oRes.data) orders = oRes.data;
                 if (cRes.data) { customers = {}; cRes.data.forEach(c => customers[c.phone] = c); }
                 if (vRes.data) vouchers = vRes.data;
@@ -908,6 +911,10 @@
             if(targetTab) targetTab.classList.remove('hidden');
             let activeBtn = document.getElementById(`tab-btn-${tab}`);
             if (activeBtn) activeBtn.className = "w-full text-left px-3 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white flex items-center justify-between";
+            
+            if (tab === 'promos') {
+                populateProductDropdowns();
+            }
             renderAdminData();
         }
 
