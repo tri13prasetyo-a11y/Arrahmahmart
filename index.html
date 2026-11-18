@@ -99,9 +99,12 @@
                         </div>
                     </div>
 
-                    <!-- 1. TAB PESANAN -->
+                    <!-- 1. TAB PESANAN MASUK -->
                     <div id="admin-tab-orders" class="space-y-3">
-                        <h3 class="font-bold text-sm text-slate-800">📦 Daftar Pesanan Masuk</h3>
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-sm text-slate-800">📦 Daftar Pesanan Masuk (Realtime)</h3>
+                            <button onclick="switchAdminTab('reports')" class="text-xs bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-bold hover:bg-orange-200">Kelola Pelunasan di Laporan →</button>
+                        </div>
                         <div id="admin-orders-list" class="space-y-3"></div>
                     </div>
 
@@ -235,20 +238,32 @@
                         <div id="admin-customers-list" class="space-y-2"></div>
                     </div>
 
-                    <!-- 6. TAB REPORTS -->
+                    <!-- 6. TAB LAPORAN & KEUANGAN (DENGAN VERIFIKASI PELUNASAN, HAPUS PESANAN & FILTER PERIODE) -->
                     <div id="admin-tab-reports" class="hidden space-y-4">
                         <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-4">
                             <div class="flex justify-between items-center flex-wrap gap-2">
                                 <h3 class="font-bold text-sm text-orange-600">📊 Laporan Penjualan & Keuangan</h3>
-                                <div class="flex gap-2">
-                                    <button onclick="exportToExcel()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700 shadow">📥 Unduh Excel</button>
-                                    <button onclick="resetReportsWithPin()" class="bg-red-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-700 shadow">🗑️ Reset Laporan</button>
-                                </div>
+                                <button onclick="exportToExcel()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700 shadow">📥 Unduh Excel (Sesuai Filter)</button>
                             </div>
+
+                            <!-- FILTER PERIODE TRANSAKSI -->
+                            <div class="flex flex-wrap items-center gap-2 pt-2 border-t text-xs bg-orange-50/60 p-3 rounded-lg border border-orange-100">
+                                <span class="font-bold text-slate-700">🗓️ Filter Periode Transaksi:</span>
+                                <input type="date" id="report-start-date" class="border p-1.5 rounded-lg bg-white" onchange="renderAdminData()">
+                                <span class="text-slate-500">s/d</span>
+                                <input type="date" id="report-end-date" class="border p-1.5 rounded-lg bg-white" onchange="renderAdminData()">
+                                <button onclick="clearReportFilter()" class="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-semibold hover:bg-slate-300">Tampilkan Semua</button>
+                            </div>
+
                             <div id="report-summary-cards" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs"></div>
                         </div>
+
+                        <!-- RINCIAN PESANAN, VERIFIKASI PELUNASAN & HAPUS PESANAN -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
-                            <h3 class="font-bold text-sm text-slate-800">📋 Rincian & Verifikasi Pesanan</h3>
+                            <div class="flex justify-between items-center">
+                                <h3 class="font-bold text-sm text-slate-800">📋 Rincian Pesanan & Verifikasi Pelunasan</h3>
+                                <span id="filtered-order-count-label" class="text-xs font-semibold text-orange-700 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200">0 Pesanan</span>
+                            </div>
                             <div id="admin-report-orders-list" class="space-y-3"></div>
                         </div>
                     </div>
@@ -302,8 +317,8 @@
 
             <div class="bg-orange-50 p-3 rounded-xl space-y-2 text-xs mb-4 border border-orange-100">
                 <div class="flex justify-between"><span>Subtotal:</span><span id="cart-subtotal">Rp 0</span></div>
-                <div class="flex justify-between text-emerald-600"><span>Potongan Voucher:</span><span id="cart-voucher-disc">-Rp 0</span></div>
-                <div class="flex justify-between text-orange-700"><span>Poin Dimiliki (<strong id="modal-user-points">0</strong>):</span><span><input type="checkbox" id="use-points-checkbox" onchange="calculateCartTotal()"> Gunakan Poin</span></div>
+                <div class="flex justify-between text-emerald-600"><span>Potongan Voucher (Kelipatan):</span><span id="cart-voucher-disc">-Rp 0</span></div>
+                <div class="flex justify-between text-orange-700"><span>Poin Dimiliki (<strong id="modal-user-points">0</strong>) [Konversi: Rp <span id="modal-point-value">1000</span>/poin]:</span><span><input type="checkbox" id="use-points-checkbox" onchange="calculateCartTotal()"> Gunakan Poin</span></div>
                 <div class="flex justify-between font-bold text-sm pt-2 border-t border-orange-200 text-slate-900"><span>Total Bayar:</span><span id="cart-total">Rp 0</span></div>
             </div>
 
@@ -340,7 +355,6 @@
         let sb = null;
         try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e){}
 
-        // FALLBACK DEFAULT PRODUCTS (Agar katalog tidak pernah kosong jika Supabase kosong/offline)
         let defaultProducts = [
             { id: 1, name: 'Beras Premium Pinpin 5kg', hpp: 60000, price: 65000, promoPrice: 65000, stock: 25, img: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80', pointsEarned: 5, variants: ['5kg'] },
             { id: 2, name: 'Minyak Goreng Bimoli 2L', hpp: 35000, price: 38000, promoPrice: 38000, stock: 40, img: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80', pointsEarned: 5, variants: ['2 Liter'] },
@@ -354,8 +368,31 @@
         window.addEventListener('load', async () => {
             if (!window.location.hash) window.location.hash = '#customer';
             await syncFromCloud();
+            setupRealtimeSync();
             router();
         });
+
+        // REALTIME SUBSCRIPTION AGAR DATA OTOMATIS SINKRON ANTAR ADMIN & CUSTOMER
+        function setupRealtimeSync() {
+            if (!sb) return;
+            try {
+                sb.channel('arrahmah-realtime-channel')
+                    .on('postgres_changes', { event: '*', schema: 'public' }, async () => {
+                        await syncFromCloud();
+                        if (window.location.hash.includes('#admin')) {
+                            if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
+                                renderAdminData();
+                            }
+                        } else {
+                            updateCustomerDisplay();
+                            renderCatalog();
+                        }
+                    })
+                    .subscribe();
+            } catch (err) {
+                console.warn("Realtime sync warning:", err);
+            }
+        }
 
         async function syncFromCloud() {
             if (!sb) {
@@ -399,8 +436,8 @@
                     }
                 }
             } catch(e) {
-                console.error("Sync error, using default fallback:", e);
-                products = defaultProducts;
+                console.error("Sync error:", e);
+                if (products.length === 0) products = defaultProducts;
             }
         }
 
@@ -502,22 +539,79 @@
                         <div id="headline-scroll-container" class="flex overflow-x-auto snap-x snap-mandatory scrollbar-none scroll-smooth">
                             ${headlines.map(hl => `<div class="w-full shrink-0 snap-center relative"><img src="${hl.img}" class="w-full h-48 md:h-64 object-cover"><div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white"><p class="font-bold text-sm">${hl.title || ''}</p></div></div>`).join('')}
                         </div>
+                        ${headlines.length > 1 ? `
+                            <button onclick="scrollSlider('headline-scroll-container', -1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">‹</button>
+                            <button onclick="scrollSlider('headline-scroll-container', 1)" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">›</button>
+                        ` : ''}
                     </div>`;
             } else { hlContainer.innerHTML = ''; }
 
             const vContainer = document.getElementById('customer-vouchers');
             if (vouchers.length > 0) {
-                vContainer.innerHTML = `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">🎟️ Voucher Belanja Aktif:</p><div class="flex gap-2 overflow-x-auto pb-1">${vouchers.map(v => `<div class="bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg text-xs shrink-0"><span class="font-bold text-orange-700 block">${v.code}</span><span class="text-[10px] text-slate-600">Diskon Rp ${(v.discount_amount||0).toLocaleString()} (Min Rp ${(v.min_spend||0).toLocaleString()})</span></div>`).join('')}</div></div>`;
+                vContainer.innerHTML = `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm"><p class="font-bold text-xs text-orange-600 mb-2">🎟️ Voucher Belanja Aktif (Berlaku Kelipatan):</p><div class="flex gap-2 overflow-x-auto pb-1">${vouchers.map(v => `<div class="bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg text-xs shrink-0"><span class="font-bold text-orange-700 block">${v.code}</span><span class="text-[10px] text-slate-600">Diskon Rp ${(v.discount_amount||0).toLocaleString()} per kelipatan Min Rp ${(v.min_spend||0).toLocaleString()}</span></div>`).join('')}</div></div>`;
             } else { vContainer.innerHTML = ''; }
 
             const bContainer = document.getElementById('customer-bundles-container');
             if (bundles.length > 0) {
-                bContainer.innerHTML = `<div class="space-y-2"><h3 class="font-bold text-sm text-orange-600">📦 Paket Bundling Hemat</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${bundles.map(b => `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm flex items-center space-x-3 text-xs"><img src="${b.img||'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80'}" class="w-20 h-20 object-cover rounded-lg shrink-0"><div class="flex-1"><p class="font-bold text-slate-900">${b.name}</p><div class="flex items-center space-x-2 mt-1"><span class="font-bold text-orange-600 text-sm">Rp ${(b.promo_price||0).toLocaleString()}</span><span class="text-[10px] text-slate-400 line-through">Rp ${(b.original_price||0).toLocaleString()}</span></div></div><button onclick="addSpecialToCart('bundle-${b.id}', '${b.name}', ${b.promo_price})" class="bg-orange-600 text-white px-3 py-2 rounded-lg font-semibold shrink-0">+ Ambil</button></div>`).join('')}</div></div>`;
+                bContainer.innerHTML = `
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-sm text-orange-600 flex items-center gap-1">📦 Paket Bundling Hemat</h3>
+                        <div class="relative rounded-2xl overflow-hidden shadow-md border border-orange-200 bg-white group">
+                            <div id="bundle-scroll-container" class="flex overflow-x-auto snap-x snap-mandatory scrollbar-none scroll-smooth">
+                                ${bundles.map(b => {
+                                    let itemsDesc = [b.p1, b.p2, b.p3, b.p4, b.p5].filter(Boolean).join(' + ');
+                                    let periodText = b.start_date && b.end_date ? `<p class="text-[10px] text-orange-200 font-medium mt-1">🗓️ Periode: ${b.start_date} s/d ${b.end_date}</p>` : '';
+                                    let imgUrl = b.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80';
+                                    return `
+                                        <div class="w-full shrink-0 snap-center relative">
+                                            <img src="${imgUrl}" class="w-full h-52 md:h-64 object-cover brightness-90">
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex flex-col justify-end p-4 text-white">
+                                                <span class="bg-orange-600 text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase w-fit mb-1 shadow">Paket Bundling Spesial</span>
+                                                <h4 class="font-bold text-base md:text-lg leading-tight mb-0.5">${b.name}</h4>
+                                                <p class="text-xs text-orange-100 line-clamp-1 mb-2">Isi: ${itemsDesc}</p>
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-baseline space-x-2">
+                                                        <span class="font-bold text-orange-400 text-base md:text-lg">Rp ${(b.promo_price||0).toLocaleString()}</span>
+                                                        <span class="text-xs text-slate-300 line-through">Rp ${(b.original_price||0).toLocaleString()}</span>
+                                                    </div>
+                                                    <button onclick="addSpecialToCart('bundle-${b.id}', '${b.name}', ${b.promo_price})" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md transition">+ Ambil Paket</button>
+                                                </div>
+                                                ${periodText}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>`;
             } else { bContainer.innerHTML = ''; }
 
             const tmContainer = document.getElementById('customer-tebus-container');
             if (tebusMurahList.length > 0) {
-                tmContainer.innerHTML = `<div class="space-y-2"><h3 class="font-bold text-sm text-orange-600">⚡ Promo Tebus Murah</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${tebusMurahList.map(tm => `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm flex items-center space-x-3 text-xs"><img src="${tm.img||'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80'}" class="w-20 h-20 object-cover rounded-lg shrink-0"><div class="flex-1"><p class="font-bold text-slate-900">${tm.name}</p><div class="flex items-center space-x-2 mt-1"><span class="font-bold text-orange-600 text-sm">Rp ${(tm.tebus_price||0).toLocaleString()}</span><span class="text-[10px] text-slate-400 line-through">Rp ${(tm.normal_price||0).toLocaleString()}</span></div><p class="text-[10px] text-slate-500">Min. Belanja Rp ${(tm.min_cart_amount||0).toLocaleString()}</p></div><button onclick="addTebusMurahToCart(${tm.id})" class="bg-orange-600 text-white px-3 py-2 rounded-lg font-semibold shrink-0">+ Tebus</button></div>`).join('')}</div></div>`;
+                tmContainer.innerHTML = `
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-sm text-orange-600 flex items-center gap-1">⚡ Promo Tebus Murah (Berlaku Kelipatan)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            ${tebusMurahList.map(tm => {
+                                let periodText = tm.start_date && tm.end_date ? `<p class="text-[10px] text-orange-700 font-medium">Periode: ${tm.start_date} s/d ${tm.end_date}</p>` : '';
+                                let imgTag = tm.img ? `<img src="${tm.img}" class="w-20 h-20 object-cover rounded-lg shrink-0">` : '';
+                                return `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm flex items-center space-x-3 text-xs">
+                                    ${imgTag}
+                                    <div class="flex-1">
+                                        <span class="bg-orange-600 text-white text-[9px] px-2 py-0.5 rounded font-bold uppercase">Tebus Murah</span>
+                                        <p class="font-bold text-slate-900 mt-1">${tm.name}</p>
+                                        <div class="flex items-center space-x-2 mt-1">
+                                            <span class="font-bold text-orange-600 text-sm">Rp ${(tm.tebus_price||0).toLocaleString()}</span>
+                                            <span class="text-[10px] text-slate-400 line-through">Rp ${(tm.normal_price||0).toLocaleString()}</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-500">Kelipatan Min. Belanja Rp ${(tm.min_cart_amount||0).toLocaleString()}</p>
+                                        ${periodText}
+                                    </div>
+                                    <button onclick="addTebusMurahToCart(${tm.id})" class="bg-orange-600 text-white px-3 py-2 rounded-lg font-semibold shrink-0 shadow">+ Tebus</button>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>`;
             } else { tmContainer.innerHTML = ''; }
 
             const grid = document.getElementById('product-grid');
@@ -528,6 +622,10 @@
                     let vars = Array.isArray(p.variants) ? p.variants : [];
                     let variantSelect = vars.length > 0 ? `<select id="var-select-${p.id}" class="w-full border border-orange-200 rounded p-1 text-[10px] mt-1.5 bg-orange-50/40">${vars.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>` : '';
                     let hasDiscount = p.price > p.promoPrice;
+                    let tierInfo = '';
+                    if (Array.isArray(p.tiers) && p.tiers.length > 0) {
+                        tierInfo = `<div class="mt-1 bg-orange-50 p-1.5 rounded border border-orange-100 text-[10px] text-orange-700">📦 Grosir: ` + p.tiers.map(t=>`Min ${t.min} item @Rp ${t.price.toLocaleString()}`).join(', ') + `</div>`;
+                    }
                     return `
                     <div class="bg-white rounded-xl shadow-sm border border-orange-100 overflow-hidden flex flex-col justify-between">
                         <div>
@@ -542,6 +640,7 @@
                                     <span class="inline-block bg-orange-50 text-orange-700 text-[10px] px-2 py-0.5 rounded font-medium">+${p.pointsEarned} Poin</span>
                                     <span class="text-[10px] text-slate-500">Stok: ${p.stock}</span>
                                 </div>
+                                ${tierInfo}
                                 ${variantSelect}
                             </div>
                         </div>
@@ -569,21 +668,40 @@
             } else { floatBtn.innerHTML = ''; }
         }
 
+        function getItemPrice(prod, qty) {
+            let price = prod.promoPrice;
+            if (Array.isArray(prod.tiers) && prod.tiers.length > 0) {
+                let sortedTiers = [...prod.tiers].sort((a,b)=>b.min - a.min);
+                for(let t of sortedTiers) {
+                    if (qty >= t.min) { price = t.price; break; }
+                }
+            }
+            return price;
+        }
+
         function addToCart(id) {
             const prod = products.find(p => p.id === id);
             if (!prod) return;
             let chosenVariant = document.getElementById(`var-select-${id}`)?.value || '';
             let cartKey = chosenVariant ? `${id}-${chosenVariant}` : `${id}`;
             let exist = cart.find(i => i.cartKey === cartKey);
-            let newQty = (exist ? exist.qty : 0) + 1;
+            let currentQty = exist ? exist.qty : 0;
+            let newQty = currentQty + 1;
 
             if (newQty > prod.stock) { alert("Stok tidak mencukupi!"); return; }
 
+            let finalPrice = getItemPrice(prod, newQty);
             if (exist) {
                 exist.qty = newQty;
+                exist.promoPrice = finalPrice;
             } else {
-                cart.push({ ...prod, cartKey, name: chosenVariant ? `${prod.name} (${chosenVariant})` : prod.name, qty: 1 });
+                cart.push({ ...prod, cartKey, promoPrice: finalPrice, name: chosenVariant ? `${prod.name} (${chosenVariant})` : prod.name, qty: 1 });
             }
+            cart.forEach(item => {
+                if (!item.isSpecial && item.id === prod.id) {
+                    item.promoPrice = getItemPrice(prod, item.qty);
+                }
+            });
             updateCartFloatingUI();
         }
 
@@ -599,7 +717,16 @@
             if (!tm) return;
             let sub = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
             if (sub < tm.min_cart_amount) { alert(`Minimal belanja Rp ${tm.min_cart_amount.toLocaleString()} untuk tebus murah ini!`); return; }
-            addSpecialToCart(`tm-${tm.id}`, `[Tebus Murah] ${tm.name}`, tm.tebus_price);
+            let maxKelipatan = Math.floor(sub / tm.min_cart_amount);
+            let key = `tm-${tm.id}`;
+            let exist = cart.find(i => i.cartKey === key);
+            let currentTebusQty = exist ? exist.qty : 0;
+
+            if (currentTebusQty >= maxKelipatan) {
+                alert(`Maksimal tebus murah untuk total belanja Anda saat ini adalah ${maxKelipatan} item.`);
+                return;
+            }
+            addSpecialToCart(key, `[Tebus Murah] ${tm.name}`, tm.tebus_price);
         }
 
         function toggleCartModal(show) {
@@ -620,8 +747,9 @@
             }
             if (currentPhone && customers[currentPhone]) {
                 document.getElementById('modal-user-points').innerText = customers[currentPhone].points;
+                document.getElementById('modal-point-value').innerText = (storeSettings.point_value || 1000).toLocaleString();
                 document.getElementById('order-phone').value = currentPhone;
-                if (customers[currentPhone].name) document.getElementById('order-name').value = customers[currentPhone].name;
+                if (customers[currentPhone].name && customers[currentPhone].name !== "Pelanggan") document.getElementById('order-name').value = customers[currentPhone].name;
                 if (customers[currentPhone].address) document.getElementById('order-address').value = customers[currentPhone].address;
             }
             calculateCartTotal();
@@ -630,8 +758,24 @@
         function updateQty(cartKey, delta) {
             let item = cart.find(i => i.cartKey === cartKey);
             if (item) {
-                item.qty += delta;
-                if (item.qty <= 0) cart = cart.filter(i => i.cartKey !== cartKey);
+                if (!item.isSpecial) {
+                    let prod = products.find(p => p.id === item.id);
+                    if (prod) {
+                        let newQty = item.qty + delta;
+                        if (newQty <= 0) {
+                            cart = cart.filter(i => i.cartKey !== cartKey);
+                        } else if (newQty > prod.stock) {
+                            alert("Stok tidak mencukupi!");
+                            return;
+                        } else {
+                            item.qty = newQty;
+                            item.promoPrice = getItemPrice(prod, newQty);
+                        }
+                    }
+                } else {
+                    item.qty += delta;
+                    if (item.qty <= 0) cart = cart.filter(i => i.cartKey !== cartKey);
+                }
             }
             renderCartModalContent();
             updateCartFloatingUI();
@@ -642,23 +786,39 @@
             let found = vouchers.find(v => v.code === code);
             if (!found) { alert("Voucher tidak valid!"); appliedVoucher = null; }
             else {
-                let sub = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
-                if (sub < found.min_spend) { alert(`Minimal belanja Rp ${found.min_spend.toLocaleString()}`); appliedVoucher = null; }
-                else { appliedVoucher = found; alert(`Voucher berhasil dipakai!`); }
+                if (found.max_usage && (found.used_count || 0) >= found.max_usage) {
+                    alert("Voucher ini sudah mencapai batas maksimal kuota pemakaian!");
+                    appliedVoucher = null;
+                } else {
+                    let sub = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
+                    if (sub < found.min_spend) { alert(`Minimal belanja untuk voucher ini adalah Rp ${found.min_spend.toLocaleString()}`); appliedVoucher = null; }
+                    else { appliedVoucher = found; alert(`Voucher ${found.code} berhasil dipakai!`); }
+                }
             }
             calculateCartTotal();
         }
 
         function calculateCartTotal() {
             let subtotal = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
-            let vDisc = appliedVoucher ? appliedVoucher.discount_amount : 0;
+            let vDisc = 0;
+            if (appliedVoucher) {
+                if (subtotal < appliedVoucher.min_spend) {
+                    appliedVoucher = null;
+                } else {
+                    let multiplier = Math.floor(subtotal / appliedVoucher.min_spend);
+                    vDisc = appliedVoucher.discount_amount * multiplier;
+                }
+            }
             let pDisc = 0;
             if (document.getElementById('use-points-checkbox').checked && currentPhone && customers[currentPhone]) {
                 let pointVal = storeSettings.point_value || 1000;
                 let availablePoints = customers[currentPhone].points || 0;
-                pDisc = Math.min(availablePoints * pointVal, subtotal - vDisc);
+                let remainingSub = subtotal - vDisc;
+                let maxPoints = Math.min(availablePoints, Math.floor(remainingSub / pointVal));
+                pDisc = maxPoints * pointVal;
             }
             let totalDisc = vDisc + pDisc;
+            if (totalDisc > subtotal) totalDisc = subtotal;
             let finalTotal = Math.max(0, subtotal - totalDisc);
 
             document.getElementById('cart-subtotal').innerText = `Rp ${subtotal.toLocaleString()}`;
@@ -673,12 +833,17 @@
             let shipping = document.getElementById('order-shipping').value;
             let payment = document.getElementById('order-payment').value;
 
-            if (!name || !phone || !address || cart.length === 0) { alert("Harap lengkapi data pemesan dan keranjang!"); return; }
+            if (!name || !phone || !address || cart.length === 0) { alert("Harap lengkapi nama, no WA, alamat, dan keranjang!"); return; }
             currentPhone = phone;
             localStorage.setItem('ar_active_phone', currentPhone);
 
             let subtotal = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
-            let vDisc = appliedVoucher ? appliedVoucher.discount_amount : 0;
+            let vDisc = 0;
+            if (appliedVoucher) {
+                let multiplier = Math.floor(subtotal / appliedVoucher.min_spend);
+                vDisc = appliedVoucher.discount_amount * multiplier;
+            }
+
             let ptsUsed = 0, pDisc = 0;
             if (document.getElementById('use-points-checkbox').checked && customers[phone]) {
                 let pointVal = storeSettings.point_value || 1000;
@@ -702,23 +867,35 @@
             }
             let netProfit = finalTotal - totalHpp;
 
+            let now = new Date();
+            let isoDate = now.toISOString().split('T')[0]; // YYYY-MM-DD untuk filter periode
+            let displayDate = now.toLocaleDateString('id-ID');
+
             let newOrder = {
                 id: 'ORD-' + Date.now().toString().slice(-6),
-                display_date: new Date().toLocaleDateString('id-ID'),
+                display_date: `${displayDate} (${isoDate})`,
                 name, phone, address, items: cart, subtotal, total_hpp: totalHpp, total_discount: totalDisc,
                 points_used: ptsUsed, final_total: finalTotal, net_profit: netProfit, points_earned: ptsEarned, shipping, payment, status: 'Menunggu Pembayaran', paid_date: null
             };
 
             if (sb) {
-                await sb.from('orders').insert([newOrder]);
+                let { error: ordErr } = await sb.from('orders').insert([newOrder]);
+                if (ordErr) { alert("Gagal mengirim pesanan: " + ordErr.message); return; }
+                if (appliedVoucher) {
+                    let newUsedCount = (appliedVoucher.used_count || 0) + 1;
+                    await sb.from('vouchers').update({ used_count: newUsedCount }).eq('id', appliedVoucher.id);
+                }
                 let custObj = customers[phone] || { phone, name, address, points: 10, total_spend: 0 };
                 custObj.name = name; custObj.address = address;
+                custObj.points = customers[phone] ? customers[phone].points : 10;
                 await sb.from('customers').upsert([custObj]);
             }
 
-            let waText = `Halo Admin *${storeSettings.store_name||'Arrahmah Mart'}* 👋,\nSaya ingin memesan:\n\nNo: *${newOrder.id}*\nNama: *${name}*\nNo WA: *${phone}*\nAlamat: *${address}*\n\n`;
+            let waText = `Halo Admin *${storeSettings.store_name||'Arrahmah Mart'}* 👋,\nSaya ingin memesan produk:\n\nNo Pesanan: *${newOrder.id}*\nNama: *${name}*\nNo WA: *${phone}*\nAlamat: *${address}*\n\n`;
             cart.forEach(i => { waText += `- ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}\n`; });
-            waText += `\n*Total Bayar: Rp ${finalTotal.toLocaleString()}*\n\nPengiriman: ${shipping}\nPembayaran: ${payment}\n\nTerima kasih!`;
+            waText += `\nSubtotal: Rp ${subtotal.toLocaleString()}\n`;
+            if (totalDisc > 0) waText += `Total Diskon/Poin: -Rp ${totalDisc.toLocaleString()}\n`;
+            waText += `*Total Pembayaran: Rp ${finalTotal.toLocaleString()}*\n\nPengiriman: ${shipping}\nPembayaran: ${payment}\n\nMohon konfirmasinya, terima kasih!`;
 
             let adminWa = storeSettings.wa_admin || '6281331999525';
             let waUrl = `https://wa.me/${adminWa}?text=${encodeURIComponent(waText)}`;
@@ -728,7 +905,44 @@
             router();
         }
 
-        // ADMIN FUNCTIONS
+        // --- HELPER KONVERSI TANGGAL UNTUK FILTER PERIODE ---
+        function parseOrderDateToISO(order) {
+            if (!order || !order.display_date) return '';
+            // Cek jika ada format (YYYY-MM-DD)
+            let isoMatch = order.display_date.match(/(\d{4}-\d{2}-\d{2})/);
+            if (isoMatch) return isoMatch[1];
+            // Cek format DD/MM/YYYY atau D/M/YYYY
+            let idMatch = order.display_date.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+            if (idMatch) {
+                let d = idMatch[1].padStart(2, '0');
+                let m = idMatch[2].padStart(2, '0');
+                let y = idMatch[3];
+                return `${y}-${m}-${d}`;
+            }
+            return '';
+        }
+
+        function getFilteredOrders() {
+            let startVal = document.getElementById('report-start-date')?.value || '';
+            let endVal = document.getElementById('report-end-date')?.value || '';
+            if (!startVal && !endVal) return orders;
+
+            return orders.filter(o => {
+                let orderISO = parseOrderDateToISO(o);
+                if (!orderISO) return false;
+                if (startVal && orderISO < startVal) return false;
+                if (endVal && orderISO > endVal) return false;
+                return true;
+            });
+        }
+
+        function clearReportFilter() {
+            document.getElementById('report-start-date').value = '';
+            document.getElementById('report-end-date').value = '';
+            renderAdminData();
+        }
+
+        // --- ADMIN LOGIC ---
         function verifyAdminPin() {
             let pin = document.getElementById('admin-pin-input').value;
             if (pin === (storeSettings.admin_pin || '1234')) {
@@ -761,39 +975,454 @@
             if(targetTab) targetTab.classList.remove('hidden');
             let activeBtn = document.getElementById(`tab-btn-${tab}`);
             if (activeBtn) activeBtn.className = "w-full text-left px-3 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white flex items-center justify-between";
+            
             if (tab === 'promos') populateProductDropdowns();
             renderAdminData();
         }
 
-        function printOrder(orderId) {
-            let order = orders.find(o => o.id === orderId);
-            if (!order) return;
-            let itemsHtml = Array.isArray(order.items) ? order.items.map(i => `<tr><td style="padding: 6px 0; border-bottom: 1px dashed #ddd;">${i.name} (${i.qty}x)</td><td style="padding: 6px 0; border-bottom: 1px dashed #ddd; text-align: right;">Rp ${(i.promoPrice * i.qty).toLocaleString()}</td></tr>`).join('') : '';
-            let printWindow = window.open('', '_blank', 'width=400,height=600');
-            printWindow.document.write(`<html><head><title>Struk - ${order.id}</title><style>body{font-family:Poppins,Arial;font-size:12px;padding:15px;}</style></head><body><h3>${storeSettings.store_name||'Arrahmah Mart'}</h3><p>No: ${order.id}<br>Nama: ${order.name}</p><table>${itemsHtml}</table><p><strong>Total: Rp ${(order.final_total||0).toLocaleString()}</strong></p><script>window.onload=function(){window.print();window.close();}<\/script></body></html>`);
-            printWindow.document.close();
-        }
-
         function renderAdminData() {
             document.getElementById('badge-order-count').innerText = orders.filter(o => o.status !== 'LUNAS').length;
-            document.getElementById('admin-orders-list').innerHTML = orders.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pesanan.</p>` : orders.map(o => `<div class="bg-white p-4 rounded-xl shadow-sm border space-y-2 text-xs"><div class="flex justify-between font-bold"><span>${o.id} - ${o.name} (${o.phone})</span><span>${o.status}</span></div><p>Total: <strong>Rp ${(o.final_total||0).toLocaleString()}</strong></p><div class="flex gap-2"><button onclick="printOrder('${o.id}')" class="bg-blue-600 text-white px-3 py-1.5 rounded">Cetak</button>${o.status!=='LUNAS'?`<button onclick="confirmOrder('${o.id}')" class="bg-emerald-600 text-white px-3 py-1.5 rounded">Konfirmasi Lunas</button>`:''}</div></div>`).join('');
-            document.getElementById('admin-products-list').innerHTML = products.map(p => `<div class="bg-white p-3 rounded-xl border flex items-center space-x-3 text-xs"><img src="${p.img}" class="w-12 h-12 object-cover rounded"><div class="flex-1"><p class="font-bold">${p.name}</p><p class="text-slate-500">Rp ${p.promoPrice.toLocaleString()} | Stok: ${p.stock}</p></div><button onclick="deleteProduct(${p.id})" class="text-red-500 font-bold">Hapus</button></div>`).join('');
+
+            // 1. TAB PESANAN MASUK (TANPA TOMBOL CETAK)
+            document.getElementById('admin-orders-list').innerHTML = orders.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pesanan masuk.</p>` : orders.map(o => {
+                let itemsList = Array.isArray(o.items) ? o.items.map(i => `<li class="text-slate-600">• ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}</li>`).join('') : '<li>Tidak ada rincian</li>';
+                return `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-2 text-xs">
+                    <div class="flex justify-between items-center font-bold border-b pb-1.5">
+                        <span class="text-orange-700">${o.id} - ${o.name} (${o.phone})</span>
+                        <span class="text-[10px] text-slate-400">📅 ${o.display_date || '-'}</span>
+                    </div>
+                    <p class="text-slate-600"><strong>Alamat Pengiriman:</strong> ${o.address || '-'}</p>
+                    <div class="bg-orange-50/50 p-2.5 rounded-lg border border-orange-100 space-y-1">
+                        <p class="font-bold text-orange-800">🛒 Rincian Produk:</p>
+                        <ul class="pl-3 space-y-0.5">${itemsList}</ul>
+                    </div>
+                    <div class="flex justify-between items-center pt-1 text-[11px] text-slate-600">
+                        <span>🚚 Pengiriman: <strong>${o.shipping}</strong></span>
+                        <span>💳 Pembayaran: <strong>${o.payment}</strong></span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t">
+                        <span class="font-bold text-slate-900 text-sm">Total: Rp ${(o.final_total||o.finalTotal||0).toLocaleString()}</span>
+                        <span class="px-2.5 py-1 rounded font-bold ${o.status==='LUNAS'?'bg-emerald-100 text-emerald-800':'bg-orange-100 text-orange-800'}">${o.status}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // 6. TAB LAPORAN & KEUANGAN (TERINTEGRASI FILTER PERIODE, VERIFIKASI PELUNASAN & HAPUS PESANAN)
+            let filteredOrders = getFilteredOrders();
+            document.getElementById('filtered-order-count-label').innerText = `${filteredOrders.length} Transaksi Ditemukan`;
+
+            let lunasFiltered = filteredOrders.filter(o => o.status === 'LUNAS');
+            let totalOmset = lunasFiltered.reduce((s,o) => s + (o.final_total||o.finalTotal||0), 0);
+            let totalProfit = lunasFiltered.reduce((s,o) => s + (o.net_profit||0), 0);
+            let totalDiskon = lunasFiltered.reduce((s,o) => s + (o.total_discount||0), 0);
+            let totalTx = lunasFiltered.length;
+
+            document.getElementById('report-summary-cards').innerHTML = `
+                <div class="bg-orange-50 p-3 rounded-lg border border-orange-200"><p class="text-slate-500">Total Omset Lunas</p><p class="font-bold text-sm text-orange-700">Rp ${totalOmset.toLocaleString()}</p></div>
+                <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-200"><p class="text-slate-500">Total Keuntungan Bersih</p><p class="font-bold text-sm text-emerald-700">Rp ${totalProfit.toLocaleString()}</p></div>
+                <div class="bg-blue-50 p-3 rounded-lg border border-blue-200"><p class="text-slate-500">Total Diskon / Potongan</p><p class="font-bold text-sm text-blue-700">Rp ${totalDiskon.toLocaleString()}</p></div>
+                <div class="bg-purple-50 p-3 rounded-lg border border-purple-200"><p class="text-slate-500">Jumlah Transaksi Lunas</p><p class="font-bold text-sm text-purple-700">${totalTx} Transaksi</p></div>`;
+
+            document.getElementById('admin-report-orders-list').innerHTML = filteredOrders.length === 0 ? `<p class="text-xs text-slate-500">Tidak ada transaksi pada periode tanggal tersebut.</p>` : filteredOrders.map(o => {
+                let itemsList = Array.isArray(o.items) ? o.items.map(i => `<li class="text-slate-600">• ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}</li>`).join('') : '<li>Tidak ada rincian</li>';
+                let paidInfo = o.paid_date ? `<p class="text-emerald-600 font-semibold">✓ Tanggal Lunas: ${o.paid_date}</p>` : '';
+                return `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-2 text-xs">
+                    <div class="flex justify-between font-bold border-b pb-1.5">
+                        <span class="text-orange-700">${o.id} - ${o.name} (${o.phone})</span>
+                        <span class="px-2 py-0.5 rounded ${o.status==='LUNAS'?'bg-emerald-100 text-emerald-800':'bg-orange-100 text-orange-800'}">${o.status}</span>
+                    </div>
+                    <p class="text-slate-500">📅 Tanggal Pesan: ${o.display_date || '-'} | Alamat: ${o.address || '-'}</p>
+                    <div class="bg-orange-50/50 p-2.5 rounded-lg border border-orange-100 space-y-1">
+                        <p class="font-bold text-orange-800">Rincian Produk Dipesan:</p>
+                        <ul class="pl-3 space-y-0.5">${itemsList}</ul>
+                    </div>
+                    <p class="text-slate-600">Total Bayar: <strong>Rp ${(o.final_total||o.finalTotal||0).toLocaleString()}</strong> | Profit Bersih: <strong class="text-emerald-600">Rp ${(o.net_profit||0).toLocaleString()}</strong></p>
+                    <p class="text-slate-500">Pengiriman: ${o.shipping} | Pembayaran: ${o.payment}</p>
+                    ${paidInfo}
+                    <div class="flex items-center justify-between pt-2 border-t flex-wrap gap-2">
+                        <div>
+                            ${o.status !== 'LUNAS' ? `<button onclick="confirmOrder('${o.id}')" class="bg-emerald-600 text-white font-bold px-3.5 py-1.5 rounded-lg shadow hover:bg-emerald-700">✓ Konfirmasi Lunas (+Poin)</button>` : '<span class="text-emerald-600 font-bold">✓ Terverifikasi Lunas</span>'}
+                        </div>
+                        <button onclick="deleteOrder('${o.id}')" class="bg-red-100 text-red-600 hover:bg-red-200 font-bold px-3 py-1.5 rounded-lg">🗑️ Hapus Pesanan</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // TAB PRODUK, PROMO, HEADLINE, CUSTOMER, PROFIL
+            document.getElementById('admin-products-list').innerHTML = products.map(p => `
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-orange-100 flex items-center space-x-3 text-xs">
+                    <img src="${p.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80'}" class="w-14 h-14 object-cover rounded-lg">
+                    <div class="flex-1">
+                        <p class="font-bold">${p.name}</p>
+                        <p class="text-slate-500">HPP: Rp ${(p.hpp||0).toLocaleString()} | Jual: Rp ${p.promoPrice.toLocaleString()} | Stok: <strong>${p.stock}</strong></p>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <button onclick="editProduct(${p.id})" class="bg-orange-100 text-orange-700 font-bold px-2.5 py-1 rounded">Edit</button>
+                        <button onclick="deleteProduct(${p.id})" class="text-red-500 font-bold px-2 py-1">Hapus</button>
+                    </div>
+                </div>`).join('');
+
+            document.getElementById('admin-vouchers-list').innerHTML = vouchers.map(v => `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded border text-xs"><span><strong>${v.code}</strong> - Diskon Rp ${(v.discount_amount||0).toLocaleString()} (Min Rp ${(v.min_spend||0).toLocaleString()})</span><button onclick="deleteRow('vouchers', ${v.id})" class="text-red-500 font-bold">Hapus</button></div>`).join('');
+            
+            document.getElementById('admin-bundles-list').innerHTML = bundles.map(b => {
+                let desc = [b.p1, b.p2, b.p3, b.p4, b.p5].filter(Boolean).join(' | ');
+                return `<div class="bg-orange-50/50 p-2 rounded border text-xs flex justify-between items-center">
+                    <div>
+                        <strong>${b.name}</strong><br>
+                        <span class="text-[10px] text-slate-500">${desc}</span><br>
+                        Normal: Rp ${(b.original_price||0).toLocaleString()} → <strong>Bundling: Rp ${(b.promo_price||0).toLocaleString()}</strong>
+                    </div>
+                    <div class="flex gap-1">
+                        <button onclick="editBundle(${b.id})" class="bg-orange-100 text-orange-700 font-bold px-2 py-1 rounded">Edit</button>
+                        <button onclick="deleteRow('bundles', ${b.id})" class="text-red-500 font-bold px-2 py-1">Hapus</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            document.getElementById('admin-tm-list').innerHTML = tebusMurahList.map(tm => `<div class="bg-orange-50/50 p-2 rounded border text-xs flex justify-between items-center">
+                <div>
+                    <strong>${tm.name}</strong> - Tebus Rp ${(tm.tebus_price||0).toLocaleString()} (Normal: Rp ${(tm.normal_price||0).toLocaleString()})
+                </div>
+                <div class="flex gap-1">
+                    <button onclick="editTebusMurah(${tm.id})" class="bg-orange-100 text-orange-700 font-bold px-2 py-1 rounded">Edit</button>
+                    <button onclick="deleteRow('tebus_murah', ${tm.id})" class="text-red-500 font-bold px-2 py-1">Hapus</button>
+                </div>
+            </div>`).join('');
+
+            document.getElementById('admin-headlines-list').innerHTML = headlines.length === 0 ? `<p class="text-xs text-slate-500">Belum ada headline (maksimal 5).</p>` : headlines.map(hl => `
+                <div class="bg-white p-3 rounded-xl shadow-sm border flex items-center space-x-3 text-xs">
+                    <img src="${hl.img}" class="w-12 h-20 object-cover rounded">
+                    <div class="flex-1"><p class="font-bold">${hl.title || 'Tanpa Judul'}</p></div>
+                    <button onclick="deleteRow('headlines', ${hl.id})" class="text-red-500 font-bold px-2 py-1">Hapus</button>
+                </div>`).join('');
+
+            let custArray = Object.values(customers);
+            document.getElementById('admin-customers-list').innerHTML = custArray.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pelanggan.</p>` : custArray.map(c => `
+                <div class="bg-white p-3 rounded-xl shadow-sm border flex justify-between items-center text-xs">
+                    <div>
+                        <p class="font-bold">${c.name || 'Pelanggan'} (${c.phone})</p>
+                        <p class="text-slate-500">Alamat: ${c.address || '-'}</p>
+                        <p class="text-slate-500">Poin: <strong class="text-orange-600">${c.points} Poin</strong></p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openEditCustomerModal('${c.phone}')" class="bg-orange-100 text-orange-700 px-2.5 py-1.5 rounded-lg font-bold">Edit</button>
+                        <button onclick="deleteCustomer('${c.phone}')" class="text-red-500 font-bold px-2 py-1">Hapus</button>
+                        <a href="https://wa.me/${c.phone.replace(/^0/,'62')}?text=${encodeURIComponent('Halo '+(c.name||'Pelanggan')+', terima kasih telah berbelanja di Arrahmah Mart Surabaya.')}" target="_blank" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1"><span>💬 WA</span></a>
+                    </div>
+                </div>`).join('');
+
             document.getElementById('set-store-name').value = storeSettings.store_name || '';
             document.getElementById('set-wa-admin').value = storeSettings.wa_admin || '';
             document.getElementById('set-bank-accounts').value = storeSettings.bank_accounts || '';
             document.getElementById('set-point-value').value = storeSettings.point_value || 1000;
         }
 
+        async function savePointSettings() {
+            let val = parseInt(document.getElementById('set-point-value').value) || 1000;
+            let res = await sb.from('store_settings').update({ point_value: val }).eq('id', 1);
+            if (res.error) { alert("Gagal menyimpan konversi poin: " + res.error.message); return; }
+            alert("Nilai konversi poin berhasil disimpan!");
+            await syncFromCloud();
+        }
+
+        async function resetAllCustomerPoints() {
+            let pin = prompt("Masukkan PIN Admin untuk konfirmasi reset seluruh poin pelanggan:");
+            if (pin === null) return;
+            if (pin !== (storeSettings.admin_pin || '1234')) {
+                alert("PIN salah! Reset poin dibatalkan.");
+                return;
+            }
+            if (confirm("PERINGATAN: Poin seluruh pelanggan akan di-reset menjadi 0. Lanjutkan?")) {
+                for (let phone in customers) {
+                    await sb.from('customers').update({ points: 0 }).eq('phone', phone);
+                }
+                alert("Semua poin pelanggan berhasil di-reset menjadi 0!");
+                await syncFromCloud();
+                renderAdminData();
+            }
+        }
+
         async function saveProductSupabase() {
+            let editId = document.getElementById('edit-product-id').value;
             let name = document.getElementById('new-p-name').value.trim();
+            let hpp = parseInt(document.getElementById('new-p-hpp').value) || 0;
             let price = parseInt(document.getElementById('new-p-price').value) || 0;
             let promoPrice = parseInt(document.getElementById('new-p-promo').value) || price;
             let stock = parseInt(document.getElementById('new-p-stock').value) || 0;
-            if (!name || !price) return alert("Nama dan harga wajib diisi!");
-            let imgBase64 = await readFileAsBase64('new-p-img-file') || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80';
-            let res = await sb.from('products').insert([{ id: Date.now(), name, price, promo_price: promoPrice, stock, img: imgBase64, points_earned: 5 }]);
-            if (res.error) { alert("Gagal: " + res.error.message); return; }
+            let pointsEarned = parseInt(document.getElementById('new-p-points').value) || 5;
+            let tierText = document.getElementById('new-p-tiers').value.trim();
+            let varText = document.getElementById('new-p-variants').value.trim();
+            
+            let variants = varText ? varText.split(',').map(v => v.trim()).slice(0,6) : [];
+            let tiers = [];
+            if (tierText) {
+                tierText.split(',').forEach(t => {
+                    let parts = t.split(':');
+                    if(parts.length === 2) tiers.push({min: parseInt(parts[0]), price: parseInt(parts[1])});
+                });
+            }
+
+            if (!name || !price) return alert("Nama dan harga produk wajib diisi!");
+            let imgBase64 = await readFileAsBase64('new-p-img-file');
+            let prodData = { name, hpp, price, promo_price: promoPrice, discount: price - promoPrice, stock, points_earned: pointsEarned, variants, tiers };
+            if (imgBase64) prodData.img = imgBase64;
+
+            let res;
+            if (editId) {
+                res = await sb.from('products').update(prodData).eq('id', editId);
+            } else {
+                prodData.id = Date.now();
+                if(!prodData.img) prodData.img = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80';
+                res = await sb.from('products').insert([prodData]);
+            }
+            if (res.error) { alert("Gagal menyimpan produk: " + res.error.message); return; }
             alert("Produk berhasil disimpan!");
+            resetProductForm();
+            await syncFromCloud();
+            renderAdminData();
+            populateProductDropdowns();
+        }
+
+        function editProduct(id) {
+            let p = products.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('edit-product-id').value = p.id;
+            document.getElementById('new-p-name').value = p.name;
+            document.getElementById('new-p-hpp').value = p.hpp || 0;
+            document.getElementById('new-p-price').value = p.price;
+            document.getElementById('new-p-promo').value = p.promo_price || p.price;
+            document.getElementById('new-p-stock').value = p.stock;
+            document.getElementById('new-p-points').value = p.points_earned || 5;
+            document.getElementById('new-p-tiers').value = Array.isArray(p.tiers) ? p.tiers.map(t=>`${t.min}:${t.price}`).join(', ') : '';
+            document.getElementById('new-p-variants').value = Array.isArray(p.variants) ? p.variants.join(', ') : '';
+            document.getElementById('form-product-title').innerText = "Edit Produk & Varian";
+            document.getElementById('btn-save-product').innerText = "Update Produk ke Cloud";
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function resetProductForm() {
+            document.getElementById('edit-product-id').value = '';
+            document.getElementById('new-p-name').value = '';
+            document.getElementById('new-p-img-file').value = '';
+            document.getElementById('new-p-hpp').value = '';
+            document.getElementById('new-p-price').value = '';
+            document.getElementById('new-p-promo').value = '';
+            document.getElementById('new-p-stock').value = '';
+            document.getElementById('new-p-points').value = '';
+            document.getElementById('new-p-tiers').value = '';
+            document.getElementById('new-p-variants').value = '';
+            document.getElementById('form-product-title').innerText = "+ Tambah Produk Baru";
+            document.getElementById('btn-save-product').innerText = "Simpan Produk ke Cloud";
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+        }
+
+        async function saveBundleSupabase() {
+            let editId = document.getElementById('edit-bundle-id').value;
+            let name = document.getElementById('b-theme').value.trim();
+            let p1 = document.getElementById('b-p1-select').value;
+            let p2 = document.getElementById('b-p2-select').value;
+            let p3 = document.getElementById('b-p3-select').value;
+            let p4 = document.getElementById('b-p4-select').value;
+            let p5 = document.getElementById('b-p5-select').value;
+            let promo_price = parseInt(document.getElementById('b-promo').value) || 0;
+            let start_date = document.getElementById('b-start').value;
+            let end_date = document.getElementById('b-end').value;
+
+            if (!name || !promo_price) return alert("Tema paket dan harga setelah bundling wajib diisi!");
+            let original_price = calculateBundleTotal();
+            if (original_price <= 0) return alert("Pilih minimal 1 produk untuk paket bundling!");
+
+            let imgBase64 = await readFileAsBase64('b-img-file');
+            let bundleData = { name, p1, p2, p3, p4, p5, original_price, promo_price, start_date, end_date };
+            if (imgBase64) bundleData.img = imgBase64;
+
+            let res;
+            if (editId) {
+                res = await sb.from('bundles').update(bundleData).eq('id', editId);
+            } else {
+                bundleData.id = Date.now();
+                res = await sb.from('bundles').insert([bundleData]);
+            }
+            if (res.error) { alert("Gagal menyimpan bundling: " + res.error.message); return; }
+            alert("Paket bundling berhasil disimpan!");
+            resetBundleForm();
+            await syncFromCloud();
+            renderAdminData();
+        }
+
+        function editBundle(id) {
+            let b = bundles.find(x => x.id === id);
+            if (!b) return;
+            document.getElementById('edit-bundle-id').value = b.id;
+            document.getElementById('b-theme').value = b.name || '';
+            document.getElementById('b-p1-select').value = b.p1 || '';
+            document.getElementById('b-p2-select').value = b.p2 || '';
+            document.getElementById('b-p3-select').value = b.p3 || '';
+            document.getElementById('b-p4-select').value = b.p4 || '';
+            document.getElementById('b-p5-select').value = b.p5 || '';
+            document.getElementById('b-promo').value = b.promo_price || '';
+            document.getElementById('b-start').value = b.start_date || '';
+            document.getElementById('b-end').value = b.end_date || '';
+            calculateBundleTotal();
+            document.getElementById('form-bundle-title').innerText = "Edit Paket Bundling";
+            document.getElementById('btn-save-bundle').innerText = "Update Bundling ke Cloud";
+            document.getElementById('btn-cancel-bundle-edit').classList.remove('hidden');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function resetBundleForm() {
+            document.getElementById('edit-bundle-id').value = '';
+            document.getElementById('b-theme').value = '';
+            document.getElementById('b-p1-select').value = '';
+            document.getElementById('b-p2-select').value = '';
+            document.getElementById('b-p3-select').value = '';
+            document.getElementById('b-p4-select').value = '';
+            document.getElementById('b-p5-select').value = '';
+            document.getElementById('b-promo').value = '';
+            document.getElementById('b-img-file').value = '';
+            document.getElementById('b-start').value = '';
+            document.getElementById('b-end').value = '';
+            document.getElementById('b-calc-orig-display').innerText = 'Rp 0';
+            document.getElementById('b-calc-hpp-display').innerText = 'Rp 0';
+            document.getElementById('form-bundle-title').innerText = "📦 Kelola Paket Bundling";
+            document.getElementById('btn-save-bundle').innerText = "Simpan Paket Bundling";
+            document.getElementById('btn-cancel-bundle-edit').classList.add('hidden');
+        }
+
+        async function saveTebusMurahSupabase() {
+            let editId = document.getElementById('edit-tm-id').value;
+            let prodVal = document.getElementById('tm-prod-select').value;
+            let normal_price = parseInt(document.getElementById('tm-normal').value) || 0;
+            let tebus_price = parseInt(document.getElementById('tm-price').value) || 0;
+            let min_cart_amount = parseInt(document.getElementById('tm-min').value) || 0;
+            let start_date = document.getElementById('tm-start').value;
+            let end_date = document.getElementById('tm-end').value;
+
+            if (!prodVal || !tebus_price) return alert("Pilih produk dan masukkan harga tebus!");
+            let name = prodVal;
+            let imgBase64 = await readFileAsBase64('tm-img-file');
+            let tmData = { name, normal_price, tebus_price, min_cart_amount, start_date, end_date };
+            if (imgBase64) tmData.img = imgBase64;
+
+            let res;
+            if (editId) {
+                res = await sb.from('tebus_murah').update(tmData).eq('id', editId);
+            } else {
+                tmData.id = Date.now();
+                res = await sb.from('tebus_murah').insert([tmData]);
+            }
+            if (res.error) { alert("Gagal menyimpan tebus murah: " + res.error.message); return; }
+            alert("Promo tebus murah berhasil disimpan!");
+            resetTebusForm();
+            await syncFromCloud();
+            renderAdminData();
+        }
+
+        function editTebusMurah(id) {
+            let tm = tebusMurahList.find(x => x.id === id);
+            if (!tm) return;
+            document.getElementById('edit-tm-id').value = tm.id;
+            document.getElementById('tm-prod-select').value = tm.name || '';
+            document.getElementById('tm-normal').value = tm.normal_price || 0;
+            document.getElementById('tm-price').value = tm.tebus_price || 0;
+            document.getElementById('tm-min').value = tm.min_cart_amount || 0;
+            document.getElementById('tm-start').value = tm.start_date || '';
+            document.getElementById('tm-end').value = tm.end_date || '';
+            document.getElementById('form-tm-title').innerText = "Edit Produk Tebus Murah";
+            document.getElementById('btn-save-tm').innerText = "Update Tebus Murah ke Cloud";
+            document.getElementById('btn-cancel-tm-edit').classList.remove('hidden');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function resetTebusForm() {
+            document.getElementById('edit-tm-id').value = '';
+            document.getElementById('tm-prod-select').value = '';
+            document.getElementById('tm-normal').value = '';
+            document.getElementById('tm-price').value = '';
+            document.getElementById('tm-min').value = '';
+            document.getElementById('tm-img-file').value = '';
+            document.getElementById('tm-start').value = '';
+            document.getElementById('tm-end').value = '';
+            document.getElementById('form-tm-title').innerText = "⚡ Kelola Produk Tebus Murah";
+            document.getElementById('btn-save-tm').innerText = "Simpan Tebus Murah";
+            document.getElementById('btn-cancel-tm-edit').classList.add('hidden');
+        }
+
+        function openEditCustomerModal(phone) {
+            let c = customers[phone];
+            if (!c) return;
+            document.getElementById('edit-cust-phone-orig').value = c.phone;
+            document.getElementById('edit-cust-name').value = c.name || '';
+            document.getElementById('edit-cust-phone').value = c.phone || '';
+            document.getElementById('edit-cust-address').value = c.address || '';
+            document.getElementById('edit-cust-points').value = c.points || 0;
+            document.getElementById('edit-customer-modal').classList.remove('hidden');
+        }
+
+        function closeEditCustomerModal() {
+            document.getElementById('edit-customer-modal').classList.add('hidden');
+        }
+
+        async function saveEditCustomer() {
+            let origPhone = document.getElementById('edit-cust-phone-orig').value;
+            let name = document.getElementById('edit-cust-name').value.trim();
+            let phone = document.getElementById('edit-cust-phone').value.trim();
+            let address = document.getElementById('edit-cust-address').value.trim();
+            let points = parseInt(document.getElementById('edit-cust-points').value) || 0;
+
+            if (!phone) return alert("Nomor WhatsApp wajib diisi!");
+            if (origPhone !== phone) {
+                await sb.from('customers').delete().eq('phone', origPhone);
+            }
+            await sb.from('customers').upsert([{ phone, name, address, points, total_spend: customers[origPhone]?.total_spend || 0 }]);
+            alert("Data pelanggan berhasil diperbarui!");
+            closeEditCustomerModal();
+            await syncFromCloud();
+            renderAdminData();
+        }
+
+        async function deleteCustomer(phone) {
+            if (confirm("Hapus data pelanggan ini?")) {
+                await sb.from('customers').delete().eq('phone', phone);
+                await syncFromCloud();
+                renderAdminData();
+            }
+        }
+
+        async function deleteOrder(orderId) {
+            if (confirm("Hapus pesanan ini dari laporan dan database?")) {
+                await sb.from('orders').delete().eq('id', orderId);
+                await syncFromCloud();
+                renderAdminData();
+            }
+        }
+
+        async function addVoucherSupabase() {
+            if (vouchers.length >= 5) return alert("Maksimal hanya 5 voucher aktif!");
+            let code = document.getElementById('v-code').value.trim().toUpperCase();
+            let name = document.getElementById('v-name').value.trim();
+            let discount_amount = parseInt(document.getElementById('v-disc').value) || 0;
+            let min_spend = parseInt(document.getElementById('v-min').value) || 0;
+            let max_usage = parseInt(document.getElementById('v-max').value) || 100;
+            if (!code || !discount_amount) return alert("Kode dan potongan wajib diisi!");
+            let res = await sb.from('vouchers').insert([{ id: Date.now(), code, name, discount_amount, min_spend, max_usage, used_count: 0 }]);
+            if (res.error) { alert("Gagal menambah voucher: " + res.error.message); return; }
+            alert("Voucher berhasil disimpan!");
+            await syncFromCloud(); renderAdminData();
+        }
+
+        async function addHeadlineSupabase() {
+            if (headlines.length >= 5) return alert("Maksimal hanya 5 headline aktif!");
+            let title = document.getElementById('hl-title').value.trim();
+            let imgBase64 = await readFileAsBase64('hl-img-file');
+            if (!imgBase64) return alert("Pilih gambar headline terlebih dahulu!");
+            let res = await sb.from('headlines').insert([{ id: Date.now(), title, img: imgBase64 }]);
+            if (res.error) { alert("Gagal menambah headline: " + res.error.message); return; }
+            document.getElementById('hl-title').value = '';
+            document.getElementById('hl-img-file').value = '';
             await syncFromCloud(); renderAdminData();
         }
 
@@ -804,15 +1433,22 @@
             }
         }
 
+        async function deleteRow(table, id) {
+            await sb.from(table).delete().eq('id', id);
+            await syncFromCloud(); renderAdminData();
+        }
+
         async function confirmOrder(orderId) {
             let order = orders.find(o => o.id === orderId);
-            if (order) {
-                await sb.from('orders').update({ status: 'LUNAS' }).eq('id', orderId);
+            if (order && order.status !== 'LUNAS') {
+                let todayStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+                await sb.from('orders').update({ status: 'LUNAS', paid_date: todayStr }).eq('id', orderId);
                 if (customers[order.phone]) {
                     let newPts = (customers[order.phone].points || 0) + (order.points_earned || 0);
-                    await sb.from('customers').update({ points: newPts }).eq('phone', order.phone);
+                    let newSpend = (customers[order.phone].total_spend || 0) + (order.final_total || order.finalTotal || 0);
+                    await sb.from('customers').update({ points: newPts, total_spend: newSpend }).eq('phone', order.phone);
                 }
-                alert("Pesanan LUNAS & poin bertambah!");
+                alert("Pesanan dikonfirmasi LUNAS & poin pelanggan bertambah otomatis!");
                 await syncFromCloud(); renderAdminData();
             }
         }
@@ -821,17 +1457,40 @@
             let store_name = document.getElementById('set-store-name').value.trim();
             let wa_admin = document.getElementById('set-wa-admin').value.trim();
             let bank_accounts = document.getElementById('set-bank-accounts').value.trim();
-            let res = await sb.from('store_settings').update({ store_name, wa_admin, bank_accounts }).eq('id', 1);
-            if (res.error) { alert("Gagal: " + res.error.message); return; }
-            alert("Pengaturan disimpan!");
+            let newPin = document.getElementById('set-admin-pin').value.trim();
+            let logoBase64 = await readFileAsBase64('set-store-logo-file');
+            
+            let updateData = { store_name, wa_admin, bank_accounts };
+            if (newPin) updateData.admin_pin = newPin;
+            if (logoBase64) updateData.logo_url = logoBase64;
+
+            let res = await sb.from('store_settings').update(updateData).eq('id', 1);
+            if (res.error) { alert("Gagal menyimpan pengaturan: " + res.error.message); return; }
+            alert("Pengaturan toko berhasil disimpan!");
             await syncFromCloud();
         }
 
         function exportToExcel() {
-            let worksheet = XLSX.utils.json_to_sheet(orders);
+            let filteredOrders = getFilteredOrders();
+            let dataToExport = filteredOrders.map(o => ({
+                "ID Pesanan": o.id,
+                "Tanggal Pesan": o.display_date,
+                "Tanggal Lunas": o.paid_date || '-',
+                "Nama Customer": o.name,
+                "No WA": o.phone,
+                "Alamat": o.address,
+                "Subtotal": o.subtotal,
+                "Total Diskon": o.total_discount,
+                "Total Bayar": o.final_total || o.finalTotal,
+                "Keuntungan Bersih": o.net_profit,
+                "Pengiriman": o.shipping,
+                "Pembayaran": o.payment,
+                "Status": o.status
+            }));
+            let worksheet = XLSX.utils.json_to_sheet(dataToExport);
             let workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan");
-            XLSX.writeFile(workbook, "Laporan.xlsx");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Penjualan");
+            XLSX.writeFile(workbook, "Laporan_Arrahmah_Mart.xlsx");
         }
     </script>
 </body>
