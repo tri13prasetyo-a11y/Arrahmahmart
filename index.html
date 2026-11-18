@@ -111,7 +111,7 @@
                         </div>
                     </div>
 
-                    <!-- 1. TAB PESANAN (Hanya Ringkasan Rapi) -->
+                    <!-- 1. TAB PESANAN (Dengan Tombol Cetak Struk) -->
                     <div id="admin-tab-orders" class="space-y-3">
                         <h3 class="font-bold text-sm text-slate-800">📦 Daftar Pesanan Masuk (Ringkasan Bersih)</h3>
                         <div id="admin-orders-list" class="space-y-3"></div>
@@ -249,7 +249,7 @@
                         <div id="admin-customers-list" class="space-y-2"></div>
                     </div>
 
-                    <!-- 6. TAB LAPORAN & KEUANGAN (Dengan Filter Periode & Verifikasi/Hapus Pesanan) -->
+                    <!-- 6. TAB LAPORAN & KEUANGAN -->
                     <div id="admin-tab-reports" class="hidden space-y-4">
                         <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-4">
                             <div class="flex justify-between items-center flex-wrap gap-2">
@@ -272,7 +272,7 @@
                             <div id="report-summary-cards" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs"></div>
                         </div>
 
-                        <!-- Rincian Pesanan per Hari (Verifikasi & Hapus Pesanan Dipindah ke Sini) -->
+                        <!-- Rincian Pesanan per Hari (Verifikasi, Cetak & Hapus) -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
                             <h3 class="font-bold text-sm text-slate-800">📋 Rincian & Verifikasi Pesanan Masuk (Sesuai Filter)</h3>
                             <div id="admin-report-orders-list" class="space-y-3"></div>
@@ -950,10 +950,83 @@
             renderAdminData();
         }
 
+        // Fungsi Cetak Struk Pesanan
+        function printOrder(orderId) {
+            let order = orders.find(o => o.id === orderId);
+            if (!order) return;
+
+            let itemsHtml = Array.isArray(order.items) ? order.items.map(i => `
+                <tr>
+                    <td style="padding: 6px 0; border-bottom: 1px dashed #ddd;">${i.name} (${i.qty}x)</td>
+                    <td style="padding: 6px 0; border-bottom: 1px dashed #ddd; text-align: right;">Rp ${(i.promoPrice * i.qty).toLocaleString()}</td>
+                </tr>
+            `).join('') : '';
+
+            let printWindow = window.open('', '_blank', 'width=400,height=600');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Struk Pesanan - ${order.id}</title>
+                    <style>
+                        body { font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #333; padding: 15px; margin: 0; }
+                        .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 10px; margin-bottom: 10px; }
+                        .store-name { font-size: 16px; font-weight: bold; margin: 0; }
+                        .store-info { font-size: 10px; color: #666; margin: 2px 0; }
+                        .order-info { margin-bottom: 10px; font-size: 11px; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+                        .totals { border-top: 1px solid #333; padding-top: 8px; font-size: 11px; }
+                        .total-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+                        .footer { text-align: center; font-size: 10px; margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <p class="store-name">${storeSettings.store_name || 'Arrahmah Mart'}</p>
+                        <p class="store-info">Surabaya • Cloud Realtime</p>
+                    </div>
+                    <div class="order-info">
+                        <div><strong>No Pesanan:</strong> ${order.id}</div>
+                        <div><strong>Tanggal:</strong> ${order.display_date || '-'}</div>
+                        <div><strong>Pemesan:</strong> ${order.name} (${order.phone})</div>
+                        <div><strong>Alamat:</strong> ${order.address || '-'}</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr style="border-bottom: 1px solid #333;">
+                                <th style="text-align: left; padding-bottom: 4px;">Produk</th>
+                                <th style="text-align: right; padding-bottom: 4px;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml}
+                        </tbody>
+                    </table>
+                    <div class="totals">
+                        <div class="total-row"><span>Subtotal:</span> <span>Rp ${(order.subtotal || 0).toLocaleString()}</span></div>
+                        ${(order.total_discount || 0) > 0 ? `<div class="total-row"><span>Diskon / Poin:</span> <span>-Rp ${order.total_discount.toLocaleString()}</span></div>` : ''}
+                        <div class="total-row" style="font-weight: bold; font-size: 13px; margin-top: 6px;"><span>Total Bayar:</span> <span>Rp ${(order.final_total || order.finalTotal || 0).toLocaleString()}</span></div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 11px;">
+                        <div><strong>Pengiriman:</strong> ${order.shipping}</div>
+                        <div><strong>Pembayaran:</strong> ${order.payment}</div>
+                        <div><strong>Status:</strong> ${order.status}</div>
+                    </div>
+                    <div class="footer">
+                        <p>Terima kasih telah berbelanja di ${storeSettings.store_name || 'Arrahmah Mart'}!<br>Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.</p>
+                    </div>
+                    <script>
+                        window.onload = function() { window.print(); window.close(); }
+                    </script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
         function renderAdminData() {
             document.getElementById('badge-order-count').innerText = orders.filter(o => o.status !== 'LUNAS').length;
 
-            // 1. Tab Pesanan Masuk (Hanya Ringkasan Rapi Saja)
+            // 1. Tab Pesanan Masuk (Dengan Tombol Cetak Struk)
             document.getElementById('admin-orders-list').innerHTML = orders.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pesanan masuk.</p>` : orders.map(o => {
                 let itemsList = Array.isArray(o.items) ? o.items.map(i => `<li class="text-slate-600">• ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}</li>`).join('') : '<li>Tidak ada rincian</li>';
                 return `
@@ -971,9 +1044,12 @@
                         <span>🚚 Pengiriman: <strong>${o.shipping}</strong></span>
                         <span>💳 Pembayaran: <strong>${o.payment}</strong></span>
                     </div>
-                    <div class="flex justify-between items-center pt-1 border-t">
-                        <span class="font-bold text-slate-900">Total: Rp ${(o.final_total||o.finalTotal||0).toLocaleString()}</span>
-                        <span class="px-2.5 py-0.5 rounded font-bold ${o.status==='LUNAS'?'bg-emerald-100 text-emerald-800':'bg-orange-100 text-orange-800'}">${o.status}</span>
+                    <div class="flex justify-between items-center pt-2 border-t">
+                        <span class="font-bold text-slate-900 text-sm">Total: Rp ${(o.final_total||o.finalTotal||0).toLocaleString()}</span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="printOrder('${o.id}')" class="bg-blue-600 text-white font-semibold px-3 py-1.5 rounded-lg shadow hover:bg-blue-700">🖨️ Cetak Struk</button>
+                            <span class="px-2.5 py-0.5 rounded font-bold ${o.status==='LUNAS'?'bg-emerald-100 text-emerald-800':'bg-orange-100 text-orange-800'}">${o.status}</span>
+                        </div>
                     </div>
                 </div>`;
             }).join('');
@@ -991,7 +1067,7 @@
                 return true;
             });
 
-            // 2. Tab Laporan (Rincian Pesanan + Tombol Verifikasi & Hapus Pesanan)
+            // 2. Tab Laporan (Rincian Pesanan + Tombol Verifikasi, Cetak & Hapus)
             document.getElementById('admin-report-orders-list').innerHTML = filteredOrders.length === 0 ? `<p class="text-xs text-slate-500">Tidak ada pesanan dalam periode ini.</p>` : filteredOrders.map(o => {
                 let itemsList = Array.isArray(o.items) ? o.items.map(i => `<li class="text-slate-600">• ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}</li>`).join('') : '<li>Tidak ada rincian</li>';
                 let paidInfo = o.paid_date ? `<p class="text-emerald-600 font-semibold">Tanggal Lunas: ${o.paid_date}</p>` : '';
@@ -1009,11 +1085,12 @@
                     <p class="text-slate-500">Total: <strong>Rp ${(o.final_total||o.finalTotal||0).toLocaleString()}</strong> | Profit: <strong class="text-emerald-600">Rp ${(o.net_profit||0).toLocaleString()}</strong></p>
                     <p class="text-slate-500">Kirim: ${o.shipping} | Bayar: ${o.payment}</p>
                     ${paidInfo}
-                    <div class="flex items-center justify-between pt-2 border-t">
-                        <div>
+                    <div class="flex items-center justify-between pt-2 border-t flex-wrap gap-2">
+                        <div class="flex items-center gap-2">
                             ${o.status !== 'LUNAS' ? `<button onclick="confirmOrder('${o.id}')" class="bg-emerald-600 text-white font-semibold px-3 py-1.5 rounded-lg shadow hover:bg-emerald-700">Konfirmasi Lunas (+Poin)</button>` : '<span class="text-emerald-600 font-bold">✓ Sudah Lunas</span>'}
+                            <button onclick="printOrder('${o.id}')" class="bg-blue-600 text-white font-semibold px-3 py-1.5 rounded-lg shadow hover:bg-blue-700">🖨️ Cetak Struk</button>
                         </div>
-                        <button onclick="deleteOrder('${o.id}')" class="bg-red-100 text-red-600 hover:bg-red-200 font-bold px-3 py-1.5 rounded-lg">🗑️ Hapus Pesanan</button>
+                        <button onclick="deleteOrder('${o.id}')" class="bg-red-100 text-red-600 hover:bg-red-200 font-bold px-3 py-1.5 rounded-lg">🗑️ Hapus</button>
                     </div>
                 </div>`;
             }).join('');
@@ -1087,7 +1164,7 @@
                     </div>
                 </div>`).join('');
 
-            // Reports Summary Cards (Berdasarkan filter lunas & periode)
+            // Reports Summary Cards
             let lunasFiltered = filteredOrders.filter(o=>o.status==='LUNAS');
             let totalOmset = lunasFiltered.reduce((s,o)=>s+(o.final_total||0),0);
             let totalProfit = lunasFiltered.reduce((s,o)=>s+(o.net_profit||0),0);
