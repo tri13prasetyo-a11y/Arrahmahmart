@@ -592,7 +592,7 @@
 
             const grid = document.getElementById('product-grid');
             if (products.length === 0) {
-                grid.innerHTML = `<p class="text-xs text-slate-500 col-span-full text-center py-6 bg-white rounded-xl border">Belum ada produk.</p>`;
+                grid.innerHTML = `<p class="text-xs text-slate-500 col-span-full text-center py-6 bg-white rounded-xl border">Belum ada produk. Silakan tambah produk melalui Panel Admin.</p>`;
             } else {
                 grid.innerHTML = products.map(p => {
                     let vars = Array.isArray(p.variants) ? p.variants : [];
@@ -846,7 +846,6 @@
             let newOrder = {
                 id: 'ORD-' + Date.now().toString().slice(-6),
                 display_date: new Date().toLocaleDateString('id-ID'),
-                raw_date: new Date().toISOString().split('T')[0],
                 name, phone, address, items: cart, subtotal, total_hpp: totalHpp, total_discount: totalDisc,
                 points_used: ptsUsed, final_total: finalTotal, net_profit: netProfit, points_earned: ptsEarned, shipping, payment, status: 'Menunggu Pembayaran', paid_date: null
             };
@@ -1026,10 +1025,6 @@
             let endVal = document.getElementById('report-end-date')?.value || '';
             let filteredOrders = orders.filter(o => {
                 if (!startVal && !endVal) return true;
-                let oDate = o.raw_date || '';
-                if (!oDate) return true;
-                if (startVal && oDate < startVal) return false;
-                if (endVal && oDate > endVal) return false;
                 return true;
             });
 
