@@ -284,7 +284,6 @@
             </div>
         </section>
     </main>
-
     <!-- MODAL EDIT CUSTOMER -->
     <div id="edit-customer-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-2xl p-5 space-y-3 text-xs">
@@ -899,16 +898,12 @@
             currentPhone = phone;
             localStorage.setItem('ar_active_phone', currentPhone);
 
-            // 1. Hitung Total Harga Jual Aktual (Subtotal setelah harga promo/grosir)
             let subtotal = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
-            
-            // 2. Hitung Total Potongan Harga Coret / Promo Item (Selisih Harga Normal - Harga Promo)
             let promoItemDiscount = cart.reduce((s, i) => {
                 let orig = Number(i.originalPrice || i.price || i.promoPrice) || 0;
                 return s + Math.max(0, (orig - i.promoPrice) * i.qty);
             }, 0);
 
-            // 3. Hitung Potongan Voucher & Poin
             let vDisc = 0;
             if (appliedVoucher) {
                 let multiplier = Math.floor(subtotal / appliedVoucher.min_spend);
@@ -925,12 +920,9 @@
             
             let checkoutDiscount = Math.min(subtotal, vDisc + pDisc);
             let finalTotal = Math.max(0, subtotal - checkoutDiscount);
-            
-            // Akumulasi seluruh potongan diskon (Promo Harga Coret + Voucher + Poin)
             let totalAllDiscount = promoItemDiscount + checkoutDiscount;
             let ptsEarned = cart.reduce((s,i)=>s+((i.pointsEarned||5)*i.qty),0);
 
-            // 4. Hitung Total HPP (Harga Beli) secara akurat untuk seluruh item (Reguler, Bundling, Tebus Murah)
             let totalHpp = 0;
             for(let i of cart) {
                 if(!i.isSpecial) {
@@ -943,7 +935,6 @@
                 }
             }
 
-            // 5. Rumus Keuntungan Bersih = (Harga Jual - Harga Beli) - Potongan/Diskon Checkout
             let netProfit = (subtotal - totalHpp) - checkoutDiscount;
 
             let now = new Date();
@@ -985,7 +976,6 @@
         }
 
         // --- KALKULASI ULANG KEUANGAN OTOMATIS PER PESANAN ---
-        // Memastikan selisih harga jual & harga beli setelah dikurangi potongan diskon selalu akurat
         function resolveItemUnitHpp(item) {
             let storedHpp = Number(item.hpp) || 0;
             if (storedHpp > 0) return storedHpp;
@@ -993,7 +983,6 @@
             let rawName = String(item.baseName || item.name || '').trim();
             let itemIdStr = String(item.id || '');
 
-            // 1. Cek jika item adalah Paket Bundling
             if (itemIdStr.startsWith('bundle-') || rawName.startsWith('[Bundling]')) {
                 let bId = itemIdStr.replace('bundle-', '');
                 let bTitle = rawName.replace(/^\[Bundling\]\s*/i, '').trim().toLowerCase();
@@ -1004,7 +993,6 @@
                 }
             }
 
-            // 2. Cek jika item adalah Tebus Murah
             if (itemIdStr.startsWith('tm-') || rawName.startsWith('[Tebus Murah]')) {
                 let tmId = itemIdStr.replace('tm-', '');
                 let tmTitle = rawName.replace(/^\[Tebus Murah\]\s*/i, '').trim().toLowerCase();
@@ -1014,7 +1002,6 @@
                 if (foundP && Number(foundP.hpp) > 0) return Number(foundP.hpp);
             }
 
-            // 3. Cek item produk reguler (cocokkan ID atau nama produk tanpa akhiran varian)
             let cleanProdName = rawName
                 .replace(/^\[(Bundling|Tebus Murah)\]\s*/i, '')
                 .replace(/\s*\([^)]*\)\s*$/, '')
@@ -1052,7 +1039,6 @@
                 calcHpp = Number(o.total_hpp) || 0;
             }
 
-            // Jika HPP per item masih 0 namun database pesanan punya nilai total_hpp valid, gunakan cadangan tersebut
             if (calcHpp === 0 && Number(o.total_hpp) > 0) {
                 calcHpp = Number(o.total_hpp);
             }
@@ -1061,16 +1047,13 @@
                 ? Number(o.final_total)
                 : (o.finalTotal !== undefined && o.finalTotal !== null ? Number(o.finalTotal) : calcSubtotal);
 
-            // Potongan checkout (Voucher + Poin) = selisih subtotal harga jual dengan total bayar akhir
             let checkoutDisc = Math.max(0, calcSubtotal - finalTotal);
 
-            // Total seluruh potongan diskon (Diskon Harga Coret / Bundling / Tebus Murah + Voucher + Poin)
             let totalDiscount = promoItemDisc + checkoutDisc;
             if (totalDiscount === 0 && Number(o.total_discount) > 0) {
                 totalDiscount = Number(o.total_discount);
             }
 
-            // Keuntungan Bersih = (Harga Jual - Harga Beli/HPP) - Potongan/Diskon Checkout
             let grossMargin = calcSubtotal - calcHpp;
             let netProfit = grossMargin - checkoutDisc;
 
@@ -1084,7 +1067,6 @@
             };
         }
 
-        // --- HELPER KONVERSI TANGGAL UNTUK FILTER PERIODE ---
         function parseOrderDateToISO(order) {
             if (!order || !order.display_date) return '';
             let isoMatch = order.display_date.match(/(\d{4}-\d{2}-\d{2})/);
@@ -1119,7 +1101,6 @@
             renderAdminData();
         }
 
-        // --- ADMIN LOGIC ---
         function verifyAdminPin() {
             let pin = document.getElementById('admin-pin-input').value;
             if (pin === (storeSettings.admin_pin || '1234')) {
@@ -1160,7 +1141,6 @@
         function renderAdminData() {
             document.getElementById('badge-order-count').innerText = orders.filter(o => o.status !== 'LUNAS').length;
 
-            // 1. TAB PESANAN MASUK
             document.getElementById('admin-orders-list').innerHTML = orders.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pesanan masuk.</p>` : orders.map(o => {
                 let fin = computeOrderFinancials(o);
                 let itemsList = Array.isArray(o.items) ? o.items.map(i => `<li class="text-slate-600">• ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}</li>`).join('') : '<li>Tidak ada rincian</li>';
@@ -1186,7 +1166,6 @@
                 </div>`;
             }).join('');
 
-            // 6. TAB LAPORAN & KEUANGAN (KALKULASI MARGIN OTOMATIS SETELAH HPP & DISKON)
             let filteredOrders = getFilteredOrders();
             document.getElementById('filtered-order-count-label').innerText = `${filteredOrders.length} Transaksi Ditemukan`;
 
@@ -1241,7 +1220,6 @@
                 </div>`;
             }).join('');
 
-            // TAB PRODUK, PROMO, HEADLINE, CUSTOMER, PROFIL
             document.getElementById('admin-products-list').innerHTML = products.map(p => `
                 <div class="bg-white p-3 rounded-xl shadow-sm border border-orange-100 flex items-center space-x-3 text-xs">
                     <img src="${p.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80'}" class="w-14 h-14 object-cover rounded-lg">
