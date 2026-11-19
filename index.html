@@ -20,14 +20,17 @@
 
     <!-- HEADER BERSIH -->
     <header class="bg-orange-600 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center space-x-3">
-            <div id="header-logo-container" class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow overflow-hidden">
-                <span class="text-orange-600 font-bold text-xs text-center leading-tight">AR</span>
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div id="header-logo-container" class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow overflow-hidden">
+                    <span class="text-orange-600 font-bold text-xs text-center leading-tight">AR</span>
+                </div>
+                <div>
+                    <h1 id="store-title-display" class="font-bold text-lg leading-tight">Arrahmah Mart</h1>
+                    <p class="text-xs text-orange-100">Surabaya • Cloud Realtime Edition</p>
+                </div>
             </div>
-            <div>
-                <h1 id="store-title-display" class="font-bold text-lg leading-tight">Arrahmah Mart</h1>
-                <p class="text-xs text-orange-100">Surabaya • Cloud Realtime Edition</p>
-            </div>
+            <button onclick="syncFromCloud(true)" class="bg-orange-700 hover:bg-orange-800 text-white text-[11px] px-3 py-1.5 rounded-lg font-semibold shadow-sm transition">↻ Muat Ulang Data</button>
         </div>
     </header>
 
@@ -57,7 +60,7 @@
             </div>
 
             <div id="product-grid" class="grid grid-cols-2 gap-3 md:grid-cols-4">
-                <p class="text-xs text-slate-500 col-span-full text-center py-6">Memuat katalog produk...</p>
+                <p class="text-xs text-slate-500 col-span-full text-center py-6">Memuat katalog produk dari Cloud...</p>
             </div>
         </section>
 
@@ -347,7 +350,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT APLIKASI -->
+    <!-- SCRIPT APLIKASI (BAGIAN 1/2) -->
     <script>
         const SUPABASE_URL = 'https://oeoskmyvumfwihbrmfkx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_VriQAQ-FC3JGp7-ojoEGHw_YoU5RCDu';
@@ -355,20 +358,27 @@
         try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e){}
 
         let defaultProducts = [
-            { id: 1, name: 'Beras Premium Pinpin 5kg', hpp: 60000, price: 65000, promoPrice: 65000, stock: 25, img: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80', pointsEarned: 5, variants: ['5kg'] },
-            { id: 2, name: 'Minyak Goreng Bimoli 2L', hpp: 35000, price: 38000, promoPrice: 38000, stock: 40, img: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80', pointsEarned: 5, variants: ['2 Liter'] },
-            { id: 3, name: 'Gula Pasir Manis Kita 1kg', hpp: 15000, price: 16500, promoPrice: 16500, stock: 50, img: 'https://images.unsplash.com/photo-1581441363689-1ed3dcf21cba?auto=format&fit=crop&w=300&q=80', pointsEarned: 5, variants: ['1kg'] }
+            { id: 1, name: 'Beras Premium Pinpin 5kg', hpp: 60000, price: 65000, promoPrice: 65000, stock: 25, img: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80', pointsEarned: 5, variants: ['5kg'], tiers: [] },
+            { id: 2, name: 'Minyak Goreng Bimoli 2L', hpp: 35000, price: 38000, promoPrice: 38000, stock: 40, img: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80', pointsEarned: 5, variants: ['2 Liter'], tiers: [] },
+            { id: 3, name: 'Gula Pasir Manis Kita 1kg', hpp: 15000, price: 16500, promoPrice: 16500, stock: 50, img: 'https://images.unsplash.com/photo-1581441363689-1ed3dcf21cba?auto=format&fit=crop&w=300&q=80', pointsEarned: 5, variants: ['1kg'], tiers: [] }
         ];
 
         let products = [], orders = [], customers = {}, vouchers = [], bundles = [], tebusMurahList = [], storeSettings = {}, headlines = [];
         let cart = [], appliedVoucher = null, currentPhone = localStorage.getItem('ar_active_phone') || '';
+        let hasCloudProducts = false;
+
+        function parseJsonSafe(val, fallback) {
+            if (!val) return fallback;
+            if (Array.isArray(val) || typeof val === 'object') return val;
+            try { return JSON.parse(val); } catch(e) { return fallback; }
+        }
 
         window.addEventListener('hashchange', router);
         window.addEventListener('load', async () => {
             if (!window.location.hash) window.location.hash = '#customer';
-            await syncFromCloud();
-            setupRealtimeSync();
             router();
+            await syncFromCloud(false);
+            setupRealtimeSync();
         });
 
         function setupRealtimeSync() {
@@ -376,7 +386,7 @@
             try {
                 sb.channel('arrahmah-realtime-channel')
                     .on('postgres_changes', { event: '*', schema: 'public' }, async () => {
-                        await syncFromCloud();
+                        await syncFromCloud(false);
                         if (window.location.hash.includes('#admin')) {
                             if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
                                 renderAdminData();
@@ -392,52 +402,94 @@
             }
         }
 
-        async function syncFromCloud() {
+        async function fetchTableSafe(tableName, orderCol, ascending) {
+            if (!sb) return { data: null, error: null };
+            try {
+                let query = sb.from(tableName).select('*');
+                if (orderCol) query = query.order(orderCol, { ascending: !!ascending });
+                let res = await query;
+                return res;
+            } catch (err) {
+                console.warn(`Gagal memuat tabel ${tableName}:`, err);
+                return { data: null, error: err };
+            }
+        }
+
+        async function syncFromCloud(showToast = false) {
             if (!sb) {
-                products = defaultProducts;
+                if (!hasCloudProducts && products.length === 0) products = defaultProducts;
+                renderCatalog();
                 return;
             }
+
             try {
                 let [pRes, oRes, cRes, vRes, bRes, tmRes, sRes, hlRes] = await Promise.all([
-                    sb.from('products').select('*').order('id', {ascending:true}),
-                    sb.from('orders').select('*').order('id', {ascending:false}),
-                    sb.from('customers').select('*'),
-                    sb.from('vouchers').select('*'),
-                    sb.from('bundles').select('*'),
-                    sb.from('tebus_murah').select('*'),
-                    sb.from('store_settings').select('*').eq('id', 1).single(),
-                    sb.from('headlines').select('*').order('id', {ascending:true})
+                    fetchTableSafe('products', 'id', true),
+                    fetchTableSafe('orders', 'id', false),
+                    fetchTableSafe('customers', null, true),
+                    fetchTableSafe('vouchers', null, true),
+                    fetchTableSafe('bundles', null, true),
+                    fetchTableSafe('tebus_murah', null, true),
+                    sb.from('store_settings').select('*').eq('id', 1).maybeSingle(),
+                    fetchTableSafe('headlines', 'id', true)
                 ]);
 
-                if (pRes.data && pRes.data.length > 0) {
-                    products = pRes.data.map(p => ({
-                        ...p,
-                        hpp: Number(p.hpp) || 0,
-                        price: Number(p.price) || 0,
-                        promoPrice: Number(p.promo_price || p.price) || 0,
-                        pointsEarned: Number(p.points_earned) || 5
-                    }));
-                } else {
+                if (pRes && Array.isArray(pRes.data)) {
+                    if (pRes.data.length > 0) {
+                        hasCloudProducts = true;
+                        products = pRes.data.map(p => ({
+                            ...p,
+                            hpp: Number(p.hpp) || 0,
+                            price: Number(p.price) || 0,
+                            promoPrice: Number(p.promo_price || p.promoPrice || p.price) || 0,
+                            stock: Number(p.stock) || 0,
+                            pointsEarned: Number(p.points_earned || p.pointsEarned) || 5,
+                            variants: parseJsonSafe(p.variants, []),
+                            tiers: parseJsonSafe(p.tiers, [])
+                        }));
+                    } else if (!hasCloudProducts && products.length === 0) {
+                        products = defaultProducts;
+                    }
+                } else if (!hasCloudProducts && products.length === 0) {
                     products = defaultProducts;
                 }
+
                 populateProductDropdowns();
 
-                if (oRes.data) orders = oRes.data;
-                if (cRes.data) { customers = {}; cRes.data.forEach(c => customers[c.phone] = c); }
-                if (vRes.data) vouchers = vRes.data;
-                if (bRes.data) bundles = bRes.data;
-                if (tmRes.data) tebusMurahList = tmRes.data;
-                if (hlRes.data) headlines = hlRes.data;
-                if (sRes.data) {
+                if (oRes && Array.isArray(oRes.data)) orders = oRes.data;
+                if (cRes && Array.isArray(cRes.data)) {
+                    customers = {};
+                    cRes.data.forEach(c => { if (c && c.phone) customers[c.phone] = c; });
+                }
+                if (vRes && Array.isArray(vRes.data)) vouchers = vRes.data;
+                if (bRes && Array.isArray(bRes.data)) bundles = bRes.data;
+                if (tmRes && Array.isArray(tmRes.data)) tebusMurahList = tmRes.data;
+                if (hlRes && Array.isArray(hlRes.data)) headlines = hlRes.data;
+
+                if (sRes && sRes.data) {
                     storeSettings = sRes.data;
                     document.getElementById('store-title-display').innerText = storeSettings.store_name || 'Arrahmah Mart Surabaya';
                     if (storeSettings.logo_url) {
                         document.getElementById('header-logo-container').innerHTML = `<img src="${storeSettings.logo_url}" class="w-full h-full object-cover">`;
                     }
                 }
-            } catch(e) {
+
+                if (window.location.hash.includes('#admin')) {
+                    if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
+                        renderAdminData();
+                    }
+                } else {
+                    updateCustomerDisplay();
+                    renderCatalog();
+                }
+
+                if (showToast) {
+                    alert(`Data Cloud diperbarui: ${products.length} produk, ${bundles.length} bundling, ${headlines.length} headline.`);
+                }
+            } catch (e) {
                 console.error("Sync error:", e);
-                if (products.length === 0) products = defaultProducts;
+                if (!hasCloudProducts && products.length === 0) products = defaultProducts;
+                renderCatalog();
             }
         }
 
@@ -495,7 +547,7 @@
         }
 
         function populateProductDropdowns() {
-            let opts = `<option value="">-- Pilih Produk --</option>` + products.map(p => `<option value="${p.name}">${p.name} (Jual: Rp ${p.promoPrice.toLocaleString()} | HPP: Rp ${(p.hpp||0).toLocaleString()})</option>`).join('');
+            let opts = `<option value="">-- Pilih Produk --</option>` + products.map(p => `<option value="${p.name}">${p.name} (Jual: Rp ${(p.promoPrice||0).toLocaleString()} | HPP: Rp ${(p.hpp||0).toLocaleString()})</option>`).join('');
             ['b-p1-select', 'b-p2-select', 'b-p3-select', 'b-p4-select', 'b-p5-select', 'tm-prod-select'].forEach(id => {
                 let el = document.getElementById(id);
                 if (el) el.innerHTML = opts;
@@ -510,7 +562,7 @@
                 if (name) {
                     let p = products.find(prod => prod.name === name);
                     if (p) {
-                        totalOrig += p.promoPrice;
+                        totalOrig += (Number(p.promoPrice || p.price) || 0);
                         totalHpp += (Number(p.hpp) || 0);
                     }
                 }
@@ -537,7 +589,7 @@
                 hlContainer.innerHTML = `
                     <div class="relative rounded-2xl overflow-hidden shadow-md border border-orange-200 bg-white group">
                         <div id="headline-scroll-container" class="flex overflow-x-auto snap-x snap-mandatory scrollbar-none scroll-smooth">
-                            ${headlines.map(hl => `<div class="w-full shrink-0 snap-center relative"><img src="${hl.img}" class="w-full h-48 md:h-64 object-cover"><div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white"><p class="font-bold text-sm">${hl.title || ''}</p></div></div>`).join('')}
+                            ${headlines.map(hl => `<div class="w-full shrink-0 snap-center relative"><img src="${hl.img}" class="w-full h-48 md:h-64 object-cover"><div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/75 to-transparent p-3 text-white flex justify-between items-end"><p class="font-bold text-sm">${hl.title || ''}</p>${headlines.length > 1 ? '<span class="text-[10px] bg-black/50 px-2 py-0.5 rounded-full">‹ Geser ke Samping ›</span>' : ''}</div></div>`).join('')}
                         </div>
                         ${headlines.length > 1 ? `
                             <button onclick="scrollSlider('headline-scroll-container', -1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">‹</button>
@@ -555,7 +607,10 @@
             if (bundles.length > 0) {
                 bContainer.innerHTML = `
                     <div class="space-y-2">
-                        <h3 class="font-bold text-sm text-orange-600 flex items-center gap-1">📦 Paket Bundling Hemat</h3>
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-sm text-orange-600 flex items-center gap-1">📦 Paket Bundling Hemat</h3>
+                            ${bundles.length > 1 ? '<span class="text-[10px] text-orange-700 font-semibold">‹ Geser ke Samping ›</span>' : ''}
+                        </div>
                         <div class="relative rounded-2xl overflow-hidden shadow-md border border-orange-200 bg-white group">
                             <div id="bundle-scroll-container" class="flex overflow-x-auto snap-x snap-mandatory scrollbar-none scroll-smooth">
                                 ${bundles.map(b => {
@@ -569,12 +624,12 @@
                                                 <span class="bg-orange-600 text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase w-fit mb-1 shadow">Paket Bundling Spesial</span>
                                                 <h4 class="font-bold text-base md:text-lg leading-tight mb-0.5">${b.name}</h4>
                                                 <p class="text-xs text-orange-100 line-clamp-1 mb-2">Isi: ${itemsDesc}</p>
-                                                <div class="flex items-center justify-between">
+                                                <div class="flex items-center justify-between gap-2">
                                                     <div class="flex items-baseline space-x-2">
                                                         <span class="font-bold text-orange-400 text-base md:text-lg">Rp ${(b.promo_price||0).toLocaleString()}</span>
                                                         <span class="text-xs text-slate-300 line-through">Rp ${(b.original_price||0).toLocaleString()}</span>
                                                     </div>
-                                                    <button onclick="addBundleToCart(${b.id})" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md transition">+ Ambil Paket</button>
+                                                    <button onclick="addBundleToCart(${b.id})" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md transition shrink-0">+ Ambil Paket</button>
                                                 </div>
                                                 ${periodText}
                                             </div>
@@ -582,6 +637,10 @@
                                     `;
                                 }).join('')}
                             </div>
+                            ${bundles.length > 1 ? `
+                                <button onclick="scrollSlider('bundle-scroll-container', -1)" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">‹</button>
+                                <button onclick="scrollSlider('bundle-scroll-container', 1)" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-base shadow transition z-10">›</button>
+                            ` : ''}
                         </div>
                     </div>`;
             } else { bContainer.innerHTML = ''; }
@@ -624,7 +683,7 @@
                     let hasDiscount = p.price > p.promoPrice;
                     let tierInfo = '';
                     if (Array.isArray(p.tiers) && p.tiers.length > 0) {
-                        tierInfo = `<div class="mt-1 bg-orange-50 p-1.5 rounded border border-orange-100 text-[10px] text-orange-700">📦 Grosir: ` + p.tiers.map(t=>`Min ${t.min} item @Rp ${t.price.toLocaleString()}`).join(', ') + `</div>`;
+                        tierInfo = `<div class="mt-1.5 bg-orange-50 p-1.5 rounded border border-orange-100 text-[10px] text-orange-800 leading-snug"><span class="font-bold block">📦 Harga Bertingkat:</span>` + p.tiers.map(t=>`Min ${t.min} item @Rp ${Number(t.price||0).toLocaleString()}`).join(' • ') + `</div>`;
                     }
                     return `
                     <div class="bg-white rounded-xl shadow-sm border border-orange-100 overflow-hidden flex flex-col justify-between">
@@ -633,8 +692,8 @@
                             <div class="p-3">
                                 <h4 class="font-bold text-xs text-slate-800 line-clamp-2 mb-1">${p.name}</h4>
                                 <div class="flex items-center space-x-2">
-                                    <span class="font-bold text-orange-600 text-sm">Rp ${p.promoPrice.toLocaleString()}</span>
-                                    ${hasDiscount ? `<span class="text-[10px] text-slate-400 line-through">Rp ${p.price.toLocaleString()}</span>` : ''}
+                                    <span class="font-bold text-orange-600 text-sm">Rp ${(p.promoPrice||0).toLocaleString()}</span>
+                                    ${hasDiscount ? `<span class="text-[10px] text-slate-400 line-through">Rp ${(p.price||0).toLocaleString()}</span>` : ''}
                                 </div>
                                 <div class="flex justify-between items-center mt-1">
                                     <span class="inline-block bg-orange-50 text-orange-700 text-[10px] px-2 py-0.5 rounded font-medium">+${p.pointsEarned} Poin</span>
@@ -652,7 +711,6 @@
             }
             updateCartFloatingUI();
         }
-
         function updateCartFloatingUI() {
             const totalItems = cart.reduce((a, b) => a + b.qty, 0);
             document.getElementById('cart-count-badge').innerText = `${totalItems} Produk di Keranjang`;
@@ -971,7 +1029,7 @@
             let waUrl = `https://wa.me/${adminWa}?text=${encodeURIComponent(waText)}`;
             cart = []; appliedVoucher = null; toggleCartModal(false);
             window.open(waUrl, '_blank');
-            await syncFromCloud();
+            await syncFromCloud(false);
             router();
         }
 
@@ -1225,7 +1283,7 @@
                     <img src="${p.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80'}" class="w-14 h-14 object-cover rounded-lg">
                     <div class="flex-1">
                         <p class="font-bold">${p.name}</p>
-                        <p class="text-slate-500">HPP: Rp ${(p.hpp||0).toLocaleString()} | Jual: Rp ${p.promoPrice.toLocaleString()} | Stok: <strong>${p.stock}</strong></p>
+                        <p class="text-slate-500">HPP: Rp ${(p.hpp||0).toLocaleString()} | Jual: Rp ${(p.promoPrice||0).toLocaleString()} | Stok: <strong>${p.stock}</strong></p>
                     </div>
                     <div class="flex flex-col gap-1">
                         <button onclick="editProduct(${p.id})" class="bg-orange-100 text-orange-700 font-bold px-2.5 py-1 rounded">Edit</button>
@@ -1293,7 +1351,7 @@
             let res = await sb.from('store_settings').update({ point_value: val }).eq('id', 1);
             if (res.error) { alert("Gagal menyimpan konversi poin: " + res.error.message); return; }
             alert("Nilai konversi poin berhasil disimpan!");
-            await syncFromCloud();
+            await syncFromCloud(false);
         }
 
         async function resetAllCustomerPoints() {
@@ -1308,7 +1366,7 @@
                     await sb.from('customers').update({ points: 0 }).eq('phone', phone);
                 }
                 alert("Semua poin pelanggan berhasil di-reset menjadi 0!");
-                await syncFromCloud();
+                await syncFromCloud(false);
                 renderAdminData();
             }
         }
@@ -1349,7 +1407,7 @@
             if (res.error) { alert("Gagal menyimpan produk: " + res.error.message); return; }
             alert("Produk berhasil disimpan!");
             resetProductForm();
-            await syncFromCloud();
+            await syncFromCloud(false);
             renderAdminData();
             populateProductDropdowns();
         }
@@ -1418,7 +1476,7 @@
             if (res.error) { alert("Gagal menyimpan bundling: " + res.error.message); return; }
             alert("Paket bundling berhasil disimpan!");
             resetBundleForm();
-            await syncFromCloud();
+            await syncFromCloud(false);
             renderAdminData();
         }
 
@@ -1486,7 +1544,7 @@
             if (res.error) { alert("Gagal menyimpan tebus murah: " + res.error.message); return; }
             alert("Promo tebus murah berhasil disimpan!");
             resetTebusForm();
-            await syncFromCloud();
+            await syncFromCloud(false);
             renderAdminData();
         }
 
@@ -1549,14 +1607,14 @@
             await sb.from('customers').upsert([{ phone, name, address, points, total_spend: customers[origPhone]?.total_spend || 0 }]);
             alert("Data pelanggan berhasil diperbarui!");
             closeEditCustomerModal();
-            await syncFromCloud();
+            await syncFromCloud(false);
             renderAdminData();
         }
 
         async function deleteCustomer(phone) {
             if (confirm("Hapus data pelanggan ini?")) {
                 await sb.from('customers').delete().eq('phone', phone);
-                await syncFromCloud();
+                await syncFromCloud(false);
                 renderAdminData();
             }
         }
@@ -1564,7 +1622,7 @@
         async function deleteOrder(orderId) {
             if (confirm("Hapus pesanan ini dari laporan dan database?")) {
                 await sb.from('orders').delete().eq('id', orderId);
-                await syncFromCloud();
+                await syncFromCloud(false);
                 renderAdminData();
             }
         }
@@ -1580,7 +1638,7 @@
             let res = await sb.from('vouchers').insert([{ id: Date.now(), code, name, discount_amount, min_spend, max_usage, used_count: 0 }]);
             if (res.error) { alert("Gagal menambah voucher: " + res.error.message); return; }
             alert("Voucher berhasil disimpan!");
-            await syncFromCloud(); renderAdminData();
+            await syncFromCloud(false); renderAdminData();
         }
 
         async function addHeadlineSupabase() {
@@ -1592,19 +1650,19 @@
             if (res.error) { alert("Gagal menambah headline: " + res.error.message); return; }
             document.getElementById('hl-title').value = '';
             document.getElementById('hl-img-file').value = '';
-            await syncFromCloud(); renderAdminData();
+            await syncFromCloud(false); renderAdminData();
         }
 
         async function deleteProduct(id) {
             if (confirm("Hapus produk ini?")) {
                 await sb.from('products').delete().eq('id', id);
-                await syncFromCloud(); renderAdminData();
+                await syncFromCloud(false); renderAdminData();
             }
         }
 
         async function deleteRow(table, id) {
             await sb.from(table).delete().eq('id', id);
-            await syncFromCloud(); renderAdminData();
+            await syncFromCloud(false); renderAdminData();
         }
 
         async function confirmOrder(orderId) {
@@ -1626,7 +1684,7 @@
                     await sb.from('customers').update({ points: newPts, total_spend: newSpend }).eq('phone', order.phone);
                 }
                 alert("Pesanan dikonfirmasi LUNAS, margin keuangan diperbarui & poin pelanggan bertambah!");
-                await syncFromCloud(); renderAdminData();
+                await syncFromCloud(false); renderAdminData();
             }
         }
 
@@ -1644,7 +1702,7 @@
             let res = await sb.from('store_settings').update(updateData).eq('id', 1);
             if (res.error) { alert("Gagal menyimpan pengaturan: " + res.error.message); return; }
             alert("Pengaturan toko berhasil disimpan!");
-            await syncFromCloud();
+            await syncFromCloud(false);
         }
 
         function exportToExcel() {
