@@ -116,7 +116,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                                 <input type="text" id="new-p-name" placeholder="Nama Produk" class="border p-2 rounded-lg">
                                 <div><label class="block text-[10px] text-slate-500 mb-1">Upload Gambar Produk (Lokal):</label><input type="file" id="new-p-img-file" accept="image/*" class="w-full border p-1 rounded-lg text-xs bg-orange-50/30"></div>
-                                <input type="number" id="new-p-hpp" placeholder="Harga HPP (Modal) Rp" class="border p-2 rounded-lg">
+                                <input type="number" id="new-p-hpp" placeholder="Harga HPP (Modal / Beli) Rp" class="border p-2 rounded-lg">
                                 <input type="number" id="new-p-price" placeholder="Harga Jual Normal / Coret Rp" class="border p-2 rounded-lg">
                                 <input type="number" id="new-p-promo" placeholder="Harga Jual Promo Rp" class="border p-2 rounded-lg">
                                 <input type="number" id="new-p-stock" placeholder="Stok Utama" class="border p-2 rounded-lg">
@@ -238,7 +238,7 @@
                         <div id="admin-customers-list" class="space-y-2"></div>
                     </div>
 
-                    <!-- 6. TAB LAPORAN & KEUANGAN (DENGAN VERIFIKASI PELUNASAN, HAPUS PESANAN & FILTER PERIODE) -->
+                    <!-- 6. TAB LAPORAN & KEUANGAN -->
                     <div id="admin-tab-reports" class="hidden space-y-4">
                         <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-4">
                             <div class="flex justify-between items-center flex-wrap gap-2">
@@ -372,7 +372,6 @@
             router();
         });
 
-        // REALTIME SUBSCRIPTION AGAR DATA OTOMATIS SINKRON ANTAR ADMIN & CUSTOMER
         function setupRealtimeSync() {
             if (!sb) return;
             try {
@@ -414,8 +413,10 @@
                 if (pRes.data && pRes.data.length > 0) {
                     products = pRes.data.map(p => ({
                         ...p,
-                        promoPrice: p.promo_price || p.price,
-                        pointsEarned: p.points_earned || 5
+                        hpp: Number(p.hpp) || 0,
+                        price: Number(p.price) || 0,
+                        promoPrice: Number(p.promo_price || p.price) || 0,
+                        pointsEarned: Number(p.points_earned) || 5
                     }));
                 } else {
                     products = defaultProducts;
@@ -511,7 +512,7 @@
                     let p = products.find(prod => prod.name === name);
                     if (p) {
                         totalOrig += p.promoPrice;
-                        totalHpp += (p.hpp || 0);
+                        totalHpp += (Number(p.hpp) || 0);
                     }
                 }
             });
@@ -574,7 +575,7 @@
                                                         <span class="font-bold text-orange-400 text-base md:text-lg">Rp ${(b.promo_price||0).toLocaleString()}</span>
                                                         <span class="text-xs text-slate-300 line-through">Rp ${(b.original_price||0).toLocaleString()}</span>
                                                     </div>
-                                                    <button onclick="addSpecialToCart('bundle-${b.id}', '${b.name}', ${b.promo_price})" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md transition">+ Ambil Paket</button>
+                                                    <button onclick="addBundleToCart(${b.id})" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md transition">+ Ambil Paket</button>
                                                 </div>
                                                 ${periodText}
                                             </div>
@@ -680,7 +681,7 @@
         }
 
         function addToCart(id) {
-            const prod = products.find(p => p.id === id);
+            const prod = products.find(p => String(p.id) === String(id));
             if (!prod) return;
             let chosenVariant = document.getElementById(`var-select-${id}`)?.value || '';
             let cartKey = chosenVariant ? `${id}-${chosenVariant}` : `${id}`;
@@ -694,26 +695,67 @@
             if (exist) {
                 exist.qty = newQty;
                 exist.promoPrice = finalPrice;
+                exist.hpp = Number(prod.hpp) || 0;
             } else {
-                cart.push({ ...prod, cartKey, promoPrice: finalPrice, name: chosenVariant ? `${prod.name} (${chosenVariant})` : prod.name, qty: 1 });
+                cart.push({
+                    ...prod,
+                    cartKey,
+                    baseName: prod.name,
+                    hpp: Number(prod.hpp) || 0,
+                    originalPrice: Number(prod.price) || finalPrice,
+                    promoPrice: finalPrice,
+                    name: chosenVariant ? `${prod.name} (${chosenVariant})` : prod.name,
+                    qty: 1
+                });
             }
             cart.forEach(item => {
-                if (!item.isSpecial && item.id === prod.id) {
+                if (!item.isSpecial && String(item.id) === String(prod.id)) {
                     item.promoPrice = getItemPrice(prod, item.qty);
                 }
             });
             updateCartFloatingUI();
         }
 
-        function addSpecialToCart(key, name, price) {
+        function getBundleHpp(bundleObj) {
+            if (!bundleObj) return 0;
+            let bundleItems = [bundleObj.p1, bundleObj.p2, bundleObj.p3, bundleObj.p4, bundleObj.p5].filter(Boolean);
+            let total = 0;
+            bundleItems.forEach(pName => {
+                let cleanName = String(pName).trim().toLowerCase();
+                let prod = products.find(p => String(p.name).trim().toLowerCase() === cleanName);
+                if (prod) total += (Number(prod.hpp) || 0);
+            });
+            return total;
+        }
+
+        function addBundleToCart(bundleId) {
+            let b = bundles.find(x => String(x.id) === String(bundleId));
+            if (!b) return;
+            let bundleHpp = getBundleHpp(b);
+            let key = `bundle-${b.id}`;
             let exist = cart.find(i => i.cartKey === key);
-            if (exist) exist.qty++;
-            else cart.push({ id: key, cartKey: key, name, promoPrice: price, pointsEarned: 5, qty: 1, isSpecial: true });
+            if (exist) {
+                exist.qty++;
+                exist.hpp = bundleHpp;
+            } else {
+                cart.push({
+                    id: key,
+                    cartKey: key,
+                    baseName: b.name,
+                    name: `[Bundling] ${b.name}`,
+                    hpp: bundleHpp,
+                    originalPrice: Number(b.original_price || b.promo_price) || 0,
+                    promoPrice: Number(b.promo_price) || 0,
+                    pointsEarned: 5,
+                    qty: 1,
+                    isSpecial: true
+                });
+            }
             updateCartFloatingUI();
         }
 
         function addTebusMurahToCart(tmId) {
-            let tm = tebusMurahList.find(t => t.id === tmId);
+            let tm = tebusMurahList.find(t => String(t.id) === String(tmId));
             if (!tm) return;
             let sub = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
             if (sub < tm.min_cart_amount) { alert(`Minimal belanja Rp ${tm.min_cart_amount.toLocaleString()} untuk tebus murah ini!`); return; }
@@ -726,7 +768,27 @@
                 alert(`Maksimal tebus murah untuk total belanja Anda saat ini adalah ${maxKelipatan} item.`);
                 return;
             }
-            addSpecialToCart(key, `[Tebus Murah] ${tm.name}`, tm.tebus_price);
+            let baseProd = products.find(p => String(p.name).trim().toLowerCase() === String(tm.name).trim().toLowerCase());
+            let itemHpp = baseProd ? (Number(baseProd.hpp) || 0) : 0;
+
+            if (exist) {
+                exist.qty++;
+                exist.hpp = itemHpp;
+            } else {
+                cart.push({
+                    id: key,
+                    cartKey: key,
+                    baseName: tm.name,
+                    name: `[Tebus Murah] ${tm.name}`,
+                    hpp: itemHpp,
+                    originalPrice: Number(tm.normal_price || tm.tebus_price) || 0,
+                    promoPrice: Number(tm.tebus_price) || 0,
+                    pointsEarned: 5,
+                    qty: 1,
+                    isSpecial: true
+                });
+            }
+            updateCartFloatingUI();
         }
 
         function toggleCartModal(show) {
@@ -759,7 +821,7 @@
             let item = cart.find(i => i.cartKey === cartKey);
             if (item) {
                 if (!item.isSpecial) {
-                    let prod = products.find(p => p.id === item.id);
+                    let prod = products.find(p => String(p.id) === String(item.id));
                     if (prod) {
                         let newQty = item.qty + delta;
                         if (newQty <= 0) {
@@ -837,7 +899,16 @@
             currentPhone = phone;
             localStorage.setItem('ar_active_phone', currentPhone);
 
+            // 1. Hitung Total Harga Jual Aktual (Subtotal setelah harga promo/grosir)
             let subtotal = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
+            
+            // 2. Hitung Total Potongan Harga Coret / Promo Item (Selisih Harga Normal - Harga Promo)
+            let promoItemDiscount = cart.reduce((s, i) => {
+                let orig = Number(i.originalPrice || i.price || i.promoPrice) || 0;
+                return s + Math.max(0, (orig - i.promoPrice) * i.qty);
+            }, 0);
+
+            // 3. Hitung Potongan Voucher & Poin
             let vDisc = 0;
             if (appliedVoucher) {
                 let multiplier = Math.floor(subtotal / appliedVoucher.min_spend);
@@ -851,30 +922,38 @@
                 pDisc = ptsUsed * pointVal;
                 customers[phone].points -= ptsUsed;
             }
-            let totalDisc = vDisc + pDisc;
-            let finalTotal = Math.max(0, subtotal - totalDisc);
+            
+            let checkoutDiscount = Math.min(subtotal, vDisc + pDisc);
+            let finalTotal = Math.max(0, subtotal - checkoutDiscount);
+            
+            // Akumulasi seluruh potongan diskon (Promo Harga Coret + Voucher + Poin)
+            let totalAllDiscount = promoItemDiscount + checkoutDiscount;
             let ptsEarned = cart.reduce((s,i)=>s+((i.pointsEarned||5)*i.qty),0);
 
+            // 4. Hitung Total HPP (Harga Beli) secara akurat untuk seluruh item (Reguler, Bundling, Tebus Murah)
             let totalHpp = 0;
             for(let i of cart) {
                 if(!i.isSpecial) {
-                    let p = products.find(prod => prod.id === i.id);
-                    if(p) {
-                        totalHpp += (p.hpp || 0) * i.qty;
-                        if(sb) await sb.from('products').update({stock: Math.max(0, p.stock - i.qty)}).eq('id', p.id);
-                    }
+                    let p = products.find(prod => String(prod.id) === String(i.id));
+                    let unitHpp = p ? (Number(p.hpp) || 0) : (Number(i.hpp) || 0);
+                    totalHpp += unitHpp * i.qty;
+                    if(p && sb) await sb.from('products').update({stock: Math.max(0, p.stock - i.qty)}).eq('id', p.id);
+                } else {
+                    totalHpp += (Number(i.hpp) || 0) * i.qty;
                 }
             }
-            let netProfit = finalTotal - totalHpp;
+
+            // 5. Rumus Keuntungan Bersih = (Harga Jual - Harga Beli) - Potongan/Diskon Checkout
+            let netProfit = (subtotal - totalHpp) - checkoutDiscount;
 
             let now = new Date();
-            let isoDate = now.toISOString().split('T')[0]; // YYYY-MM-DD untuk filter periode
+            let isoDate = now.toISOString().split('T')[0];
             let displayDate = now.toLocaleDateString('id-ID');
 
             let newOrder = {
                 id: 'ORD-' + Date.now().toString().slice(-6),
                 display_date: `${displayDate} (${isoDate})`,
-                name, phone, address, items: cart, subtotal, total_hpp: totalHpp, total_discount: totalDisc,
+                name, phone, address, items: cart, subtotal, total_hpp: totalHpp, total_discount: totalAllDiscount,
                 points_used: ptsUsed, final_total: finalTotal, net_profit: netProfit, points_earned: ptsEarned, shipping, payment, status: 'Menunggu Pembayaran', paid_date: null
             };
 
@@ -894,7 +973,7 @@
             let waText = `Halo Admin *${storeSettings.store_name||'Arrahmah Mart'}* 👋,\nSaya ingin memesan produk:\n\nNo Pesanan: *${newOrder.id}*\nNama: *${name}*\nNo WA: *${phone}*\nAlamat: *${address}*\n\n`;
             cart.forEach(i => { waText += `- ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}\n`; });
             waText += `\nSubtotal: Rp ${subtotal.toLocaleString()}\n`;
-            if (totalDisc > 0) waText += `Total Diskon/Poin: -Rp ${totalDisc.toLocaleString()}\n`;
+            if (checkoutDiscount > 0) waText += `Potongan Voucher/Poin: -Rp ${checkoutDiscount.toLocaleString()}\n`;
             waText += `*Total Pembayaran: Rp ${finalTotal.toLocaleString()}*\n\nPengiriman: ${shipping}\nPembayaran: ${payment}\n\nMohon konfirmasinya, terima kasih!`;
 
             let adminWa = storeSettings.wa_admin || '6281331999525';
@@ -905,13 +984,111 @@
             router();
         }
 
+        // --- KALKULASI ULANG KEUANGAN OTOMATIS PER PESANAN ---
+        // Memastikan selisih harga jual & harga beli setelah dikurangi potongan diskon selalu akurat
+        function resolveItemUnitHpp(item) {
+            let storedHpp = Number(item.hpp) || 0;
+            if (storedHpp > 0) return storedHpp;
+
+            let rawName = String(item.baseName || item.name || '').trim();
+            let itemIdStr = String(item.id || '');
+
+            // 1. Cek jika item adalah Paket Bundling
+            if (itemIdStr.startsWith('bundle-') || rawName.startsWith('[Bundling]')) {
+                let bId = itemIdStr.replace('bundle-', '');
+                let bTitle = rawName.replace(/^\[Bundling\]\s*/i, '').trim().toLowerCase();
+                let foundB = bundles.find(b => String(b.id) === bId || String(b.name || '').trim().toLowerCase() === bTitle);
+                if (foundB) {
+                    let bHpp = getBundleHpp(foundB);
+                    if (bHpp > 0) return bHpp;
+                }
+            }
+
+            // 2. Cek jika item adalah Tebus Murah
+            if (itemIdStr.startsWith('tm-') || rawName.startsWith('[Tebus Murah]')) {
+                let tmId = itemIdStr.replace('tm-', '');
+                let tmTitle = rawName.replace(/^\[Tebus Murah\]\s*/i, '').trim().toLowerCase();
+                let foundTm = tebusMurahList.find(t => String(t.id) === tmId || String(t.name || '').trim().toLowerCase() === tmTitle);
+                let targetProdName = foundTm ? String(foundTm.name || '').trim().toLowerCase() : tmTitle;
+                let foundP = products.find(p => String(p.name || '').trim().toLowerCase() === targetProdName);
+                if (foundP && Number(foundP.hpp) > 0) return Number(foundP.hpp);
+            }
+
+            // 3. Cek item produk reguler (cocokkan ID atau nama produk tanpa akhiran varian)
+            let cleanProdName = rawName
+                .replace(/^\[(Bundling|Tebus Murah)\]\s*/i, '')
+                .replace(/\s*\([^)]*\)\s*$/, '')
+                .trim()
+                .toLowerCase();
+
+            let foundProd = products.find(p =>
+                String(p.id) === itemIdStr ||
+                String(p.name || '').trim().toLowerCase() === rawName.toLowerCase() ||
+                String(p.name || '').trim().toLowerCase() === cleanProdName
+            );
+
+            return foundProd ? (Number(foundProd.hpp) || 0) : 0;
+        }
+
+        function computeOrderFinancials(o) {
+            let items = Array.isArray(o.items) ? o.items : [];
+            let calcSubtotal = 0;
+            let calcHpp = 0;
+            let promoItemDisc = 0;
+
+            if (items.length > 0) {
+                items.forEach(i => {
+                    let qty = Number(i.qty) || 1;
+                    let sellPrice = Number(i.promoPrice || i.price) || 0;
+                    let origPrice = Number(i.originalPrice || i.price || sellPrice) || 0;
+                    let unitHpp = resolveItemUnitHpp(i);
+
+                    calcSubtotal += sellPrice * qty;
+                    calcHpp += unitHpp * qty;
+                    promoItemDisc += Math.max(0, (origPrice - sellPrice) * qty);
+                });
+            } else {
+                calcSubtotal = Number(o.subtotal || o.final_total) || 0;
+                calcHpp = Number(o.total_hpp) || 0;
+            }
+
+            // Jika HPP per item masih 0 namun database pesanan punya nilai total_hpp valid, gunakan cadangan tersebut
+            if (calcHpp === 0 && Number(o.total_hpp) > 0) {
+                calcHpp = Number(o.total_hpp);
+            }
+
+            let finalTotal = (o.final_total !== undefined && o.final_total !== null)
+                ? Number(o.final_total)
+                : (o.finalTotal !== undefined && o.finalTotal !== null ? Number(o.finalTotal) : calcSubtotal);
+
+            // Potongan checkout (Voucher + Poin) = selisih subtotal harga jual dengan total bayar akhir
+            let checkoutDisc = Math.max(0, calcSubtotal - finalTotal);
+
+            // Total seluruh potongan diskon (Diskon Harga Coret / Bundling / Tebus Murah + Voucher + Poin)
+            let totalDiscount = promoItemDisc + checkoutDisc;
+            if (totalDiscount === 0 && Number(o.total_discount) > 0) {
+                totalDiscount = Number(o.total_discount);
+            }
+
+            // Keuntungan Bersih = (Harga Jual - Harga Beli/HPP) - Potongan/Diskon Checkout
+            let grossMargin = calcSubtotal - calcHpp;
+            let netProfit = grossMargin - checkoutDisc;
+
+            return {
+                subtotal: calcSubtotal,
+                totalHpp: calcHpp,
+                totalDiscount: totalDiscount,
+                checkoutDiscount: checkoutDisc,
+                finalTotal: finalTotal,
+                netProfit: netProfit
+            };
+        }
+
         // --- HELPER KONVERSI TANGGAL UNTUK FILTER PERIODE ---
         function parseOrderDateToISO(order) {
             if (!order || !order.display_date) return '';
-            // Cek jika ada format (YYYY-MM-DD)
             let isoMatch = order.display_date.match(/(\d{4}-\d{2}-\d{2})/);
             if (isoMatch) return isoMatch[1];
-            // Cek format DD/MM/YYYY atau D/M/YYYY
             let idMatch = order.display_date.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
             if (idMatch) {
                 let d = idMatch[1].padStart(2, '0');
@@ -983,8 +1160,9 @@
         function renderAdminData() {
             document.getElementById('badge-order-count').innerText = orders.filter(o => o.status !== 'LUNAS').length;
 
-            // 1. TAB PESANAN MASUK (TANPA TOMBOL CETAK)
+            // 1. TAB PESANAN MASUK
             document.getElementById('admin-orders-list').innerHTML = orders.length === 0 ? `<p class="text-xs text-slate-500">Belum ada pesanan masuk.</p>` : orders.map(o => {
+                let fin = computeOrderFinancials(o);
                 let itemsList = Array.isArray(o.items) ? o.items.map(i => `<li class="text-slate-600">• ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}</li>`).join('') : '<li>Tidak ada rincian</li>';
                 return `
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-2 text-xs">
@@ -1002,29 +1180,37 @@
                         <span>💳 Pembayaran: <strong>${o.payment}</strong></span>
                     </div>
                     <div class="flex justify-between items-center pt-2 border-t">
-                        <span class="font-bold text-slate-900 text-sm">Total: Rp ${(o.final_total||o.finalTotal||0).toLocaleString()}</span>
+                        <span class="font-bold text-slate-900 text-sm">Total: Rp ${fin.finalTotal.toLocaleString()}</span>
                         <span class="px-2.5 py-1 rounded font-bold ${o.status==='LUNAS'?'bg-emerald-100 text-emerald-800':'bg-orange-100 text-orange-800'}">${o.status}</span>
                     </div>
                 </div>`;
             }).join('');
 
-            // 6. TAB LAPORAN & KEUANGAN (TERINTEGRASI FILTER PERIODE, VERIFIKASI PELUNASAN & HAPUS PESANAN)
+            // 6. TAB LAPORAN & KEUANGAN (KALKULASI MARGIN OTOMATIS SETELAH HPP & DISKON)
             let filteredOrders = getFilteredOrders();
             document.getElementById('filtered-order-count-label').innerText = `${filteredOrders.length} Transaksi Ditemukan`;
 
             let lunasFiltered = filteredOrders.filter(o => o.status === 'LUNAS');
-            let totalOmset = lunasFiltered.reduce((s,o) => s + (o.final_total||o.finalTotal||0), 0);
-            let totalProfit = lunasFiltered.reduce((s,o) => s + (o.net_profit||0), 0);
-            let totalDiskon = lunasFiltered.reduce((s,o) => s + (o.total_discount||0), 0);
+            let totalOmset = 0;
+            let totalProfit = 0;
+            let totalDiskon = 0;
             let totalTx = lunasFiltered.length;
+
+            lunasFiltered.forEach(o => {
+                let fin = computeOrderFinancials(o);
+                totalOmset += fin.finalTotal;
+                totalProfit += fin.netProfit;
+                totalDiskon += fin.totalDiscount;
+            });
 
             document.getElementById('report-summary-cards').innerHTML = `
                 <div class="bg-orange-50 p-3 rounded-lg border border-orange-200"><p class="text-slate-500">Total Omset Lunas</p><p class="font-bold text-sm text-orange-700">Rp ${totalOmset.toLocaleString()}</p></div>
-                <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-200"><p class="text-slate-500">Total Keuntungan Bersih</p><p class="font-bold text-sm text-emerald-700">Rp ${totalProfit.toLocaleString()}</p></div>
+                <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-200"><p class="text-slate-500">Total Keuntungan Bersih</p><p class="font-bold text-sm ${totalProfit < 0 ? 'text-red-600' : 'text-emerald-700'}">Rp ${totalProfit.toLocaleString()}</p></div>
                 <div class="bg-blue-50 p-3 rounded-lg border border-blue-200"><p class="text-slate-500">Total Diskon / Potongan</p><p class="font-bold text-sm text-blue-700">Rp ${totalDiskon.toLocaleString()}</p></div>
                 <div class="bg-purple-50 p-3 rounded-lg border border-purple-200"><p class="text-slate-500">Jumlah Transaksi Lunas</p><p class="font-bold text-sm text-purple-700">${totalTx} Transaksi</p></div>`;
 
             document.getElementById('admin-report-orders-list').innerHTML = filteredOrders.length === 0 ? `<p class="text-xs text-slate-500">Tidak ada transaksi pada periode tanggal tersebut.</p>` : filteredOrders.map(o => {
+                let fin = computeOrderFinancials(o);
                 let itemsList = Array.isArray(o.items) ? o.items.map(i => `<li class="text-slate-600">• ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}</li>`).join('') : '<li>Tidak ada rincian</li>';
                 let paidInfo = o.paid_date ? `<p class="text-emerald-600 font-semibold">✓ Tanggal Lunas: ${o.paid_date}</p>` : '';
                 return `
@@ -1038,8 +1224,13 @@
                         <p class="font-bold text-orange-800">Rincian Produk Dipesan:</p>
                         <ul class="pl-3 space-y-0.5">${itemsList}</ul>
                     </div>
-                    <p class="text-slate-600">Total Bayar: <strong>Rp ${(o.final_total||o.finalTotal||0).toLocaleString()}</strong> | Profit Bersih: <strong class="text-emerald-600">Rp ${(o.net_profit||0).toLocaleString()}</strong></p>
-                    <p class="text-slate-500">Pengiriman: ${o.shipping} | Pembayaran: ${o.payment}</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 bg-slate-50 p-2 rounded border text-[11px]">
+                        <div><span class="text-slate-400 block">Harga Jual:</span><strong>Rp ${fin.subtotal.toLocaleString()}</strong></div>
+                        <div><span class="text-slate-400 block">Modal (HPP):</span><strong>Rp ${fin.totalHpp.toLocaleString()}</strong></div>
+                        <div><span class="text-slate-400 block">Diskon / Potongan:</span><strong class="text-blue-600">-Rp ${fin.totalDiscount.toLocaleString()}</strong></div>
+                        <div><span class="text-slate-400 block">Keuntungan Bersih:</span><strong class="${fin.netProfit < 0 ? 'text-red-600' : 'text-emerald-600'}">Rp ${fin.netProfit.toLocaleString()}</strong></div>
+                    </div>
+                    <p class="text-slate-600">Total Bayar Customer: <strong class="text-slate-900">Rp ${fin.finalTotal.toLocaleString()}</strong> | Pengiriman: ${o.shipping} | Pembayaran: ${o.payment}</p>
                     ${paidInfo}
                     <div class="flex items-center justify-between pt-2 border-t flex-wrap gap-2">
                         <div>
@@ -1441,14 +1632,22 @@
         async function confirmOrder(orderId) {
             let order = orders.find(o => o.id === orderId);
             if (order && order.status !== 'LUNAS') {
+                let fin = computeOrderFinancials(order);
                 let todayStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-                await sb.from('orders').update({ status: 'LUNAS', paid_date: todayStr }).eq('id', orderId);
+                await sb.from('orders').update({
+                    status: 'LUNAS',
+                    paid_date: todayStr,
+                    total_hpp: fin.totalHpp,
+                    total_discount: fin.totalDiscount,
+                    net_profit: fin.netProfit
+                }).eq('id', orderId);
+
                 if (customers[order.phone]) {
                     let newPts = (customers[order.phone].points || 0) + (order.points_earned || 0);
-                    let newSpend = (customers[order.phone].total_spend || 0) + (order.final_total || order.finalTotal || 0);
+                    let newSpend = (customers[order.phone].total_spend || 0) + fin.finalTotal;
                     await sb.from('customers').update({ points: newPts, total_spend: newSpend }).eq('phone', order.phone);
                 }
-                alert("Pesanan dikonfirmasi LUNAS & poin pelanggan bertambah otomatis!");
+                alert("Pesanan dikonfirmasi LUNAS, margin keuangan diperbarui & poin pelanggan bertambah!");
                 await syncFromCloud(); renderAdminData();
             }
         }
@@ -1472,21 +1671,25 @@
 
         function exportToExcel() {
             let filteredOrders = getFilteredOrders();
-            let dataToExport = filteredOrders.map(o => ({
-                "ID Pesanan": o.id,
-                "Tanggal Pesan": o.display_date,
-                "Tanggal Lunas": o.paid_date || '-',
-                "Nama Customer": o.name,
-                "No WA": o.phone,
-                "Alamat": o.address,
-                "Subtotal": o.subtotal,
-                "Total Diskon": o.total_discount,
-                "Total Bayar": o.final_total || o.finalTotal,
-                "Keuntungan Bersih": o.net_profit,
-                "Pengiriman": o.shipping,
-                "Pembayaran": o.payment,
-                "Status": o.status
-            }));
+            let dataToExport = filteredOrders.map(o => {
+                let fin = computeOrderFinancials(o);
+                return {
+                    "ID Pesanan": o.id,
+                    "Tanggal Pesan": o.display_date,
+                    "Tanggal Lunas": o.paid_date || '-',
+                    "Nama Customer": o.name,
+                    "No WA": o.phone,
+                    "Alamat": o.address,
+                    "Harga Jual (Subtotal)": fin.subtotal,
+                    "Harga Beli (HPP)": fin.totalHpp,
+                    "Total Potongan / Diskon": fin.totalDiscount,
+                    "Total Bayar Customer": fin.finalTotal,
+                    "Keuntungan Bersih (Margin)": fin.netProfit,
+                    "Pengiriman": o.shipping,
+                    "Pembayaran": o.payment,
+                    "Status": o.status
+                };
+            });
             let worksheet = XLSX.utils.json_to_sheet(dataToExport);
             let workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Penjualan");
