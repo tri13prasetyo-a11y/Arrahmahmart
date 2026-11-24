@@ -20,17 +20,20 @@
 
     <!-- HEADER BERSIH -->
     <header class="bg-orange-600 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div id="header-logo-container" class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow overflow-hidden">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+            <div class="flex items-center space-x-3 min-w-0">
+                <div id="header-logo-container" class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow overflow-hidden shrink-0">
                     <span class="text-orange-600 font-bold text-xs text-center leading-tight">AR</span>
                 </div>
-                <div>
-                    <h1 id="store-title-display" class="font-bold text-lg leading-tight">Arrahmah Mart</h1>
-                    <p class="text-xs text-orange-100">Surabaya • Cloud Realtime Edition</p>
+                <div class="truncate">
+                    <h1 id="store-title-display" class="font-bold text-base md:text-lg leading-tight truncate">Arrahmah Mart</h1>
+                    <p class="text-xs text-orange-100 truncate">Surabaya • Cloud Realtime Edition</p>
                 </div>
             </div>
-            <button onclick="syncFromCloud(true)" class="bg-orange-700 hover:bg-orange-800 text-white text-[11px] px-3 py-1.5 rounded-lg font-semibold shadow-sm transition">↻ Muat Ulang Data</button>
+            <div class="flex items-center gap-2 shrink-0">
+                <button onclick="openAdminWaChat()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] px-3 py-1.5 rounded-lg font-semibold shadow-sm transition">💬 WA Admin</button>
+                <button onclick="syncFromCloud(true)" class="bg-orange-700 hover:bg-orange-800 text-white text-[11px] px-3 py-1.5 rounded-lg font-semibold shadow-sm transition">↻ Muat Ulang</button>
+            </div>
         </div>
     </header>
 
@@ -39,15 +42,18 @@
         
         <!-- ================= HALAMAN CUSTOMER (#customer) ================= -->
         <section id="view-customer" class="space-y-5">
-            <!-- Gambar Headline dihilangkan sementara agar akses ringan & cepat -->
+            <div id="customer-order-notice" class="hidden bg-emerald-50 border border-emerald-300 text-emerald-900 p-4 rounded-xl shadow-sm text-xs space-y-2"></div>
 
-            <div class="bg-white border border-orange-200 p-4 rounded-xl shadow-sm">
-                <h2 class="font-bold text-orange-600 text-base mb-1">🪙 Program Poin Pelanggan</h2>
-                <p class="text-xs text-slate-600">Setiap belanja mengumpulkan poin yang bisa ditukar diskon di pesanan berikutnya!</p>
-                <div class="mt-3 flex items-center justify-between bg-orange-50 p-2.5 rounded-lg border border-orange-100 text-xs">
-                    <span>No WA Anda: <strong id="cust-phone-display" class="text-orange-700">-</strong> (<strong id="cust-points-display" class="text-emerald-600">0 Poin</strong>)</span>
-                    <button onclick="changeCustomerPhone()" class="text-orange-600 underline font-semibold">Ubah / Daftar</button>
+            <div class="bg-white border border-orange-200 p-4 rounded-xl shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                    <h2 class="font-bold text-orange-600 text-base mb-1">🪙 Program Poin Pelanggan</h2>
+                    <p class="text-xs text-slate-600">Setiap belanja mengumpulkan poin yang bisa ditukar diskon di pesanan berikutnya!</p>
+                    <div class="mt-3 flex items-center justify-between bg-orange-50 p-2.5 rounded-lg border border-orange-100 text-xs gap-3">
+                        <span>No WA Anda: <strong id="cust-phone-display" class="text-orange-700">-</strong> (<strong id="cust-points-display" class="text-emerald-600">0 Poin</strong>)</span>
+                        <button onclick="changeCustomerPhone()" class="text-orange-600 underline font-semibold shrink-0">Ubah / Daftar</button>
+                    </div>
                 </div>
+                <button onclick="openAdminWaChat()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow transition shrink-0">💬 Hubungi Admin via WA</button>
             </div>
 
             <div id="customer-vouchers"></div>
@@ -60,7 +66,7 @@
             </div>
 
             <div id="product-grid" class="grid grid-cols-2 gap-3 md:grid-cols-4">
-                <p class="text-xs text-slate-500 col-span-full text-center py-6 bg-white rounded-xl border border-orange-100">Memuat seluruh katalog produk dari Cloud...</p>
+                <p class="text-xs text-slate-500 col-span-full text-center py-6 bg-white rounded-xl border border-orange-100">Memuat katalog produk...</p>
             </div>
         </section>
 
@@ -294,7 +300,7 @@
                 <button onclick="closePromoDetailModal()" class="text-slate-400 hover:text-slate-700 font-bold text-base">✕</button>
             </div>
             <div class="flex items-center space-x-3">
-                <img id="promo-modal-img" src="" class="w-16 h-16 object-cover rounded-xl border border-orange-100 shrink-0">
+                <img id="promo-modal-img" src="" onerror="handleImgError(this)" class="w-16 h-16 object-cover rounded-xl border border-orange-100 shrink-0">
                 <div>
                     <h4 id="promo-modal-title" class="font-bold text-sm text-slate-900"></h4>
                     <div class="flex items-baseline space-x-2 mt-1">
@@ -315,7 +321,7 @@
             </div>
         </div>
     </div>
-    <!-- MODAL EDIT CUSTOMER -->
+<!-- MODAL EDIT CUSTOMER -->
     <div id="edit-customer-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-2xl p-5 space-y-3 text-xs">
             <h3 class="font-bold text-sm text-orange-600">✏️ Edit Data Pelanggan</h3>
@@ -374,7 +380,7 @@
                 </div>
             </div>
 
-            <button onclick="submitOrder()" class="w-full bg-orange-600 text-white font-bold py-3 rounded-xl text-sm hover:bg-orange-700 transition shadow">Kirim Pesanan ke WhatsApp Admin</button>
+            <button id="btn-submit-order" onclick="submitOrder()" class="w-full bg-orange-600 text-white font-bold py-3 rounded-xl text-sm hover:bg-orange-700 transition shadow">✓ Kirim Pesanan ke Toko</button>
         </div>
     </div>
 
@@ -385,15 +391,40 @@
         let sb = null;
         try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e){}
 
+        const SAFE_PLACEHOLDER_IMG = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"><rect width="300" height="200" fill="#ffedd5"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#c2410c" font-family="sans-serif" font-size="14" font-weight="bold">Arrahmah Mart</text></svg>');
+
+        function handleImgError(imgEl) {
+            if (!imgEl || imgEl.dataset.fallbackApplied) return;
+            imgEl.dataset.fallbackApplied = '1';
+            imgEl.src = SAFE_PLACEHOLDER_IMG;
+        }
+
+        function getSafeImgUrl(url) {
+            if (!url || typeof url !== 'string') return SAFE_PLACEHOLDER_IMG;
+            const trimmed = url.trim();
+            if (!trimmed || trimmed.includes('1581441363689-1ed3dcf21cba')) return SAFE_PLACEHOLDER_IMG;
+            return trimmed;
+        }
+
+        function openAdminWaChat() {
+            let rawWa = String(storeSettings.wa_admin || '6281331999525').replace(/[^0-9]/g, '');
+            if (rawWa.startsWith('0')) rawWa = '62' + rawWa.slice(1);
+            if (!rawWa) rawWa = '6281331999525';
+            let storeName = storeSettings.store_name || 'Arrahmah Mart Surabaya';
+            let msg = `Halo Admin *${storeName}*, saya ingin bertanya / konfirmasi pesanan saya.`;
+            window.open(`https://wa.me/${rawWa}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
         let fallbackProducts = [
             { id: 1, name: 'Beras Premium Pinpin 5kg', hpp: 60000, price: 65000, promoPrice: 65000, stock: 25, img: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80', pointsEarned: 5, variants: ['5kg'], tiers: [] },
             { id: 2, name: 'Minyak Goreng Bimoli 2L', hpp: 35000, price: 38000, promoPrice: 38000, stock: 40, img: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80', pointsEarned: 5, variants: ['2 Liter'], tiers: [] },
-            { id: 3, name: 'Gula Pasir Manis Kita 1kg', hpp: 15000, price: 16500, promoPrice: 16500, stock: 50, img: 'https://images.unsplash.com/photo-1581441363689-1ed3dcf21cba?auto=format&fit=crop&w=300&q=80', pointsEarned: 5, variants: ['1kg'], tiers: [] }
+            { id: 3, name: 'Gula Pasir Manis Kita 1kg', hpp: 15000, price: 16500, promoPrice: 16500, stock: 50, img: SAFE_PLACEHOLDER_IMG, pointsEarned: 5, variants: ['1kg'], tiers: [] }
         ];
 
         let products = [], orders = [], customers = {}, vouchers = [], bundles = [], tebusMurahList = [], storeSettings = {};
         let cart = [], appliedVoucher = null, currentPhone = localStorage.getItem('ar_active_phone') || '';
         let cloudReady = false;
+        let isSyncing = false;
 
         function parseJsonSafe(val, fallback) {
             if (!val) return fallback;
@@ -423,6 +454,25 @@
             };
         }
 
+        function withTimeout(promise, ms = 7000) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
+            ]);
+        }
+
+        async function fetchTableFast(tableName, orderCol, ascending) {
+            if (!sb) return { data: null, error: null };
+            try {
+                let query = sb.from(tableName).select('*');
+                if (orderCol) query = query.order(orderCol, { ascending: !!ascending });
+                return await withTimeout(query, 7000);
+            } catch (err) {
+                console.warn(`Pemuatan ${tableName} melewati batas waktu / gagal:`, err);
+                return { data: null, error: err };
+            }
+        }
+
         window.addEventListener('hashchange', router);
         window.addEventListener('load', async () => {
             if (!window.location.hash) window.location.hash = '#customer';
@@ -437,14 +487,6 @@
                 sb.channel('arrahmah-realtime-channel')
                     .on('postgres_changes', { event: '*', schema: 'public' }, async () => {
                         await syncFromCloud(false);
-                        if (window.location.hash.includes('#admin')) {
-                            if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
-                                renderAdminData();
-                            }
-                        } else {
-                            updateCustomerDisplay();
-                            renderCatalog();
-                        }
                     })
                     .subscribe();
             } catch (err) {
@@ -452,82 +494,76 @@
             }
         }
 
-        async function fetchTableSafe(tableName, orderCol, ascending) {
-            if (!sb) return { data: null, error: null };
-            try {
-                let query = sb.from(tableName).select('*');
-                if (orderCol) query = query.order(orderCol, { ascending: !!ascending });
-                return await query;
-            } catch (err) {
-                console.warn(`Gagal memuat tabel ${tableName}:`, err);
-                return { data: null, error: err };
-            }
-        }
-
         async function syncFromCloud(showToast = false) {
+            if (isSyncing) return;
+            isSyncing = true;
+
             if (!sb) {
                 if (!cloudReady && products.length === 0) products = fallbackProducts;
                 renderCatalog();
+                isSyncing = false;
                 return;
             }
 
             try {
-                let [pRes, oRes, cRes, vRes, bRes, tmRes, sRes] = await Promise.all([
-                    fetchTableSafe('products', 'id', true),
-                    fetchTableSafe('orders', 'id', false),
-                    fetchTableSafe('customers', null, true),
-                    fetchTableSafe('vouchers', null, true),
-                    fetchTableSafe('bundles', null, true),
-                    fetchTableSafe('tebus_murah', null, true),
-                    sb.from('store_settings').select('*').eq('id', 1).maybeSingle()
+                // Tahap A: Muat data utama katalog customer terlebih dahulu agar cepat tampil
+                let [pRes, bRes, tmRes, vRes, sRes] = await Promise.all([
+                    fetchTableFast('products', 'id', true),
+                    fetchTableFast('bundles', null, true),
+                    fetchTableFast('tebus_murah', null, true),
+                    fetchTableFast('vouchers', null, true),
+                    withTimeout(sb.from('store_settings').select('*').eq('id', 1).maybeSingle(), 6000).catch(() => ({ data: null }))
                 ]);
 
                 if (pRes && !pRes.error && Array.isArray(pRes.data)) {
                     cloudReady = true;
-                    if (pRes.data.length > 0) {
-                        products = pRes.data.map(normalizeProductRow);
-                    } else {
-                        products = [];
-                    }
+                    products = pRes.data.length > 0 ? pRes.data.map(normalizeProductRow) : [];
                 } else if (!cloudReady && products.length === 0) {
                     products = fallbackProducts;
                 }
 
-                populateProductDropdowns();
-
-                if (oRes && Array.isArray(oRes.data)) orders = oRes.data;
-                if (cRes && Array.isArray(cRes.data)) {
-                    customers = {};
-                    cRes.data.forEach(c => { if (c && c.phone) customers[c.phone] = c; });
-                }
-                if (vRes && Array.isArray(vRes.data)) vouchers = vRes.data;
                 if (bRes && Array.isArray(bRes.data)) bundles = bRes.data;
                 if (tmRes && Array.isArray(tmRes.data)) tebusMurahList = tmRes.data;
+                if (vRes && Array.isArray(vRes.data)) vouchers = vRes.data;
 
                 if (sRes && sRes.data) {
                     storeSettings = sRes.data;
                     document.getElementById('store-title-display').innerText = storeSettings.store_name || 'Arrahmah Mart Surabaya';
                     if (storeSettings.logo_url) {
-                        document.getElementById('header-logo-container').innerHTML = `<img src="${storeSettings.logo_url}" class="w-full h-full object-cover">`;
+                        document.getElementById('header-logo-container').innerHTML = `<img src="${getSafeImgUrl(storeSettings.logo_url)}" onerror="handleImgError(this)" class="w-full h-full object-cover">`;
                     }
                 }
 
-                if (window.location.hash.includes('#admin')) {
-                    if (!document.getElementById('admin-dashboard').classList.contains('hidden')) {
-                        renderAdminData();
-                    }
-                } else {
+                populateProductDropdowns();
+                updateCustomerDisplay();
+                renderCatalog();
+
+                // Tahap B: Muat data pelanggan & pesanan di latar belakang tanpa menahan layar customer
+                let [oRes, cRes] = await Promise.all([
+                    fetchTableFast('orders', 'id', false),
+                    fetchTableFast('customers', null, true)
+                ]);
+
+                if (oRes && Array.isArray(oRes.data)) orders = oRes.data;
+                if (cRes && Array.isArray(cRes.data)) {
+                    customers = {};
+                    cRes.data.forEach(c => { if (c && c.phone) customers[c.phone] = c; });
                     updateCustomerDisplay();
-                    renderCatalog();
+                }
+
+                if (window.location.hash.includes('#admin') && !document.getElementById('admin-dashboard').classList.contains('hidden')) {
+                    renderAdminData();
                 }
 
                 if (showToast) {
-                    alert(`Sinkronisasi selesai: ${products.length} produk, ${bundles.length} paket bundling, ${tebusMurahList.length} tebus murah.`);
+                    alert(`Data berhasil diperbarui: ${products.length} produk, ${bundles.length} paket bundling, ${tebusMurahList.length} tebus murah.`);
                 }
             } catch (e) {
                 console.error("Sync error:", e);
                 if (!cloudReady && products.length === 0) products = fallbackProducts;
                 renderCatalog();
+            } finally {
+                isSyncing = false;
             }
         }
 
@@ -625,7 +661,7 @@
             if (!b) return;
             let items = [b.p1, b.p2, b.p3, b.p4, b.p5].filter(Boolean);
             document.getElementById('promo-modal-badge').innerText = '📦 Rincian Paket Bundling';
-            document.getElementById('promo-modal-img').src = b.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80';
+            document.getElementById('promo-modal-img').src = getSafeImgUrl(b.img);
             document.getElementById('promo-modal-title').innerText = b.name || 'Paket Bundling';
             document.getElementById('promo-modal-price').innerText = `Rp ${(Number(b.promo_price)||0).toLocaleString()}`;
             document.getElementById('promo-modal-orig').innerText = Number(b.original_price) > 0 ? `Rp ${Number(b.original_price).toLocaleString()}` : '';
@@ -659,7 +695,7 @@
             }
 
             document.getElementById('promo-modal-badge').innerText = '⚡ Rincian Promo Tebus Murah';
-            document.getElementById('promo-modal-img').src = tm.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80';
+            document.getElementById('promo-modal-img').src = getSafeImgUrl(tm.img);
             document.getElementById('promo-modal-title').innerText = tm.name || 'Produk Tebus Murah';
             document.getElementById('promo-modal-price').innerText = `Rp ${(Number(tm.tebus_price)||0).toLocaleString()}`;
             document.getElementById('promo-modal-orig').innerText = Number(tm.normal_price) > 0 ? `Rp ${Number(tm.normal_price).toLocaleString()}` : '';
@@ -691,9 +727,9 @@
                             ${bundles.map(b => {
                                 let itemsDesc = [b.p1, b.p2, b.p3, b.p4, b.p5].filter(Boolean).join(' + ');
                                 let periodText = b.start_date && b.end_date ? `<p class="text-[10px] text-orange-700 font-medium">Periode: ${b.start_date} s/d ${b.end_date}</p>` : '';
-                                let imgUrl = b.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80';
+                                let imgUrl = getSafeImgUrl(b.img);
                                 return `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm flex items-center space-x-3 text-xs">
-                                    <img src="${imgUrl}" class="w-20 h-20 object-cover rounded-lg shrink-0 border border-orange-100">
+                                    <img src="${imgUrl}" onerror="handleImgError(this)" class="w-20 h-20 object-cover rounded-lg shrink-0 border border-orange-100">
                                     <div class="flex-1 min-w-0">
                                         <span class="bg-orange-600 text-white text-[9px] px-2 py-0.5 rounded font-bold uppercase">Paket Bundling</span>
                                         <p class="font-bold text-slate-900 mt-1 truncate">${b.name}</p>
@@ -719,9 +755,9 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             ${tebusMurahList.map(tm => {
                                 let periodText = tm.start_date && tm.end_date ? `<p class="text-[10px] text-orange-700 font-medium">Periode: ${tm.start_date} s/d ${tm.end_date}</p>` : '';
-                                let imgUrl = tm.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80';
+                                let imgUrl = getSafeImgUrl(tm.img);
                                 return `<div class="bg-white p-3 rounded-xl border border-orange-200 shadow-sm flex items-center space-x-3 text-xs">
-                                    <img src="${imgUrl}" class="w-20 h-20 object-cover rounded-lg shrink-0 border border-orange-100">
+                                    <img src="${imgUrl}" onerror="handleImgError(this)" class="w-20 h-20 object-cover rounded-lg shrink-0 border border-orange-100">
                                     <div class="flex-1 min-w-0">
                                         <span class="bg-orange-600 text-white text-[9px] px-2 py-0.5 rounded font-bold uppercase">Tebus Murah</span>
                                         <p class="font-bold text-slate-900 mt-1 truncate">${tm.name}</p>
@@ -754,7 +790,7 @@
                     return `
                     <div class="bg-white rounded-xl shadow-sm border border-orange-100 overflow-hidden flex flex-col justify-between">
                         <div>
-                            <img src="${p.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80'}" class="w-full h-32 object-cover">
+                            <img src="${getSafeImgUrl(p.img)}" onerror="handleImgError(this)" class="w-full h-32 object-cover">
                             <div class="p-3">
                                 <h4 class="font-bold text-xs text-slate-800 line-clamp-2 mb-1">${p.name}</h4>
                                 <div class="flex items-center space-x-2">
@@ -777,7 +813,7 @@
             }
             updateCartFloatingUI();
         }
-        function updateCartFloatingUI() {
+function updateCartFloatingUI() {
             const totalItems = cart.reduce((a, b) => a + b.qty, 0);
             document.getElementById('cart-count-badge').innerText = `${totalItems} Produk di Keranjang`;
             let floatBtn = document.getElementById('floating-cart-btn');
@@ -793,11 +829,18 @@
         }
 
         function getItemPrice(prod, qty) {
-            let price = prod.promoPrice;
+            let basePromo = Number(prod.promoPrice || prod.price) || 0;
+            let price = basePromo;
             if (Array.isArray(prod.tiers) && prod.tiers.length > 0) {
-                let sortedTiers = [...prod.tiers].sort((a,b)=>b.min - a.min);
-                for(let t of sortedTiers) {
-                    if (qty >= t.min) { price = t.price; break; }
+                let sortedTiers = [...prod.tiers]
+                    .map(t => ({ min: Number(t.min) || 0, price: Number(t.price) || 0 }))
+                    .filter(t => t.min > 0 && t.price > 0)
+                    .sort((a, b) => b.min - a.min);
+                for (let t of sortedTiers) {
+                    if (qty >= t.min) {
+                        price = t.price;
+                        break;
+                    }
                 }
             }
             return price;
@@ -880,7 +923,7 @@
         function addTebusMurahToCart(tmId) {
             let tm = tebusMurahList.find(t => String(t.id) === String(tmId));
             if (!tm) return;
-            let sub = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
+            let sub = cart.reduce((s,i)=>s+((Number(i.promoPrice)||0)*(Number(i.qty)||0)),0);
             if (sub < (Number(tm.min_cart_amount)||0)) { alert(`Minimal belanja Rp ${(Number(tm.min_cart_amount)||0).toLocaleString()} untuk tebus murah ini!`); return; }
             let maxKelipatan = Math.floor(sub / (Number(tm.min_cart_amount)||1));
             let key = `tm-${tm.id}`;
@@ -924,11 +967,23 @@
             const container = document.getElementById('cart-items-container');
             if (cart.length === 0) { container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Keranjang kosong.</p>`; }
             else {
-                container.innerHTML = cart.map(item => `
+                container.innerHTML = cart.map(item => {
+                    let qty = Number(item.qty) || 1;
+                    let unitPrice = Number(item.promoPrice) || 0;
+                    let lineTotal = unitPrice * qty;
+                    return `
                     <div class="flex justify-between items-center bg-orange-50/60 p-2.5 rounded-lg text-xs border border-orange-100">
-                        <div><p class="font-bold">${item.name}</p><p class="text-slate-500">Rp ${item.promoPrice.toLocaleString()} x ${item.qty}</p></div>
-                        <div class="flex items-center space-x-2"><button onclick="updateQty('${item.cartKey}', -1)" class="px-2 py-0.5 bg-white border rounded font-bold">-</button><span>${item.qty}</span><button onclick="updateQty('${item.cartKey}', 1)" class="px-2 py-0.5 bg-white border rounded font-bold">+</button></div>
-                    </div>`).join('');
+                        <div>
+                            <p class="font-bold text-slate-800">${item.name}</p>
+                            <p class="text-slate-500">Rp ${unitPrice.toLocaleString()} x ${qty} = <strong class="text-orange-700">Rp ${lineTotal.toLocaleString()}</strong></p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="updateQty('${item.cartKey}', -1)" class="px-2 py-0.5 bg-white border rounded font-bold">-</button>
+                            <span>${qty}</span>
+                            <button onclick="updateQty('${item.cartKey}', 1)" class="px-2 py-0.5 bg-white border rounded font-bold">+</button>
+                        </div>
+                    </div>`;
+                }).join('');
             }
             if (currentPhone && customers[currentPhone]) {
                 document.getElementById('modal-user-points').innerText = customers[currentPhone].points;
@@ -975,40 +1030,110 @@
                     alert("Voucher ini sudah mencapai batas maksimal kuota pemakaian!");
                     appliedVoucher = null;
                 } else {
-                    let sub = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
-                    if (sub < found.min_spend) { alert(`Minimal belanja untuk voucher ini adalah Rp ${found.min_spend.toLocaleString()}`); appliedVoucher = null; }
+                    let sub = cart.reduce((s,i)=>s+((Number(i.promoPrice)||0)*(Number(i.qty)||0)),0);
+                    if (sub < (Number(found.min_spend)||0)) { alert(`Minimal belanja untuk voucher ini adalah Rp ${(Number(found.min_spend)||0).toLocaleString()}`); appliedVoucher = null; }
                     else { appliedVoucher = found; alert(`Voucher ${found.code} berhasil dipakai!`); }
                 }
             }
             calculateCartTotal();
         }
 
-        function calculateCartTotal() {
-            let subtotal = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
+        function computeCheckoutBreakdown() {
+            let subtotal = cart.reduce((s, i) => s + ((Number(i.promoPrice) || 0) * (Number(i.qty) || 0)), 0);
+            let promoItemDiscount = cart.reduce((s, i) => {
+                let qty = Number(i.qty) || 0;
+                let sell = Number(i.promoPrice) || 0;
+                let orig = Number(i.originalPrice || i.price || sell) || 0;
+                return s + Math.max(0, (orig - sell) * qty);
+            }, 0);
+
             let vDisc = 0;
             if (appliedVoucher) {
-                if (subtotal < appliedVoucher.min_spend) {
-                    appliedVoucher = null;
+                let minSpend = Number(appliedVoucher.min_spend) || 0;
+                let discAmt = Number(appliedVoucher.discount_amount) || 0;
+                if (minSpend > 0 && subtotal >= minSpend) {
+                    let multiplier = Math.floor(subtotal / minSpend);
+                    vDisc = discAmt * multiplier;
+                } else if (minSpend === 0) {
+                    vDisc = discAmt;
                 } else {
-                    let multiplier = Math.floor(subtotal / appliedVoucher.min_spend);
-                    vDisc = appliedVoucher.discount_amount * multiplier;
+                    appliedVoucher = null;
                 }
             }
-            let pDisc = 0;
-            if (document.getElementById('use-points-checkbox').checked && currentPhone && customers[currentPhone]) {
-                let pointVal = storeSettings.point_value || 1000;
-                let availablePoints = customers[currentPhone].points || 0;
-                let remainingSub = subtotal - vDisc;
-                let maxPoints = Math.min(availablePoints, Math.floor(remainingSub / pointVal));
-                pDisc = maxPoints * pointVal;
-            }
-            let totalDisc = vDisc + pDisc;
-            if (totalDisc > subtotal) totalDisc = subtotal;
-            let finalTotal = Math.max(0, subtotal - totalDisc);
+            if (vDisc > subtotal) vDisc = subtotal;
 
-            document.getElementById('cart-subtotal').innerText = `Rp ${subtotal.toLocaleString()}`;
-            document.getElementById('cart-voucher-disc').innerText = `-Rp ${vDisc.toLocaleString()}`;
-            document.getElementById('cart-total').innerText = `Rp ${finalTotal.toLocaleString()}`;
+            let usePts = !!document.getElementById('use-points-checkbox')?.checked;
+            let ptsUsed = 0;
+            let pDisc = 0;
+            if (usePts && currentPhone && customers[currentPhone]) {
+                let pointVal = Number(storeSettings.point_value) || 1000;
+                let availablePoints = Math.max(0, Number(customers[currentPhone].points) || 0);
+                let remainingAfterVoucher = Math.max(0, subtotal - vDisc);
+                if (pointVal > 0 && remainingAfterVoucher > 0) {
+                    ptsUsed = Math.min(availablePoints, Math.floor(remainingAfterVoucher / pointVal));
+                    pDisc = ptsUsed * pointVal;
+                }
+            }
+
+            let checkoutDiscount = Math.min(subtotal, vDisc + pDisc);
+            let finalTotal = Math.max(0, subtotal - checkoutDiscount);
+            let totalAllDiscount = promoItemDiscount + checkoutDiscount;
+            let ptsEarned = cart.reduce((s, i) => s + ((Number(i.pointsEarned) || 5) * (Number(i.qty) || 0)), 0);
+
+            return {
+                subtotal,
+                promoItemDiscount,
+                vDisc,
+                ptsUsed,
+                pDisc,
+                checkoutDiscount,
+                totalAllDiscount,
+                finalTotal,
+                ptsEarned
+            };
+        }
+
+        function calculateCartTotal() {
+            let calc = computeCheckoutBreakdown();
+            document.getElementById('cart-subtotal').innerText = `Rp ${calc.subtotal.toLocaleString()}`;
+            document.getElementById('cart-voucher-disc').innerText = `-Rp ${(calc.vDisc + calc.pDisc).toLocaleString()}`;
+            document.getElementById('cart-total').innerText = `Rp ${calc.finalTotal.toLocaleString()}`;
+        }
+
+        function renderCustomerOrderNotice(orderObj) {
+            const box = document.getElementById('customer-order-notice');
+            if (!box || !orderObj) return;
+            let itemsHtml = (Array.isArray(orderObj.items) ? orderObj.items : [])
+                .map(i => `<li class="flex justify-between"><span>• ${i.name} <strong>(${i.qty}x)</strong></span><span>Rp ${((Number(i.promoPrice)||0)*(Number(i.qty)||0)).toLocaleString()}</span></li>`)
+                .join('');
+
+            box.innerHTML = `
+                <div class="flex items-start justify-between gap-2 border-b border-emerald-200 pb-2">
+                    <div>
+                        <span class="inline-block bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full mb-1">✓ Pesanan Tercatat di Aplikasi</span>
+                        <h4 class="font-bold text-sm text-emerald-950">Terima kasih, ${orderObj.name}! No. Pesanan: <span class="text-emerald-700">${orderObj.id}</span></h4>
+                        <p class="text-[11px] text-emerald-800">Pesanan sudah masuk ke sistem toko dan sedang menunggu proses/konfirmasi admin.</p>
+                    </div>
+                    <button onclick="document.getElementById('customer-order-notice').classList.add('hidden')" class="text-emerald-700 hover:text-emerald-950 font-bold text-sm">✕</button>
+                </div>
+                <div class="bg-white/90 rounded-lg p-3 border border-emerald-200 space-y-1.5">
+                    <p class="font-bold text-slate-800">Rincian Belanja:</p>
+                    <ul class="space-y-1 text-slate-700">${itemsHtml}</ul>
+                    <div class="border-t border-emerald-100 pt-1.5 space-y-1 text-[11px]">
+                        <div class="flex justify-between"><span>Subtotal:</span><span>Rp ${(Number(orderObj.subtotal)||0).toLocaleString()}</span></div>
+                        ${(Number(orderObj.checkout_discount)||0) > 0 ? `<div class="flex justify-between text-emerald-700"><span>Potongan Voucher/Poin:</span><span>-Rp ${Number(orderObj.checkout_discount).toLocaleString()}</span></div>` : ''}
+                        <div class="flex justify-between font-bold text-xs text-slate-900 pt-1 border-t border-dashed border-emerald-200"><span>Total Pembayaran:</span><span class="text-orange-600">Rp ${(Number(orderObj.final_total)||0).toLocaleString()}</span></div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-emerald-900">
+                    <div>
+                        <span>🚚 <strong>${orderObj.shipping}</strong></span> • <span>💳 <strong>${orderObj.payment}</strong></span>
+                    </div>
+                    <button onclick="openAdminWaChat()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm">💬 Hubungi Admin via WA</button>
+                </div>
+            `;
+            box.classList.remove('hidden');
+            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         async function submitOrder() {
@@ -1019,84 +1144,116 @@
             let payment = document.getElementById('order-payment').value;
 
             if (!name || !phone || !address || cart.length === 0) { alert("Harap lengkapi nama, no WA, alamat, dan keranjang!"); return; }
-            currentPhone = phone;
-            localStorage.setItem('ar_active_phone', currentPhone);
 
-            let subtotal = cart.reduce((s,i)=>s+(i.promoPrice*i.qty),0);
-            let promoItemDiscount = cart.reduce((s, i) => {
-                let orig = Number(i.originalPrice || i.price || i.promoPrice) || 0;
-                return s + Math.max(0, (orig - i.promoPrice) * i.qty);
-            }, 0);
-
-            let vDisc = 0;
-            if (appliedVoucher) {
-                let multiplier = Math.floor(subtotal / appliedVoucher.min_spend);
-                vDisc = appliedVoucher.discount_amount * multiplier;
+            const submitBtn = document.getElementById('btn-submit-order');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Menyimpan Pesanan...";
             }
 
-            let ptsUsed = 0, pDisc = 0;
-            if (document.getElementById('use-points-checkbox').checked && customers[phone]) {
-                let pointVal = storeSettings.point_value || 1000;
-                ptsUsed = Math.min(customers[phone].points, Math.floor((subtotal - vDisc)/pointVal));
-                pDisc = ptsUsed * pointVal;
-                customers[phone].points -= ptsUsed;
-            }
-            
-            let checkoutDiscount = Math.min(subtotal, vDisc + pDisc);
-            let finalTotal = Math.max(0, subtotal - checkoutDiscount);
-            let totalAllDiscount = promoItemDiscount + checkoutDiscount;
-            let ptsEarned = cart.reduce((s,i)=>s+((i.pointsEarned||5)*i.qty),0);
+            try {
+                currentPhone = phone;
+                localStorage.setItem('ar_active_phone', currentPhone);
 
-            let totalHpp = 0;
-            for(let i of cart) {
-                if(!i.isSpecial) {
-                    let p = products.find(prod => String(prod.id) === String(i.id));
-                    let unitHpp = p ? (Number(p.hpp) || 0) : (Number(i.hpp) || 0);
-                    totalHpp += unitHpp * i.qty;
-                    if(p && sb) await sb.from('products').update({stock: Math.max(0, p.stock - i.qty)}).eq('id', p.id);
-                } else {
-                    totalHpp += (Number(i.hpp) || 0) * i.qty;
+                let calc = computeCheckoutBreakdown();
+                let subtotal = calc.subtotal;
+                let checkoutDiscount = calc.checkoutDiscount;
+                let totalAllDiscount = calc.totalAllDiscount;
+                let ptsUsed = calc.ptsUsed;
+                let finalTotal = calc.finalTotal;
+                let ptsEarned = calc.ptsEarned;
+
+                if (customers[phone] && ptsUsed > 0) {
+                    customers[phone].points = Math.max(0, (Number(customers[phone].points) || 0) - ptsUsed);
+                }
+
+                let totalHpp = 0;
+                for (let i of cart) {
+                    let qty = Number(i.qty) || 1;
+                    if (!i.isSpecial) {
+                        let p = products.find(prod => String(prod.id) === String(i.id));
+                        let unitHpp = p ? (Number(p.hpp) || 0) : (Number(i.hpp) || 0);
+                        totalHpp += unitHpp * qty;
+                        if (p && sb) {
+                            let nextStock = Math.max(0, (Number(p.stock) || 0) - qty);
+                            p.stock = nextStock;
+                            await sb.from('products').update({ stock: nextStock }).eq('id', p.id);
+                        }
+                    } else {
+                        totalHpp += (Number(i.hpp) || 0) * qty;
+                    }
+                }
+
+                let netProfit = (subtotal - totalHpp) - checkoutDiscount;
+
+                let now = new Date();
+                let isoDate = now.toISOString().split('T')[0];
+                let displayDate = now.toLocaleDateString('id-ID');
+
+                let newOrder = {
+                    id: 'ORD-' + Date.now().toString().slice(-6),
+                    display_date: `${displayDate} (${isoDate})`,
+                    name,
+                    phone,
+                    address,
+                    items: cart.map(item => ({
+                        id: item.id,
+                        cartKey: item.cartKey,
+                        baseName: item.baseName || item.name,
+                        name: item.name,
+                        hpp: Number(item.hpp) || 0,
+                        originalPrice: Number(item.originalPrice || item.price || item.promoPrice) || 0,
+                        promoPrice: Number(item.promoPrice) || 0,
+                        pointsEarned: Number(item.pointsEarned) || 5,
+                        qty: Number(item.qty) || 1,
+                        isSpecial: !!item.isSpecial
+                    })),
+                    subtotal,
+                    total_hpp: totalHpp,
+                    total_discount: totalAllDiscount,
+                    checkout_discount: checkoutDiscount,
+                    points_used: ptsUsed,
+                    final_total: finalTotal,
+                    net_profit: netProfit,
+                    points_earned: ptsEarned,
+                    shipping,
+                    payment,
+                    status: 'Menunggu Pembayaran',
+                    paid_date: null
+                };
+
+                if (sb) {
+                    let { error: ordErr } = await sb.from('orders').insert([newOrder]);
+                    if (ordErr) {
+                        alert("Gagal menyimpan pesanan: " + ordErr.message);
+                        return;
+                    }
+                    if (appliedVoucher) {
+                        let newUsedCount = (Number(appliedVoucher.used_count) || 0) + 1;
+                        await sb.from('vouchers').update({ used_count: newUsedCount }).eq('id', appliedVoucher.id);
+                    }
+                    let custObj = customers[phone] || { phone, name, address, points: 10, total_spend: 0 };
+                    custObj.name = name;
+                    custObj.address = address;
+                    custObj.points = customers[phone] ? customers[phone].points : 10;
+                    customers[phone] = custObj;
+                    await sb.from('customers').upsert([custObj]);
+                }
+
+                orders.unshift(newOrder);
+                cart = [];
+                appliedVoucher = null;
+                toggleCartModal(false);
+                updateCustomerDisplay();
+                renderCatalog();
+                renderCustomerOrderNotice(newOrder);
+                await syncFromCloud(false);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "✓ Kirim Pesanan ke Toko";
                 }
             }
-
-            let netProfit = (subtotal - totalHpp) - checkoutDiscount;
-
-            let now = new Date();
-            let isoDate = now.toISOString().split('T')[0];
-            let displayDate = now.toLocaleDateString('id-ID');
-
-            let newOrder = {
-                id: 'ORD-' + Date.now().toString().slice(-6),
-                display_date: `${displayDate} (${isoDate})`,
-                name, phone, address, items: cart, subtotal, total_hpp: totalHpp, total_discount: totalAllDiscount,
-                points_used: ptsUsed, final_total: finalTotal, net_profit: netProfit, points_earned: ptsEarned, shipping, payment, status: 'Menunggu Pembayaran', paid_date: null
-            };
-
-            if (sb) {
-                let { error: ordErr } = await sb.from('orders').insert([newOrder]);
-                if (ordErr) { alert("Gagal mengirim pesanan: " + ordErr.message); return; }
-                if (appliedVoucher) {
-                    let newUsedCount = (appliedVoucher.used_count || 0) + 1;
-                    await sb.from('vouchers').update({ used_count: newUsedCount }).eq('id', appliedVoucher.id);
-                }
-                let custObj = customers[phone] || { phone, name, address, points: 10, total_spend: 0 };
-                custObj.name = name; custObj.address = address;
-                custObj.points = customers[phone] ? customers[phone].points : 10;
-                await sb.from('customers').upsert([custObj]);
-            }
-
-            let waText = `Halo Admin *${storeSettings.store_name||'Arrahmah Mart'}* 👋,\nSaya ingin memesan produk:\n\nNo Pesanan: *${newOrder.id}*\nNama: *${name}*\nNo WA: *${phone}*\nAlamat: *${address}*\n\n`;
-            cart.forEach(i => { waText += `- ${i.name} (${i.qty}x) = Rp ${(i.promoPrice*i.qty).toLocaleString()}\n`; });
-            waText += `\nSubtotal: Rp ${subtotal.toLocaleString()}\n`;
-            if (checkoutDiscount > 0) waText += `Potongan Voucher/Poin: -Rp ${checkoutDiscount.toLocaleString()}\n`;
-            waText += `*Total Pembayaran: Rp ${finalTotal.toLocaleString()}*\n\nPengiriman: ${shipping}\nPembayaran: ${payment}\n\nMohon konfirmasinya, terima kasih!`;
-
-            let adminWa = storeSettings.wa_admin || '6281331999525';
-            let waUrl = `https://wa.me/${adminWa}?text=${encodeURIComponent(waText)}`;
-            cart = []; appliedVoucher = null; toggleCartModal(false);
-            window.open(waUrl, '_blank');
-            await syncFromCloud(false);
-            router();
         }
 
         // --- KALKULASI ULANG KEUANGAN OTOMATIS PER PESANAN ---
@@ -1346,7 +1503,7 @@
 
             document.getElementById('admin-products-list').innerHTML = products.map(p => `
                 <div class="bg-white p-3 rounded-xl shadow-sm border border-orange-100 flex items-center space-x-3 text-xs">
-                    <img src="${p.img || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80'}" class="w-14 h-14 object-cover rounded-lg">
+                    <img src="${getSafeImgUrl(p.img)}" onerror="handleImgError(this)" class="w-14 h-14 object-cover rounded-lg">
                     <div class="flex-1">
                         <p class="font-bold">${p.name}</p>
                         <p class="text-slate-500">HPP: Rp ${(p.hpp||0).toLocaleString()} | Jual: Rp ${(p.promoPrice||0).toLocaleString()} | Stok: <strong>${p.stock}</strong></p>
@@ -1799,3 +1956,5 @@
     </script>
 </body>
 </html>
+        
+    
