@@ -43,6 +43,7 @@
         <!-- ================= HALAMAN CUSTOMER (#customer) ================= -->
         <section id="view-customer" class="space-y-5">
             <div id="customer-order-notice" class="hidden bg-emerald-50 border border-emerald-300 text-emerald-900 p-4 rounded-xl shadow-sm text-xs space-y-2"></div>
+            <div id="cloud-status-banner" class="hidden bg-amber-50 border border-amber-300 text-amber-950 p-3.5 rounded-xl shadow-sm text-xs space-y-1.5"></div>
 
             <div class="bg-white border border-orange-200 p-4 rounded-xl shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div>
@@ -80,7 +81,6 @@
             </div>
 
             <div id="admin-dashboard" class="hidden grid grid-cols-1 md:grid-cols-4 gap-6">
-                <!-- SIDEBAR VERTIKAL -->
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-2 h-fit">
                     <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Menu Kelola Admin</p>
                     <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="w-full text-left px-3 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white flex items-center justify-between"><span>📦 Pesanan Masuk</span><span id="badge-order-count" class="bg-white text-orange-600 px-1.5 py-0.5 rounded-full text-[10px]">0</span></button>
@@ -93,7 +93,6 @@
                     <button onclick="logoutAdmin()" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-lg text-red-600 hover:bg-red-50">🚪 Keluar Admin</button>
                 </div>
 
-                <!-- KONTEN UTAMA ADMIN -->
                 <div class="md:col-span-3 space-y-6">
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 text-xs space-y-2">
                         <p class="font-bold text-slate-700">📌 Tautan Akses Terpisah:</p>
@@ -107,7 +106,6 @@
                         </div>
                     </div>
 
-                    <!-- 1. TAB PESANAN MASUK -->
                     <div id="admin-tab-orders" class="space-y-3">
                         <div class="flex justify-between items-center">
                             <h3 class="font-bold text-sm text-slate-800">📦 Daftar Pesanan Masuk (Realtime)</h3>
@@ -116,7 +114,6 @@
                         <div id="admin-orders-list" class="space-y-3"></div>
                     </div>
 
-                    <!-- 2. TAB PRODUK -->
                     <div id="admin-tab-products" class="hidden space-y-4">
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3">
                             <h3 id="form-product-title" class="font-bold text-sm text-orange-600">+ Tambah Produk Baru</h3>
@@ -144,7 +141,6 @@
                         <div id="admin-products-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                     </div>
 
-                    <!-- 3. TAB PROMO TOKO -->
                     <div id="admin-tab-promos" class="hidden space-y-6">
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 class="font-bold text-sm text-orange-600">🪙 Pengaturan Poin Pelanggan</h3>
@@ -163,7 +159,6 @@
                             </div>
                         </div>
 
-                        <!-- VOUCHER -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 class="font-bold text-sm text-orange-600">🎟️ Kelola Voucher Belanja</h3>
                             <div class="grid grid-cols-2 gap-2">
@@ -177,7 +172,6 @@
                             <div id="admin-vouchers-list" class="space-y-2 pt-2"></div>
                         </div>
 
-                        <!-- BUNDLING -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 id="form-bundle-title" class="font-bold text-sm text-orange-600">📦 Kelola Paket Bundling</h3>
                             <input type="hidden" id="edit-bundle-id" value="">
@@ -212,7 +206,6 @@
                             <div id="admin-bundles-list" class="space-y-2 pt-2"></div>
                         </div>
 
-                        <!-- TEBUS MURAH -->
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 id="form-tm-title" class="font-bold text-sm text-orange-600">⚡ Kelola Produk Tebus Murah</h3>
                             <input type="hidden" id="edit-tm-id" value="">
@@ -241,13 +234,11 @@
                         </div>
                     </div>
 
-                    <!-- 4. TAB CUSTOMERS -->
                     <div id="admin-tab-customers" class="hidden space-y-3">
                         <h3 class="font-bold text-sm text-slate-800">Database Pelanggan & Chat WhatsApp</h3>
                         <div id="admin-customers-list" class="space-y-2"></div>
                     </div>
 
-                    <!-- 5. TAB LAPORAN & KEUANGAN -->
                     <div id="admin-tab-reports" class="hidden space-y-4">
                         <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-4">
                             <div class="flex justify-between items-center flex-wrap gap-2">
@@ -275,7 +266,6 @@
                         </div>
                     </div>
 
-                    <!-- 6. TAB PROFILE -->
                     <div id="admin-tab-profile" class="hidden space-y-4">
                         <div class="bg-white p-5 rounded-xl shadow-sm border border-orange-100 space-y-3 text-xs">
                             <h3 class="font-bold text-sm text-orange-600">⚙️ Pengaturan Profil Toko & Logo</h3>
@@ -321,7 +311,8 @@
             </div>
         </div>
     </div>
-<!-- MODAL EDIT CUSTOMER -->
+
+    <!-- MODAL EDIT CUSTOMER -->
     <div id="edit-customer-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-2xl p-5 space-y-3 text-xs">
             <h3 class="font-bold text-sm text-orange-600">✏️ Edit Data Pelanggan</h3>
@@ -383,8 +374,7 @@
             <button id="btn-submit-order" onclick="submitOrder()" class="w-full bg-orange-600 text-white font-bold py-3 rounded-xl text-sm hover:bg-orange-700 transition shadow">✓ Kirim Pesanan ke Toko</button>
         </div>
     </div>
-
-    <!-- SCRIPT APLIKASI (TAHAP 2/3) -->
+    <!-- SCRIPT APLIKASI (TAHAP 2/2) -->
     <script>
         const SUPABASE_URL = 'https://oeoskmyvumfwihbrmfkx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_VriQAQ-FC3JGp7-ojoEGHw_YoU5RCDu';
@@ -425,6 +415,8 @@
         let cart = [], appliedVoucher = null, currentPhone = localStorage.getItem('ar_active_phone') || '';
         let cloudReady = false;
         let isSyncing = false;
+        let lastSyncError = '';
+        let productRowCountFromCloud = 0;
 
         function parseJsonSafe(val, fallback) {
             if (!val) return fallback;
@@ -454,22 +446,50 @@
             };
         }
 
-        function withTimeout(promise, ms = 7000) {
+        function withTimeout(promise, ms = 15000) {
             return Promise.race([
                 promise,
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Waktu muat data melebihi batas (15 detik)')), ms))
             ]);
         }
 
         async function fetchTableFast(tableName, orderCol, ascending) {
-            if (!sb) return { data: null, error: null };
+            if (!sb) return { data: null, error: { message: 'Klien Supabase belum terinisialisasi' } };
             try {
                 let query = sb.from(tableName).select('*');
                 if (orderCol) query = query.order(orderCol, { ascending: !!ascending });
-                return await withTimeout(query, 7000);
+                return await withTimeout(query, 15000);
             } catch (err) {
-                console.warn(`Pemuatan ${tableName} melewati batas waktu / gagal:`, err);
-                return { data: null, error: err };
+                console.warn(`Pemuatan ${tableName} gagal/timeout:`, err);
+                return { data: null, error: { message: err && err.message ? err.message : 'Gagal memuat data' } };
+            }
+        }
+
+        function renderCloudStatusBanner() {
+            const banner = document.getElementById('cloud-status-banner');
+            if (!banner) return;
+
+            if (lastSyncError) {
+                banner.className = 'bg-amber-50 border border-amber-300 text-amber-950 p-3.5 rounded-xl shadow-sm text-xs space-y-1.5';
+                banner.innerHTML = `
+                    <div class="flex justify-between items-center gap-2">
+                        <strong>⚠️ Kendala Koneksi Database Supabase:</strong>
+                        <button onclick="syncFromCloud(true)" class="bg-amber-600 text-white px-2.5 py-1 rounded-lg text-[11px] font-semibold">Coba Lagi</button>
+                    </div>
+                    <p class="text-amber-900">Detail error: <code class="bg-amber-100 px-1.5 py-0.5 rounded">${lastSyncError}</code></p>
+                    <p class="text-[11px] text-amber-800">Pastikan kebijakan RLS tabel di Supabase sudah mengizinkan akses publik dan kuota organisasi Supabase tidak dibatasi.</p>
+                `;
+                banner.classList.remove('hidden');
+            } else if (cloudReady && productRowCountFromCloud === 0) {
+                banner.className = 'bg-orange-50 border border-orange-300 text-orange-950 p-3.5 rounded-xl shadow-sm text-xs space-y-1';
+                banner.innerHTML = `
+                    <strong>ℹ️ Terhubung ke Supabase (0 Produk di Tabel <code>products</code>)</strong>
+                    <p class="text-[11px] text-orange-800">Koneksi ke database berhasil, tetapi belum ada baris produk di tabel <code>products</code> pada proyek ini. Anda dapat menambahkan produk baru dari menu Admin.</p>
+                `;
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+                banner.innerHTML = '';
             }
         }
 
@@ -497,34 +517,38 @@
         async function syncFromCloud(showToast = false) {
             if (isSyncing) return;
             isSyncing = true;
+            lastSyncError = '';
 
             if (!sb) {
+                lastSyncError = 'Pustaka Supabase tidak termuat di browser.';
                 if (!cloudReady && products.length === 0) products = fallbackProducts;
+                renderCloudStatusBanner();
                 renderCatalog();
                 isSyncing = false;
                 return;
             }
 
             try {
-                // Tahap A: Muat data utama katalog customer terlebih dahulu agar cepat tampil
                 let [pRes, bRes, tmRes, vRes, sRes] = await Promise.all([
                     fetchTableFast('products', 'id', true),
                     fetchTableFast('bundles', null, true),
                     fetchTableFast('tebus_murah', null, true),
                     fetchTableFast('vouchers', null, true),
-                    withTimeout(sb.from('store_settings').select('*').eq('id', 1).maybeSingle(), 6000).catch(() => ({ data: null }))
+                    withTimeout(sb.from('store_settings').select('*').eq('id', 1).maybeSingle(), 12000).catch(err => ({ data: null, error: err }))
                 ]);
 
                 if (pRes && !pRes.error && Array.isArray(pRes.data)) {
                     cloudReady = true;
-                    products = pRes.data.length > 0 ? pRes.data.map(normalizeProductRow) : [];
-                } else if (!cloudReady && products.length === 0) {
-                    products = fallbackProducts;
+                    productRowCountFromCloud = pRes.data.length;
+                    products = pRes.data.map(normalizeProductRow);
+                } else {
+                    lastSyncError = (pRes && pRes.error && pRes.error.message) ? pRes.error.message : 'Gagal membaca tabel products dari Supabase';
+                    if (!cloudReady && products.length === 0) products = fallbackProducts;
                 }
 
-                if (bRes && Array.isArray(bRes.data)) bundles = bRes.data;
-                if (tmRes && Array.isArray(tmRes.data)) tebusMurahList = tmRes.data;
-                if (vRes && Array.isArray(vRes.data)) vouchers = vRes.data;
+                if (bRes && !bRes.error && Array.isArray(bRes.data)) bundles = bRes.data;
+                if (tmRes && !tmRes.error && Array.isArray(tmRes.data)) tebusMurahList = tmRes.data;
+                if (vRes && !vRes.error && Array.isArray(vRes.data)) vouchers = vRes.data;
 
                 if (sRes && sRes.data) {
                     storeSettings = sRes.data;
@@ -536,16 +560,16 @@
 
                 populateProductDropdowns();
                 updateCustomerDisplay();
+                renderCloudStatusBanner();
                 renderCatalog();
 
-                // Tahap B: Muat data pelanggan & pesanan di latar belakang tanpa menahan layar customer
                 let [oRes, cRes] = await Promise.all([
                     fetchTableFast('orders', 'id', false),
                     fetchTableFast('customers', null, true)
                 ]);
 
-                if (oRes && Array.isArray(oRes.data)) orders = oRes.data;
-                if (cRes && Array.isArray(cRes.data)) {
+                if (oRes && !oRes.error && Array.isArray(oRes.data)) orders = oRes.data;
+                if (cRes && !cRes.error && Array.isArray(cRes.data)) {
                     customers = {};
                     cRes.data.forEach(c => { if (c && c.phone) customers[c.phone] = c; });
                     updateCustomerDisplay();
@@ -556,11 +580,17 @@
                 }
 
                 if (showToast) {
-                    alert(`Data berhasil diperbarui: ${products.length} produk, ${bundles.length} paket bundling, ${tebusMurahList.length} tebus murah.`);
+                    if (lastSyncError) {
+                        alert(`Peringatan sinkronisasi: ${lastSyncError}`);
+                    } else {
+                        alert(`Sinkronisasi berhasil: ${products.length} produk, ${bundles.length} bundling, ${tebusMurahList.length} tebus murah.`);
+                    }
                 }
             } catch (e) {
                 console.error("Sync error:", e);
+                lastSyncError = e && e.message ? e.message : 'Terjadi kesalahan saat sinkronisasi';
                 if (!cloudReady && products.length === 0) products = fallbackProducts;
+                renderCloudStatusBanner();
                 renderCatalog();
             } finally {
                 isSyncing = false;
@@ -582,6 +612,7 @@
                 viewAdmin.classList.add('hidden');
                 viewCust.classList.remove('hidden');
                 updateCustomerDisplay();
+                renderCloudStatusBanner();
                 renderCatalog();
             }
         }
@@ -813,7 +844,8 @@
             }
             updateCartFloatingUI();
         }
-function updateCartFloatingUI() {
+
+        function updateCartFloatingUI() {
             const totalItems = cart.reduce((a, b) => a + b.qty, 0);
             document.getElementById('cart-count-badge').innerText = `${totalItems} Produk di Keranjang`;
             let floatBtn = document.getElementById('floating-cart-btn');
@@ -1256,7 +1288,6 @@ function updateCartFloatingUI() {
             }
         }
 
-        // --- KALKULASI ULANG KEUANGAN OTOMATIS PER PESANAN ---
         function resolveItemUnitHpp(item) {
             let storedHpp = Number(item.hpp) || 0;
             if (storedHpp > 0) return storedHpp;
@@ -1956,5 +1987,3 @@ function updateCartFloatingUI() {
     </script>
 </body>
 </html>
-        
-    
