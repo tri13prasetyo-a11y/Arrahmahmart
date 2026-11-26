@@ -63,6 +63,46 @@
 
             <div class="flex justify-between items-center pt-2">
                 <h3 class="font-bold text-lg text-slate-800">🛒 Katalog Produk</h3>
+                <div class="flex justify-between items-center pt-2 gap-2 flex-wrap">
+    <div class="flex items-center gap-3">
+        <h3 class="font-bold text-lg text-slate-800">🛒 Katalog Produk</h3>
+        <button type="button" onclick="openProductRequestModal()" class="text-xs font-semibold text-orange-700 bg-orange-100 hover:bg-orange-200 px-3 py-1.5 rounded-lg underline transition">
+            + Request Produk / Promo
+        </button>
+    </div>
+    <span id="cart-count-badge" class="bg-orange-600 text-white text-xs px-3 py-1 rounded-full font-medium shadow-sm">0 Produk di Keranjang</span>
+</div>
+
+<div id="product-request-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-5 space-y-3 text-xs shadow-xl border border-orange-200">
+        <div class="flex justify-between items-center border-b pb-2">
+            <h3 class="font-bold text-sm text-orange-600">📝 Request Produk / Usul Promo</h3>
+            <button type="button" onclick="closeProductRequestModal()" class="text-slate-400 hover:text-slate-700 font-bold text-base">✕</button>
+        </div>
+        <div class="space-y-2.5">
+            <div>
+                <label class="font-medium block mb-1">Nama Produk <span class="text-red-600">*</span></label>
+                <input type="text" id="req-prod-name" placeholder="Contoh: Minyak Goreng Pouch / Teh Celup" class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-orange-500">
+            </div>
+            <div>
+                <label class="font-medium block mb-1">Variasi Produk <span class="text-slate-400">(Tidak wajib diisi)</span></label>
+                <input type="text" id="req-prod-variant" placeholder="Contoh: Original, Melati, Pedas" class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-orange-500">
+            </div>
+            <div>
+                <label class="font-medium block mb-1">Gramasi Produk <span class="text-slate-400">(Tidak wajib diisi)</span></label>
+                <input type="text" id="req-prod-grammage" placeholder="Contoh: 250g, 500ml, 1kg" class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-orange-500">
+            </div>
+            <div>
+                <label class="font-medium block mb-1">Perkiraan yang Dibutuhkan <span class="text-slate-400">(Tidak wajib diisi)</span></label>
+                <input type="text" id="req-prod-needed" placeholder="Contoh: 5 pcs / minggu depan" class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-orange-500">
+            </div>
+        </div>
+        <div class="flex gap-2 pt-2">
+            <button type="button" onclick="submitProductRequest()" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 rounded-xl shadow">Kirim Request</button>
+            <button type="button" onclick="closeProductRequestModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-xl font-bold">Batal</button>
+        </div>
+    </div>
+</div>
                 <span id="cart-count-badge" class="bg-orange-600 text-white text-xs px-3 py-1 rounded-full font-medium shadow-sm">0 Produk di Keranjang</span>
             </div>
 
@@ -1984,6 +2024,57 @@
             XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Penjualan");
             XLSX.writeFile(workbook, "Laporan_Arrahmah_Mart.xlsx");
         }
+function openProductRequestModal() {
+    const modal = document.getElementById('product-request-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeProductRequestModal() {
+    const modal = document.getElementById('product-request-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function submitProductRequest() {
+    const name = document.getElementById('req-prod-name')?.value.trim() || '';
+    const variant = document.getElementById('req-prod-variant')?.value.trim() || '-';
+    const grammage = document.getElementById('req-prod-grammage')?.value.trim() || '-';
+    const needed = document.getElementById('req-prod-needed')?.value.trim() || '-';
+
+    if (!name) {
+        alert('Nama produk wajib diisi.');
+        return;
+    }
+
+    const savedRequests = JSON.parse(localStorage.getItem('ar_product_requests') || '[]');
+    savedRequests.unshift({
+        id: 'REQ-' + Date.now().toString().slice(-6),
+        name,
+        variant,
+        grammage,
+        needed,
+        phone: currentPhone || '-',
+        created_at: new Date().toLocaleString('id-ID')
+    });
+    localStorage.setItem('ar_product_requests', JSON.stringify(savedRequests));
+
+    let rawWa = String((typeof storeSettings !== 'undefined' && storeSettings.wa_admin) || '6281331999525').replace(/[^0-9]/g, '');
+    if (rawWa.startsWith('0')) rawWa = '62' + rawWa.slice(1);
+    const storeName = (typeof storeSettings !== 'undefined' && storeSettings.store_name) || 'Arrahmah Mart Surabaya';
+    const msg =
+        `Halo Admin *${storeName}*, saya ingin request produk / promo:\n` +
+        `- Nama Produk: *${name}*\n` +
+        `- Variasi Produk: ${variant}\n` +
+        `- Gramasi Produk: ${grammage}\n` +
+        `- Perkiraan Dibutuhkan: ${needed}`;
+
+    ['req-prod-name', 'req-prod-variant', 'req-prod-grammage', 'req-prod-needed'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    closeProductRequestModal();
+    window.open(`https://wa.me/${rawWa}?text=${encodeURIComponent(msg)}`, '_blank');
+}
     </script>
 </body>
 </html>
