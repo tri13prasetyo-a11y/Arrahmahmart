@@ -26,6 +26,8 @@
         .admin-sidebar-bg {
             background: linear-gradient(180deg, #102a4c 0%, #09192f 100%);
         }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #fdba74; border-radius: 999px; }
     </style>
@@ -68,7 +70,6 @@
     <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 w-full flex-1 pb-24">
 
         <!-- ================= HALAMAN CUSTOMER (#customer) ================= -->
-        <section id="view-customer" <!-- ================= HALAMAN CUSTOMER (#customer) ================= -->
         <section id="view-customer" class="space-y-3">
             <div id="customer-order-notice" class="hidden bg-emerald-50 border border-emerald-300 text-emerald-900 p-3.5 rounded-2xl shadow-xs text-xs space-y-2"></div>
             <div id="cloud-status-banner" class="hidden bg-amber-50 border border-amber-300 text-amber-950 p-3 rounded-2xl shadow-xs text-xs space-y-1"></div>
@@ -117,7 +118,7 @@
                         </div>
                     </div>
 
-                    <div class="h-8 w-px bg-amber-200/90 shrink-0 hidden xs:block sm:block"></div>
+                    <div class="h-8 w-px bg-amber-200/90 shrink-0 hidden sm:block"></div>
 
                     <div id="strip-voucher-summary" class="min-w-0 flex-1">
                         <p class="text-[10px] font-semibold text-slate-600 leading-none">Voucher Tersedia</p>
@@ -178,6 +179,7 @@
                 <p class="text-xs text-slate-500 col-span-full text-center py-6 bg-white rounded-2xl border border-orange-100">Memuat katalog produk...</p>
             </div>
         </section>
+
         <!-- ================= HALAMAN ADMIN (#admin) ================= -->
         <section id="view-admin" class="hidden">
             <div id="admin-login-box" class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-md border border-orange-100 mt-8">
@@ -194,7 +196,6 @@
             </div>
 
             <div id="admin-dashboard" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-                <!-- SIDEBAR ADMIN NAVY -->
                 <aside class="lg:col-span-3 admin-sidebar-bg text-white rounded-2xl p-4 shadow-lg space-y-3">
                     <div class="flex items-center gap-3 pb-3 border-b border-white/10">
                         <div class="w-10 h-10 rounded-full bg-orange-500/20 border border-orange-400/40 flex items-center justify-center text-base">🛡️</div>
@@ -226,9 +227,7 @@
                     <button type="button" onclick="logoutAdmin()" class="w-full text-left px-3 py-2 text-xs font-semibold rounded-xl text-rose-300 hover:bg-rose-500/15 transition">🚪 Keluar Admin</button>
                 </aside>
 
-                <!-- AREA KONTEN ADMIN -->
                 <div class="lg:col-span-9 space-y-5">
-                    <!-- TAUTAN CEPAT -->
                     <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-orange-100 text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div class="flex flex-wrap items-center gap-3 min-w-0">
                             <span class="truncate text-slate-600">Customer: <code id="link-cust-url" class="text-orange-700 font-semibold"></code></span>
@@ -239,12 +238,11 @@
                         <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full shrink-0">● Sistem Online</span>
                     </div>
 
-                    <!-- TAB OVERVIEW / DASHBOARD UTAMA -->
                     <div id="admin-tab-overview" class="space-y-4">
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-orange-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div>
                                 <h2 class="font-extrabold text-lg sm:text-xl text-slate-900">Selamat Datang, Admin ArrahmahMart 👋</h2>
-                                <p class="text-xs text-slate-500">Berikut ringkasan aktivitas toko Anda hari ini • <span id="admin-live-clock" class="font-semibold text-orange-700"></span></p>
+                                <p class="text-xs text-slate-500">Ringkasan aktivitas toko hari ini • <span id="admin-live-clock" class="font-semibold text-orange-700"></span></p>
                             </div>
                             <select id="overview-range-select" onchange="renderOverviewDashboard()" class="border border-orange-200 rounded-xl px-3 py-2 text-xs font-bold bg-orange-50/50 text-slate-800 outline-none">
                                 <option value="7">📅 7 Hari Terakhir</option>
@@ -282,7 +280,7 @@
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
                             <div class="lg:col-span-8 bg-white p-4 rounded-2xl shadow-sm border border-orange-100 space-y-3">
                                 <div class="flex items-center justify-between">
-                                    <h3 class="font-bold text-sm text-slate-900">🛍️ Pesanan Terbaru (Lengkap dengan Jam Pesanan)</h3>
+                                    <h3 class="font-bold text-sm text-slate-900">🛍️ Pesanan Terbaru</h3>
                                     <button type="button" onclick="switchAdminTab('orders')" class="text-xs font-bold text-orange-600 hover:underline">Lihat Semua →</button>
                                 </div>
                                 <div id="overview-recent-orders" class="overflow-x-auto text-xs"></div>
@@ -292,13 +290,12 @@
                                 <div class="space-y-1.5">
                                     <span class="inline-block bg-white/20 text-[10px] font-bold px-2.5 py-0.5 rounded-full">Kampanye Toko</span>
                                     <h4 class="font-extrabold text-base leading-snug">Promo Spesial &amp; Sedekah Belanja</h4>
-                                    <p class="text-xs text-orange-50">Kelola paket bundling, tebus murah, dan voucher agar omzet dan poin pelanggan terus tumbuh.</p>
+                                    <p class="text-xs text-orange-50">Kelola paket bundling, tebus murah, dan voucher agar omzet dan poin pelanggan tumbuh.</p>
                                 </div>
                                 <button type="button" onclick="switchAdminTab('promos')" class="bg-white text-orange-600 hover:bg-orange-50 font-bold text-xs px-3.5 py-2 rounded-xl w-fit shadow">Kelola Promo →</button>
                             </div>
                         </div>
                     </div>
-
                     <!-- TAB PESANAN MASUK -->
                     <div id="admin-tab-orders" class="hidden space-y-3">
                         <div class="flex flex-wrap justify-between items-center gap-2 bg-white p-3.5 rounded-2xl border border-orange-100 shadow-2xs">
@@ -598,42 +595,43 @@
             </div>
         </section>
     </main>
-    <!-- STRIP 4 KEUNGGULAN MODERN & FOOTER BANNER -->
-    <section class="max-w-7xl mx-auto px-3 sm:px-4 w-full pb-20 space-y-4">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div class="bg-white/90 backdrop-blur-sm rounded-2xl p-3.5 shadow-sm border border-orange-100/80 flex items-center gap-3 transition-transform duration-200 hover:-translate-y-0.5">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 text-white flex items-center justify-center text-lg shadow-xs shrink-0">🚀</div>
+
+    <!-- STRIP 4 KEUNGGULAN & FOOTER BANNER -->
+    <section class="max-w-7xl mx-auto px-3 sm:px-4 w-full pb-20 space-y-3">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+            <div class="bg-white/90 rounded-2xl p-3 shadow-2xs border border-orange-100 flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 text-white flex items-center justify-center text-base shrink-0">🚀</div>
                 <div>
                     <h4 class="font-bold text-xs text-slate-900">Akses Super Cepat</h4>
-                    <p class="text-[10px] text-slate-500 leading-snug">Instan &amp; hemat kuota di semua perangkat</p>
+                    <p class="text-[10px] text-slate-500 leading-snug">Instan &amp; hemat kuota</p>
                 </div>
             </div>
-            <div class="bg-white/90 backdrop-blur-sm rounded-2xl p-3.5 shadow-sm border border-orange-100/80 flex items-center gap-3 transition-transform duration-200 hover:-translate-y-0.5">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center text-lg shadow-xs shrink-0">🛡️</div>
+            <div class="bg-white/90 rounded-2xl p-3 shadow-2xs border border-orange-100 flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center text-base shrink-0">🛡️</div>
                 <div>
                     <h4 class="font-bold text-xs text-slate-900">Transaksi Aman</h4>
-                    <p class="text-[10px] text-slate-500 leading-snug">Data pesanan &amp; pelanggan terenkripsi</p>
+                    <p class="text-[10px] text-slate-500 leading-snug">Terhubung langsung ke cloud</p>
                 </div>
             </div>
-            <div class="bg-white/90 backdrop-blur-sm rounded-2xl p-3.5 shadow-sm border border-orange-100/80 flex items-center gap-3 transition-transform duration-200 hover:-translate-y-0.5">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-lg shadow-xs shrink-0">📊</div>
+            <div class="bg-white/90 rounded-2xl p-3 shadow-2xs border border-orange-100 flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-base shrink-0">📊</div>
                 <div>
                     <h4 class="font-bold text-xs text-slate-900">Informasi Realtime</h4>
-                    <p class="text-[10px] text-slate-500 leading-snug">Status &amp; laporan terpantau akurat</p>
+                    <p class="text-[10px] text-slate-500 leading-snug">Status &amp; stok terupdate</p>
                 </div>
             </div>
-            <div class="bg-white/90 backdrop-blur-sm rounded-2xl p-3.5 shadow-sm border border-orange-100/80 flex items-center gap-3 transition-transform duration-200 hover:-translate-y-0.5">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white flex items-center justify-center text-lg shadow-xs shrink-0">🧡</div>
+            <div class="bg-white/90 rounded-2xl p-3 shadow-2xs border border-orange-100 flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white flex items-center justify-center text-base shrink-0">🧡</div>
                 <div>
                     <h4 class="font-bold text-xs text-slate-900">Belanja Berkah</h4>
-                    <p class="text-[10px] text-slate-500 leading-snug">Promo hemat &amp; bernilai sedekah</p>
+                    <p class="text-[10px] text-slate-500 leading-snug">Promo &amp; nilai sedekah</p>
                 </div>
             </div>
         </div>
 
-        <div class="brand-topbar rounded-2xl px-4 py-3 text-white flex flex-wrap items-center justify-between gap-2 shadow-md">
+        <div class="brand-topbar rounded-2xl px-4 py-3 text-white flex flex-wrap items-center justify-between gap-2 shadow-sm">
             <div class="flex items-center gap-2.5">
-                <span class="bg-white text-orange-600 font-extrabold text-xs px-2.5 py-1 rounded-xl shadow-2xs">ArrahmahMart</span>
+                <span class="bg-white text-orange-600 font-extrabold text-xs px-2.5 py-1 rounded-xl">ArrahmahMart</span>
                 <span class="text-xs font-medium text-orange-50">belanja anda sedekah anda</span>
             </div>
             <span class="text-[11px] text-orange-100">© ArrahmahMart Surabaya</span>
@@ -641,7 +639,7 @@
     </section>
 
     <!-- BOTTOM NAVIGATION BAR CUSTOMER (MOBILE) -->
-    <nav id="customer-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-orange-100 shadow-lg z-40">
+    <nav id="customer-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-orange-100 shadow-lg z-40">
         <div class="max-w-md mx-auto grid grid-cols-4 py-1.5 text-center text-[10px] font-bold">
             <button type="button" onclick="setCustomerCategoryFilter('all'); window.scrollTo({top:0,behavior:'smooth'})" class="flex flex-col items-center gap-0.5 text-orange-600 py-1">
                 <span class="text-base">🏠</span>
@@ -662,7 +660,7 @@
         </div>
     </nav>
 
-    <!-- MODAL REQUEST PRODUK / PROMO (BISA DIAJUKAN BERKALI-KALI) -->
+    <!-- MODAL REQUEST PRODUK / PROMO -->
     <div id="product-request-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-2xl p-5 space-y-3 text-xs shadow-2xl border border-orange-200 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-2.5">
@@ -802,8 +800,7 @@
             <button type="button" id="btn-submit-order" onclick="submitOrder()" class="w-full bg-gradient-to-r from-orange-600 to-amber-500 text-white font-bold py-3 rounded-xl text-sm hover:from-orange-700 hover:to-amber-600 transition shadow">✓ Kirim Pesanan ke Toko</button>
         </div>
     </div>
-
-    <!-- SCRIPT APLIKASI TEROPTIMASI (CACHE-FIRST & KOMPRESI OTOMATIS) -->
+    <!-- SCRIPT APLIKASI TEROPTIMASI (CACHE-FIRST, KOMPRESI OTOMATIS, & HAPUS INSTAN) -->
     <script>
         const SUPABASE_URL = 'https://oeoskmyvumfwihbrmfkx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_VriQAQ-FC3JGp7-ojoEGHw_YoU5RCDu';
@@ -870,6 +867,15 @@
         let lastSyncError = '';
         let productRowCountFromCloud = 0;
 
+        let vercelQuotaState = {
+            quota_limit_gb: 100,
+            calibrated_used_gb: 0,
+            calibrated_at: new Date().toISOString().split('T')[0],
+            cycle_reset_day: 1,
+            tracked_bytes: 0,
+            save_data_mode: false
+        };
+
         function saveInstantLocalCache() {
             try {
                 localStorage.setItem('ar_fast_cache_v2', JSON.stringify({
@@ -893,14 +899,6 @@
                 return true;
             } catch (e) { return false; }
         }
-        let vercelQuotaState = {
-            quota_limit_gb: 100,
-            calibrated_used_gb: 0,
-            calibrated_at: new Date().toISOString().split('T')[0],
-            cycle_reset_day: 1,
-            tracked_bytes: 0,
-            save_data_mode: false
-        };
 
         function normalizeProductRow(p) {
             const fit = (p.img_fit === 'cover') ? 'cover' : 'contain';
@@ -1008,7 +1006,6 @@
 
             loadVercelQuotaFromLocal();
 
-            // Muat cache lokal seketika agar tampilan langsung muncul dalam <50ms
             if (hydrateFromInstantCache()) {
                 applyBranding();
                 updateCustomerDisplay();
@@ -1294,7 +1291,6 @@
             }
         }
 
-        // KOMPRESI GAMBAR OTOMATIS AGAR CEPAT DIUPLOAD & RINGAN DI KATALOG
         function readFileAsBase64(fileInputId) {
             return new Promise((resolve, reject) => {
                 const fileInput = document.getElementById(fileInputId);
@@ -1421,7 +1417,6 @@
             document.getElementById('promo-detail-modal').classList.remove('hidden');
         }
 
-        // --- FITUR REQUEST PRODUK BERULANG & DAFTAR ADMIN ---
         function getActiveRequesterInfo() {
             const nameInp = document.getElementById('req-prod-name-sender')?.value.trim() || '';
             const phoneInp = document.getElementById('req-prod-phone')?.value.trim() || '';
@@ -1605,7 +1600,6 @@
             }).join('');
         }
 
-        // --- FITUR PESANAN SAYA ---
         function toggleMyOrdersPanel() {
             const panel = document.getElementById('customer-my-orders-panel');
             if (!panel) return;
@@ -1625,7 +1619,7 @@
             if (phoneLabel) phoneLabel.innerText = activePhone || 'Belum diisi';
 
             if (!activePhone) {
-                listEl.innerHTML = `<p class="text-slate-500">Silakan isi nomor WhatsApp Anda terlebih dahulu melalui tombol <strong>Ubah / Daftar No WA</strong> agar pesanan Anda dapat dipantau di sini.</p>`;
+                listEl.innerHTML = `<p class="text-slate-500">Silakan isi nomor WhatsApp Anda melalui tombol <strong>Ubah / Daftar No WA</strong> agar pesanan Anda dapat dipantau di sini.</p>`;
                 return;
             }
 
@@ -1653,7 +1647,7 @@
                     '⏳ Menunggu verifikasi / proses admin';
 
                 return `
-                <div class="bg-orange-50/40 border border-orange-200 rounded-xl p-3 space-y-2">
+                <div class="bg-orange-50/40 border border-orange-200 rounded-xl p-3 space-y-1.5">
                     <div class="flex justify-between items-center gap-2 font-bold">
                         <span class="text-slate-900">${o.id} • ${o.name}</span>
                         <span class="px-2.5 py-0.5 rounded-full text-[10px] ${badgeClass}">${st}</span>
@@ -1668,31 +1662,32 @@
             }).join('');
         }
 
-        function renderCatalog() 
-        // Di dalam renderCatalog(), perbarui ringkasan strip voucher:
-        const vValEl = document.getElementById('strip-voucher-value');
-        const vSubEl = document.getElementById('strip-voucher-sub');
-        if (vValEl && vSubEl) {
-            if (vouchers.length > 0) {
-                const topV = vouchers[0];
-                vValEl.innerText = `Rp ${(Number(topV.discount_amount) || 0).toLocaleString()}`;
-                vSubEl.innerText = `Min. Belanja Rp ${(Number(topV.min_spend) || 0).toLocaleString()} (${topV.code})`;
-            } else {
-                vValEl.innerText = 'Promo Spesial';
-                vSubEl.innerText = 'Cek bundling & tebus murah';
-            }
-        }
-        {const searchTerm = (document.getElementById('customer-search-input')?.value || '').trim().toLowerCase();
+        function renderCatalog() {
+            const searchTerm = (document.getElementById('customer-search-input')?.value || '').trim().toLowerCase();
             const clearBtn = document.getElementById('clear-search-btn');
             if (clearBtn) {
                 if (searchTerm) clearBtn.classList.remove('hidden');
                 else clearBtn.classList.add('hidden');
             }
 
+            // Perbarui ringkasan strip voucher di bagian atas
+            const vValEl = document.getElementById('strip-voucher-value');
+            const vSubEl = document.getElementById('strip-voucher-sub');
+            if (vValEl && vSubEl) {
+                if (vouchers.length > 0) {
+                    const topV = vouchers[0];
+                    vValEl.innerText = `Rp ${(Number(topV.discount_amount) || 0).toLocaleString()}`;
+                    vSubEl.innerText = `Min. Belanja Rp ${(Number(topV.min_spend) || 0).toLocaleString()} (${topV.code})`;
+                } else {
+                    vValEl.innerText = 'Promo Spesial';
+                    vSubEl.innerText = 'Cek bundling & tebus murah';
+                }
+            }
+
             const vContainer = document.getElementById('customer-vouchers');
             const showVoucherSection = (customerCategoryFilter === 'all' || customerCategoryFilter === 'voucher') && vouchers.length > 0;
             if (showVoucherSection) {
-                vContainer.innerHTML = `<div class="bg-white p-3.5 rounded-2xl border border-orange-200 shadow-xs"><p class="font-bold text-xs text-orange-600 mb-2">🎟️ Voucher Belanja Aktif (Berlaku Kelipatan):</p><div class="flex gap-2 overflow-x-auto pb-1">${vouchers.map(v => `<div class="bg-orange-50 border border-orange-200 px-3 py-2 rounded-xl text-xs shrink-0"><span class="font-bold text-orange-700 block">${v.code}</span><span class="text-[10px] text-slate-600">Diskon Rp ${(v.discount_amount||0).toLocaleString()} per kelipatan Min Rp ${(v.min_spend||0).toLocaleString()}</span></div>`).join('')}</div></div>`;
+                vContainer.innerHTML = `<div class="bg-white p-3 rounded-2xl border border-orange-200 shadow-2xs"><p class="font-bold text-xs text-orange-600 mb-2">🎟️ Voucher Belanja Aktif (Berlaku Kelipatan):</p><div class="flex gap-2 overflow-x-auto pb-1">${vouchers.map(v => `<div class="bg-orange-50 border border-orange-200 px-3 py-2 rounded-xl text-xs shrink-0"><span class="font-bold text-orange-700 block">${v.code}</span><span class="text-[10px] text-slate-600">Diskon Rp ${(v.discount_amount||0).toLocaleString()} per kelipatan Min Rp ${(v.min_spend||0).toLocaleString()}</span></div>`).join('')}</div></div>`;
             } else { vContainer.innerHTML = ''; }
 
             const filteredBundles = bundles.filter(b => {
@@ -1718,7 +1713,7 @@
                                 let orig = Number(b.original_price) || 0;
                                 let promo = Number(b.promo_price) || 0;
                                 let hematPct = orig > promo && orig > 0 ? Math.round(((orig - promo) / orig) * 100) : 0;
-                                return `<div class="bg-white p-3 rounded-2xl border border-orange-200 shadow-xs flex items-center space-x-3 text-xs relative">
+                                return `<div class="bg-white p-3 rounded-2xl border border-orange-200 shadow-2xs flex items-center space-x-3 text-xs relative">
                                     <div class="w-20 h-20 rounded-xl shrink-0 border border-orange-100 bg-orange-50/40 flex items-center justify-center overflow-hidden">
                                         <img src="${imgUrl}" loading="lazy" onerror="handleImgError(this)" class="w-full h-full object-contain p-1">
                                     </div>
@@ -1753,7 +1748,7 @@
                             ${filteredTm.map(tm => {
                                 let periodText = tm.start_date && tm.end_date ? `<p class="text-[10px] text-orange-700 font-medium">Periode: ${tm.start_date} s/d ${tm.end_date}</p>` : '';
                                 let imgUrl = getSafeImgUrl(tm.img);
-                                return `<div class="bg-white p-3 rounded-2xl border border-orange-200 shadow-xs flex items-center space-x-3 text-xs">
+                                return `<div class="bg-white p-3 rounded-2xl border border-orange-200 shadow-2xs flex items-center space-x-3 text-xs">
                                     <div class="w-20 h-20 rounded-xl shrink-0 border border-orange-100 bg-orange-50/40 flex items-center justify-center overflow-hidden">
                                         <img src="${imgUrl}" loading="lazy" onerror="handleImgError(this)" class="w-full h-full object-contain p-1">
                                     </div>
@@ -1790,7 +1785,7 @@
                     let vars = Array.isArray(p.variants) ? p.variants : [];
                     let variantSelect = vars.length > 0 ? `<select id="var-select-${p.id}" class="w-full border border-orange-200 rounded-lg p-1 text-[10px] mt-1.5 bg-orange-50/40">${vars.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>` : '';
                     let hasDiscount = p.price > p.promoPrice;
-                    let discBadge = hasDiscount && p.price > 0 ? `<span class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-xs">-${Math.round(((p.price - p.promoPrice)/p.price)*100)}%</span>` : '';
+                    let discBadge = hasDiscount && p.price > 0 ? `<span class="absolute top-2 left-2 bg-rose-600 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-2xs">-${Math.round(((p.price - p.promoPrice)/p.price)*100)}%</span>` : '';
                     let tierInfo = '';
                     if (Array.isArray(p.tiers) && p.tiers.length > 0) {
                         tierInfo = `<div class="mt-1.5 bg-orange-50 p-1.5 rounded-lg border border-orange-100 text-[10px] text-orange-800 leading-snug"><span class="font-bold block">📦 Harga Bertingkat:</span>` + p.tiers.map(t=>`Min ${t.min} item @Rp ${Number(t.price||0).toLocaleString()}`).join(' • ') + `</div>`;
@@ -1800,7 +1795,7 @@
                         ? 'w-full h-full object-cover'
                         : 'w-full h-full object-contain p-2';
                     return `
-                    <div class="bg-white rounded-2xl shadow-xs border border-orange-100 overflow-hidden flex flex-col justify-between hover:border-orange-300 transition">
+                    <div class="bg-white rounded-2xl shadow-2xs border border-orange-100 overflow-hidden flex flex-col justify-between hover:border-orange-300 transition">
                         <div>
                             <div style="height: ${frameHeight}px;" class="relative bg-gradient-to-b from-orange-50/50 to-white flex items-center justify-center overflow-hidden border-b border-orange-50">
                                 <img src="${getSafeImgUrl(p.img)}" loading="lazy" onerror="handleImgError(this)" class="${imgClass}">
@@ -2315,7 +2310,6 @@
             return { subtotal: calcSubtotal, totalHpp: calcHpp, totalDiscount, checkoutDiscount: checkoutDisc, finalTotal, netProfit };
         }
 
-        // --- FILTER TANGGAL CUSTOM LAPORAN ---
         function parseOrderDateToISO(order) {
             if (!order || !order.display_date) return '';
             let raw = String(order.display_date);
@@ -3087,7 +3081,6 @@
             await sb.from('customers').upsert([updatedCust]);
         }
 
-        // --- HAPUS INSTAN (OPTIMISTIC UI) UNTUK PELANGGAN, PESANAN, PRODUK, & PROMO ---
         async function deleteCustomer(phone) {
             if (!confirm("Hapus data pelanggan ini?")) return;
             delete customers[phone];
