@@ -1936,7 +1936,8 @@
             const list = tebusMurah.filter(tm => {
                 if (!isPromoActiveToday(tm.start_date, tm.end_date)) return false;
                 if (!searchVal) return true;
-                return String(tm.product_name || '').toLowerCase().includes(searchVal);
+                const label = String(tm.product_name || tm.name || '').toLowerCase();
+                return label.includes(searchVal);
             });
             if (!list.length) {
                 el.innerHTML = currentCategoryFilter === 'tebus'
@@ -1948,30 +1949,34 @@
                 <div class="bg-white p-3.5 rounded-2xl border border-orange-100 shadow-2xs space-y-2.5">
                     <h4 class="font-extrabold text-xs sm:text-sm text-emerald-700">⚡ Promo Tebus Murah Kelipatan</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-                        ${list.map(tm => `
+                        ${list.map(tm => {
+                            const title = tm.product_name || tm.name || 'Promo Tebus Murah';
+                            const minSpend = Number(tm.min_cart_amount ?? tm.min_spend ?? 0) || 0;
+                            const imgSrc = tm.img || tm.image_url || '';
+                            return `
                             <div class="border border-emerald-200/80 rounded-2xl p-3 bg-emerald-50/30 flex flex-col justify-between gap-2">
                                 <div class="flex items-center gap-2.5">
                                     <div class="w-14 h-14 rounded-xl bg-white border border-emerald-100 flex items-center justify-center overflow-hidden shrink-0">
-                                        <img src="${tm.image_url || ''}" onerror="handleImgError(this)" class="w-full h-full object-contain p-1">
+                                        <img src="${imgSrc}" onerror="handleImgError(this)" class="w-full h-full object-contain p-1">
                                     </div>
                                     <div class="min-w-0">
                                         <span class="text-[9px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">TEBUS MURAH</span>
-                                        <h5 class="font-bold text-slate-900 mt-0.5 line-clamp-1">${tm.product_name}</h5>
+                                        <h5 class="font-bold text-slate-900 mt-0.5 line-clamp-1">${title}</h5>
                                         <div class="flex items-baseline gap-1.5 mt-0.5">
                                             <span class="font-extrabold text-emerald-700 text-sm">${formatRupiah(tm.tebus_price)}</span>
                                             ${Number(tm.normal_price) > Number(tm.tebus_price) ? `<span class="text-[10px] text-slate-400 line-through">${formatRupiah(tm.normal_price)}</span>` : ''}
                                         </div>
-                                        <p class="text-[10px] text-slate-500">Min. belanja ${formatRupiah(tm.min_spend)} (kelipatan)</p>
+                                        <p class="text-[10px] text-slate-500">Min. belanja ${formatRupiah(minSpend)} (kelipatan)</p>
                                     </div>
                                 </div>
                                 <button type="button" onclick="addTebusToCart('${tm.id}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded-xl font-bold text-[11px]">+ Ambil Tebus Murah</button>
                             </div>
-                        `).join('')}
+                        `;
+                        }).join('')}
                     </div>
                 </div>
             `;
         }
-
         function addTebusToCart(id) {
             const tm = tebusMurah.find(x => String(x.id) === String(id));
             if (!tm) return;
